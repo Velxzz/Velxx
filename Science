@@ -1,0 +1,259 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("BoostSystemGui")
+if oldGui then oldGui:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BoostSystemGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MenuShortcut = Instance.new("TextButton", ScreenGui)
+MenuShortcut.Name = "MenuShortcut"
+MenuShortcut.Size = UDim2.new(0, 50, 0, 50)
+MenuShortcut.Position = UDim2.new(0, 20, 0, 20)
+MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MenuShortcut.BackgroundTransparency = 0.2
+MenuShortcut.TextColor3 = Color3.fromRGB(0, 255, 220)
+MenuShortcut.Text = "MENU"
+MenuShortcut.Font = Enum.Font.GothamSemibold
+MenuShortcut.TextSize = 12
+MenuShortcut.Active = true
+MenuShortcut.Draggable = true
+Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(1, 0)
+
+local MenuStroke = Instance.new("UIStroke", MenuShortcut)
+MenuStroke.Color = Color3.fromRGB(0, 255, 220)
+MenuStroke.Thickness = 0.5
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 210, 0, 245)
+MainFrame.Position = UDim2.new(0, 20, 0, 80)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BackgroundTransparency = 0.5
+MainFrame.Visible = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+
+local FrameStroke = Instance.new("UIStroke", MainFrame)
+FrameStroke.Color = Color3.fromRGB(255, 255, 255)
+FrameStroke.Transparency = 0.8
+FrameStroke.Thickness = 1.5
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Position = UDim2.new(0, 0, 0, 5)
+Title.BackgroundTransparency = 1
+Title.Text = "BOOST SYSTEM"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+
+local function createToggle(name, yPos)
+    local Label = Instance.new("TextLabel", MainFrame)
+    Label.Size = UDim2.new(0, 120, 0, 30)
+    Label.Position = UDim2.new(0, 15, 0, yPos)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextSize = 13
+    
+    local Btn = Instance.new("TextButton", MainFrame)
+    Btn.Size = UDim2.new(0, 55, 0, 26)
+    Btn.Position = UDim2.new(0, 140, 0, yPos + 2)
+    Btn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    Btn.BackgroundTransparency = 0.3
+    Btn.Text = "OFF"
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 11
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
+    
+    return Btn
+end
+
+local FastToggleBtn = createToggle("Fast boost :", 45)
+local SmoothToggleBtn = createToggle("Smooth boost :", 85)
+local SmoothReverseToggleBtn = createToggle("Smooth brake :", 125)
+local LockToggleBtn = createToggle("Lock button :", 165)
+
+local GiveLabel = Instance.new("TextLabel", MainFrame)
+GiveLabel.Size = UDim2.new(0, 120, 0, 30)
+GiveLabel.Position = UDim2.new(0, 15, 0, 205)
+GiveLabel.BackgroundTransparency = 1
+GiveLabel.Text = "Click Teleport :"
+GiveLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+GiveLabel.TextXAlignment = Enum.TextXAlignment.Left
+GiveLabel.Font = Enum.Font.GothamSemibold
+GiveLabel.TextSize = 13
+
+local GiveBtn = Instance.new("TextButton", MainFrame)
+GiveBtn.Size = UDim2.new(0, 55, 0, 26)
+GiveBtn.Position = UDim2.new(0, 140, 0, 207)
+GiveBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+GiveBtn.BackgroundTransparency = 0.3
+GiveBtn.Text = "GIVE"
+GiveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GiveBtn.Font = Enum.Font.GothamBold
+GiveBtn.TextSize = 11
+Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
+
+local FastFloatBtn = Instance.new("TextButton", ScreenGui)
+FastFloatBtn.Size = UDim2.new(0, 55, 0, 55)
+FastFloatBtn.Position = UDim2.new(0.7, 0, 0.2, 0)
+FastFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+FastFloatBtn.BackgroundTransparency = 0.4
+FastFloatBtn.Text = "🚀"
+FastFloatBtn.TextSize = 22
+FastFloatBtn.Visible = false
+FastFloatBtn.Active = true
+FastFloatBtn.Draggable = true
+Instance.new("UICorner", FastFloatBtn).CornerRadius = UDim.new(1, 0)
+
+local FastStroke = Instance.new("UIStroke", FastFloatBtn)
+FastStroke.Color = Color3.fromRGB(255, 50, 50)
+FastStroke.Thickness = 2.5
+
+local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
+SmoothFloatBtn.Size = UDim2.new(0, 55, 0, 55)
+SmoothFloatBtn.Position = UDim2.new(0.8, 0, 0.2, 0)
+SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+SmoothFloatBtn.BackgroundTransparency = 0.4
+SmoothFloatBtn.Text = "⚡"
+SmoothFloatBtn.TextSize = 22
+SmoothFloatBtn.Visible = false
+SmoothFloatBtn.Active = true
+SmoothFloatBtn.Draggable = true
+Instance.new("UICorner", SmoothFloatBtn).CornerRadius = UDim.new(1, 0)
+
+local SmoothStroke = Instance.new("UIStroke", SmoothFloatBtn)
+SmoothStroke.Color = Color3.fromRGB(50, 255, 100)
+SmoothStroke.Thickness = 2.5
+
+local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
+SmoothReverseFloatBtn.Size = UDim2.new(0, 55, 0, 55)
+SmoothReverseFloatBtn.Position = UDim2.new(0.9, 0, 0.2, 0)
+SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+SmoothReverseFloatBtn.BackgroundTransparency = 0.4
+SmoothReverseFloatBtn.Text = "🛑"
+SmoothReverseFloatBtn.TextSize = 22
+SmoothReverseFloatBtn.Visible = false
+SmoothReverseFloatBtn.Active = true
+SmoothReverseFloatBtn.Draggable = true
+Instance.new("UICorner", SmoothReverseFloatBtn).CornerRadius = UDim.new(1, 0)
+
+local SmoothReverseStroke = Instance.new("UIStroke", SmoothReverseFloatBtn)
+SmoothReverseStroke.Color = Color3.fromRGB(255, 150, 0)
+SmoothReverseStroke.Thickness = 2.5
+
+local isLocked = false
+local isSmoothBoosting = false
+local isSmoothReversing = false
+
+MenuShortcut.MouseButton1Click:Connect(function() 
+    MainFrame.Visible = not MainFrame.Visible 
+end)
+
+FastToggleBtn.MouseButton1Click:Connect(function()
+    local active = not FastFloatBtn.Visible
+    FastFloatBtn.Visible = active
+    FastToggleBtn.Text = active and "ON" or "OFF"
+    FastToggleBtn.BackgroundColor3 = active and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+end)
+
+SmoothToggleBtn.MouseButton1Click:Connect(function()
+    local active = not SmoothFloatBtn.Visible
+    SmoothFloatBtn.Visible = active
+    SmoothToggleBtn.Text = active and "ON" or "OFF"
+    SmoothToggleBtn.BackgroundColor3 = active and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+end)
+
+SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
+    local active = not SmoothReverseFloatBtn.Visible
+    SmoothReverseFloatBtn.Visible = active
+    SmoothReverseToggleBtn.Text = active and "ON" or "OFF"
+    SmoothReverseToggleBtn.BackgroundColor3 = active and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+end)
+
+LockToggleBtn.MouseButton1Click:Connect(function()
+    isLocked = not isLocked
+    LockToggleBtn.Text = isLocked and "ON" or "OFF"
+    LockToggleBtn.BackgroundColor3 = isLocked and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    FastFloatBtn.Draggable = not isLocked
+    SmoothFloatBtn.Draggable = not isLocked
+    SmoothReverseFloatBtn.Draggable = not isLocked
+end)
+
+FastFloatBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+    if seat and seat:IsA("VehicleSeat") then
+        seat.AssemblyLinearVelocity = seat.CFrame.LookVector * (seat.AssemblyLinearVelocity.Magnitude + 100)
+    end
+end)
+
+SmoothFloatBtn.MouseButton1Click:Connect(function()
+    isSmoothBoosting = not isSmoothBoosting
+    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
+    if isSmoothBoosting then
+        task.spawn(function()
+            while isSmoothBoosting do
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                local seat = hum and hum.SeatPart
+                if seat and seat:IsA("VehicleSeat") then
+                    seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity + (seat.CFrame.LookVector * 4)
+                end
+                task.wait(0.0225)
+            end
+        end)
+    end
+end)
+
+SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
+    isSmoothReversing = not isSmoothReversing
+    SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
+    if isSmoothReversing then
+        task.spawn(function()
+            while isSmoothReversing do
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                local seat = hum and hum.SeatPart
+                if seat and seat:IsA("VehicleSeat") then
+                    local currentVel = seat.AssemblyLinearVelocity
+                    local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
+                    
+                    if forwardSpeed > 0 then
+                        local newVel = currentVel - (seat.CFrame.LookVector * 4)
+                        if newVel:Dot(seat.CFrame.LookVector) < 0 then
+                            seat.AssemblyLinearVelocity = Vector3.zero
+                        else
+                            seat.AssemblyLinearVelocity = newVel
+                        end
+                    elseif forwardSpeed > -1 then
+                        seat.AssemblyLinearVelocity = Vector3.zero
+                    end
+                end
+                task.wait(0.0225)
+            end
+        end)
+    end
+end)
+
+GiveBtn.MouseButton1Click:Connect(function()
+    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
+    t.Name = "Teleport Tool"
+    t.RequiresHandle = false
+    t.Activated:Connect(function()
+        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
+        end
+    end)
+end)
