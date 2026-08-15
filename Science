@@ -123,7 +123,7 @@ FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -215)
+SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -200)
 SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothFloatBtn.BackgroundTransparency = 0.4
 SmoothFloatBtn.Text = "⚡"
@@ -139,7 +139,7 @@ SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -140)
+SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -125)
 SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothReverseFloatBtn.BackgroundTransparency = 0.4
 SmoothReverseFloatBtn.Text = "🛑"
