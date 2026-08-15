@@ -31,7 +31,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 210, 0, 245)
+MainFrame.Size = UDim2.new(0, 210, 0, 285)
 MainFrame.Position = UDim2.new(0, 20, 0, 80)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -79,14 +79,19 @@ local function createToggle(name, yPos)
     return Btn
 end
 
-local FastToggleBtn = createToggle("Fast boost :", 45)
-local SmoothToggleBtn = createToggle("Smooth boost :", 85)
-local SmoothReverseToggleBtn = createToggle("Smooth brake :", 125)
-local LockToggleBtn = createToggle("Lock button :", 165)
+local ActiveFeaturesBtn = createToggle("Active Features:", 45)
+local FastToggleBtn = createToggle("Fast boost :", 85)
+local SmoothToggleBtn = createToggle("Smooth boost :", 125)
+local SmoothReverseToggleBtn = createToggle("Smooth brake :", 165)
+local LockToggleBtn = createToggle("Lock button :", 205)
+
+-- Set default Active Features ON
+ActiveFeaturesBtn.Text = "ON"
+ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
 local GiveLabel = Instance.new("TextLabel", MainFrame)
 GiveLabel.Size = UDim2.new(0, 120, 0, 30)
-GiveLabel.Position = UDim2.new(0, 15, 0, 205)
+GiveLabel.Position = UDim2.new(0, 15, 0, 245)
 GiveLabel.BackgroundTransparency = 1
 GiveLabel.Text = "Click Teleport :"
 GiveLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -96,7 +101,7 @@ GiveLabel.TextSize = 13
 
 local GiveBtn = Instance.new("TextButton", MainFrame)
 GiveBtn.Size = UDim2.new(0, 55, 0, 26)
-GiveBtn.Position = UDim2.new(0, 140, 0, 207)
+GiveBtn.Position = UDim2.new(0, 140, 0, 247)
 GiveBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 GiveBtn.BackgroundTransparency = 0.3
 GiveBtn.Text = "GIVE"
@@ -105,6 +110,7 @@ GiveBtn.Font = Enum.Font.GothamBold
 GiveBtn.TextSize = 11
 Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
 
+-- Posisi Float Buttons sesuai dengan koordinat file kamu
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
@@ -123,7 +129,7 @@ FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -200)
+SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -215)
 SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothFloatBtn.BackgroundTransparency = 0.4
 SmoothFloatBtn.Text = "⚡"
@@ -139,7 +145,7 @@ SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -125)
+SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -140)
 SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothReverseFloatBtn.BackgroundTransparency = 0.4
 SmoothReverseFloatBtn.Text = "🛑"
@@ -153,12 +159,26 @@ local SmoothReverseStroke = Instance.new("UIStroke", SmoothReverseFloatBtn)
 SmoothReverseStroke.Color = Color3.fromRGB(255, 150, 0)
 SmoothReverseStroke.Thickness = 2.5
 
+local isFeaturesActive = true
 local isLocked = false
 local isSmoothBoosting = false
 local isSmoothReversing = false
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
+end)
+
+ActiveFeaturesBtn.MouseButton1Click:Connect(function()
+    isFeaturesActive = not isFeaturesActive
+    ActiveFeaturesBtn.Text = isFeaturesActive and "ON" or "OFF"
+    ActiveFeaturesBtn.BackgroundColor3 = isFeaturesActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    
+    if not isFeaturesActive then
+        isSmoothBoosting = false
+        isSmoothReversing = false
+        SmoothFloatBtn.Text = "⚡"
+        SmoothReverseFloatBtn.Text = "🛑"
+    end
 end)
 
 FastToggleBtn.MouseButton1Click:Connect(function()
@@ -192,6 +212,7 @@ LockToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 FastFloatBtn.MouseButton1Click:Connect(function()
+    if not isFeaturesActive then return end
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
@@ -201,11 +222,12 @@ FastFloatBtn.MouseButton1Click:Connect(function()
 end)
 
 SmoothFloatBtn.MouseButton1Click:Connect(function()
+    if not isFeaturesActive then return end
     isSmoothBoosting = not isSmoothBoosting
     SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
     if isSmoothBoosting then
         task.spawn(function()
-            while isSmoothBoosting do
+            while isSmoothBoosting and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
                 local seat = hum and hum.SeatPart
@@ -214,16 +236,21 @@ SmoothFloatBtn.MouseButton1Click:Connect(function()
                 end
                 task.wait(0.0225)
             end
+            if not isFeaturesActive then
+                isSmoothBoosting = false
+                SmoothFloatBtn.Text = "⚡"
+            end
         end)
     end
 end)
 
 SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
+    if not isFeaturesActive then return end
     isSmoothReversing = not isSmoothReversing
     SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-    if isSmoothReversing then
+    if isSmoothReversing me
         task.spawn(function()
-            while isSmoothReversing do
+            while isSmoothReversing and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
                 local seat = hum and hum.SeatPart
@@ -243,6 +270,10 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
                     end
                 end
                 task.wait(0.0225)
+            end
+            if not isFeaturesActive then
+                isSmoothReversing = false
+                SmoothReverseFloatBtn.Text = "🛑"
             end
         end)
     end
