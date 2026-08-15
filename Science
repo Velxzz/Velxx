@@ -31,7 +31,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 210, 0, 285)
+MainFrame.Size = UDim2.new(0, 210, 0, 325)
 MainFrame.Position = UDim2.new(0, 20, 0, 80)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -108,6 +108,27 @@ GiveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 GiveBtn.Font = Enum.Font.GothamBold
 GiveBtn.TextSize = 11
 Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
+
+local FlyLabel = Instance.new("TextLabel", MainFrame)
+FlyLabel.Size = UDim2.new(0, 120, 0, 30)
+FlyLabel.Position = UDim2.new(0, 15, 0, 285)
+FlyLabel.BackgroundTransparency = 1
+FlyLabel.Text = "Fly GUI :"
+FlyLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+FlyLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlyLabel.Font = Enum.Font.GothamSemibold
+FlyLabel.TextSize = 13
+
+local FlyBtn = Instance.new("TextButton", MainFrame)
+FlyBtn.Size = UDim2.new(0, 55, 0, 26)
+FlyBtn.Position = UDim2.new(0, 140, 0, 287)
+FlyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+FlyBtn.BackgroundTransparency = 0.3
+FlyBtn.Text = "EXECUTE"
+FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyBtn.Font = Enum.Font.GothamBold
+FlyBtn.TextSize = 9
+Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 8)
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -286,4 +307,8 @@ GiveBtn.MouseButton1Click:Connect(function()
             LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
         end
     end)
+end)
+
+FlyBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua'))()
 end)
