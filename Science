@@ -8,6 +8,7 @@ if oldGui then oldGui:Destroy() end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BoostSystemGui"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MenuShortcut = Instance.new("TextButton", ScreenGui)
@@ -106,7 +107,7 @@ Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-FastFloatBtn.Position = UDim2.new(1, -210, 1, -260)
+FastFloatBtn.Position = UDim2.new(1, -230, 1, -270)
 FastFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 FastFloatBtn.BackgroundTransparency = 0.4
 FastFloatBtn.Text = "🚀"
@@ -122,7 +123,7 @@ FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -210, 1, -195)
+SmoothFloatBtn.Position = UDim2.new(1, -230, 1, -205)
 SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothFloatBtn.BackgroundTransparency = 0.4
 SmoothFloatBtn.Text = "⚡"
@@ -138,7 +139,7 @@ SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -210, 1, -130)
+SmoothReverseFloatBtn.Position = UDim2.new(1, -230, 1, -140)
 SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothReverseFloatBtn.BackgroundTransparency = 0.4
 SmoothReverseFloatBtn.Text = "🛑"
