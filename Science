@@ -85,7 +85,6 @@ local SmoothToggleBtn = createToggle("Smooth boost :", 125)
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 165)
 local LockToggleBtn = createToggle("Lock button :", 205)
 
--- Set default Active Features ON
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
@@ -110,7 +109,6 @@ GiveBtn.Font = Enum.Font.GothamBold
 GiveBtn.TextSize = 11
 Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
 
--- Posisi Float Buttons sesuai dengan koordinat file kamu
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
@@ -248,7 +246,7 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     isSmoothReversing = not isSmoothReversing
     SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-    if isSmoothReversing me
+    if isSmoothReversing then
         task.spawn(function()
             while isSmoothReversing and isFeaturesActive do
                 local char = LocalPlayer.Character
