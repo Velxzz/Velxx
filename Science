@@ -365,7 +365,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
--- SISTEM BELOK & MIRING FIXED DIRECTION (ANTI-REVERSED LEAN)
+-- SISTEM BELOK DINAMIS ANTI SLIP (SMOOTH & NATURAL LEAN)
 local currentSteerLerp = 0
 
 RunService.RenderStepped:Connect(function(dt)
@@ -386,13 +386,14 @@ RunService.RenderStepped:Connect(function(dt)
             rawSteer = seat.SteerFloat
         end
         
-        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 12), -1, 1)
+        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 8), -1, 1)
         
         if math.abs(currentSteerLerp) > 0.05 then
-            local turnSpeedForce = 3.0
-            local leanForce = 1.2 -- Diperhalus agar miringnya pas dan tidak rebah berlebihan
+            local currentSpeed = seat.AssemblyLinearVelocity.Magnitude
             
-            -- PERBAIKAN: Tanda Z dibalik (-currentSteerLerp) agar belok kanan = miring kanan
+            local turnSpeedForce = math.clamp(2.2 - (currentSpeed * 0.003), 1.0, 2.2)
+            local leanForce = 0.35
+            
             local localAngularVel = Vector3.new(0, -currentSteerLerp * turnSpeedForce, -currentSteerLerp * leanForce)
             local worldAngularVel = seat.CFrame:VectorToWorldSpace(localAngularVel)
             
