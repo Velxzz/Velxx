@@ -322,7 +322,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
--- REVISI: FAST STEER CEPAT-SEDANG DENGAN BELOKAN TAJAM HALUS
 local currentSteerLerp = 0
 
 RunService.RenderStepped:Connect(function(dt)
@@ -333,27 +332,23 @@ RunService.RenderStepped:Connect(function(dt)
     local seat = hum and hum.SeatPart
     
     if seat and seat:IsA("VehicleSeat") then
-        seat.TurnSpeed = 8 -- Menaikkan batas belok roda agar tajam & cepat
-        
         local rawSteer = seat.SteerFloat
-        -- Transisi halus cepat-sedang menggunakan Lerp (Smoothing response)
         currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 14), -1, 1)
         
         if math.abs(currentSteerLerp) > 0.01 then
-            -- Rotasi belokan bodi motor (Lebih tajam tapi alami)
-            local steerForce = 5.2 
-            seat.AssemblyAngularVelocity = Vector3.new(
-                seat.AssemblyAngularVelocity.X,
-                -currentSteerLerp * steerForce,
-                seat.AssemblyAngularVelocity.Z
-            )
+            local turnAngle = math.rad(-currentSteerLerp * 2.8)
+            seat.CFrame = seat.CFrame * CFrame.Angles(0, turnAngle, 0)
+            
+            local speed = seat.AssemblyLinearVelocity.Magnitude
+            if speed > 2 then
+                seat.AssemblyLinearVelocity = seat.CFrame.LookVector * speed
+            end
         end
         
-        -- Mempercepat animasi miring/kemudi badan karakter 2.2x agar terlihat pas
         local animator = hum:FindFirstChildOfClass("Animator")
         if animator then
             for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                track.PlaybackSpeed = 2.2
+                track.PlaybackSpeed = 3.0
             end
         end
     end
