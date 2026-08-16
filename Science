@@ -319,10 +319,13 @@ GiveBtn.MouseButton1Click:Connect(function()
 end)
 
 FlyBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly'))()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
-RunService.RenderStepped:Connect(function()
+-- REVISI: FAST STEER CEPAT-SEDANG DENGAN BELOKAN TAJAM HALUS
+local currentSteerLerp = 0
+
+RunService.RenderStepped:Connect(function(dt)
     if not isFeaturesActive or not isFastSteer then return end
     
     local char = LocalPlayer.Character
@@ -330,18 +333,27 @@ RunService.RenderStepped:Connect(function()
     local seat = hum and hum.SeatPart
     
     if seat and seat:IsA("VehicleSeat") then
-        seat.TurnSpeed = 2.5
+        seat.TurnSpeed = 8 -- Menaikkan batas belok roda agar tajam & cepat
         
-        local steer = seat.SteerFloat
-        if steer ~= 0 then
-            local rotSpeed = math.rad(-steer * 4.5)
-            seat.AssemblyAngularVelocity = Vector3.new(seat.AssemblyAngularVelocity.X, rotSpeed, seat.AssemblyAngularVelocity.Z)
+        local rawSteer = seat.SteerFloat
+        -- Transisi halus cepat-sedang menggunakan Lerp (Smoothing response)
+        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 14), -1, 1)
+        
+        if math.abs(currentSteerLerp) > 0.01 then
+            -- Rotasi belokan bodi motor (Lebih tajam tapi alami)
+            local steerForce = 5.2 
+            seat.AssemblyAngularVelocity = Vector3.new(
+                seat.AssemblyAngularVelocity.X,
+                -currentSteerLerp * steerForce,
+                seat.AssemblyAngularVelocity.Z
+            )
         end
         
+        -- Mempercepat animasi miring/kemudi badan karakter 2.2x agar terlihat pas
         local animator = hum:FindFirstChildOfClass("Animator")
         if animator then
             for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                track.PlaybackSpeed = 2.0
+                track.PlaybackSpeed = 2.2
             end
         end
     end
