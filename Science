@@ -1,5 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -280,67 +282,122 @@ FastFloatBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-SmoothFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
+local function startSmoothBoost()
+    if not isFeaturesActive or isSmoothBoosting then return end
+    isSmoothBoosting = true
+    SmoothFloatBtn.Text = "🔥"
     
-    isSmoothBoosting = not isSmoothBoosting
-    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
-    
-    if isSmoothBoosting then
-        task.spawn(function()
-            while isSmoothBoosting and isFeaturesActive do
-                local char = LocalPlayer.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local seat = hum and hum.SeatPart
-                
-                if seat and seat:IsA("BasePart") then
-                    seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity + (seat.CFrame.LookVector * 3.5)
-                else
-                    isSmoothBoosting = false
-                    SmoothFloatBtn.Text = "⚡"
-                    break
-                end
-                task.wait(0.03)
+    task.spawn(function()
+        while isSmoothBoosting and isFeaturesActive do
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local seat = hum and hum.SeatPart
+            
+            if seat and seat:IsA("BasePart") then
+                seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity + (seat.CFrame.LookVector * 3.5)
+            else
+                isSmoothBoosting = false
+                SmoothFloatBtn.Text = "⚡"
+                break
             end
-        end)
-    end
+            task.wait(0.03)
+        end
+    end)
+end
+
+local function stopSmoothBoost()
+    isSmoothBoosting = false
+    SmoothFloatBtn.Text = "⚡"
+end
+
+local function startSmoothBrake()
+    if not isFeaturesActive or isSmoothReversing then return end
+    isSmoothReversing = true
+    SmoothReverseFloatBtn.Text = "💥"
+    
+    task.spawn(function()
+        while isSmoothReversing and isFeaturesActive do
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local seat = hum and hum.SeatPart
+            
+            if seat and seat:IsA("BasePart") then
+                local currentVel = seat.AssemblyLinearVelocity
+                local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
+                
+                if forwardSpeed > 0 then
+                    local newVel = currentVel - (seat.CFrame.LookVector * 4)
+                    if newVel:Dot(seat.CFrame.LookVector) < 0 then
+                        seat.AssemblyLinearVelocity = Vector3.zero
+                    else
+                        seat.AssemblyLinearVelocity = newVel
+                    end
+                elseif forwardSpeed > -1 then
+                    seat.AssemblyLinearVelocity = Vector3.zero
+                end
+            else
+                isSmoothReversing = false
+                SmoothReverseFloatBtn.Text = "🛑"
+                break
+            end
+            task.wait(0.0225)
+        end
+    end)
+end
+
+local function stopSmoothBrake()
+    isSmoothReversing = false
+    SmoothReverseFloatBtn.Text = "🛑"
+end
+
+SmoothFloatBtn.MouseButton1Click:Connect(function()
+    if isSmoothBoosting then stopSmoothBoost() else startSmoothBoost() end
 end)
 
 SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    
-    isSmoothReversing = not isSmoothReversing
-    SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-    
-    if isSmoothReversing then
-        task.spawn(function()
-            while isSmoothReversing and isFeaturesActive do
-                local char = LocalPlayer.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local seat = hum and hum.SeatPart
-                
-                if seat and seat:IsA("BasePart") then
-                    local currentVel = seat.AssemblyLinearVelocity
-                    local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
-                    
-                    if forwardSpeed > 0 then
-                        local newVel = currentVel - (seat.CFrame.LookVector * 4)
-                        if newVel:Dot(seat.CFrame.LookVector) < 0 then
-                            seat.AssemblyLinearVelocity = Vector3.zero
-                        else
-                            seat.AssemblyLinearVelocity = newVel
-                        end
-                    elseif forwardSpeed > -1 then
-                        seat.AssemblyLinearVelocity = Vector3.zero
-                    end
-                else
-                    isSmoothReversing = false
-                    SmoothReverseFloatBtn.Text = "🛑"
-                    break
-                end
-                task.wait(0.0225)
-            end
-        end)
+    if isSmoothReversing then stopSmoothBrake() else startSmoothBrake() end
+end)
+
+-- INTEGRASI INPUT KEYBOARD (PC)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        if SmoothFloatBtn.Visible then startSmoothBoost() end
+    elseif input.KeyCode == Enum.KeyCode.E then
+        if SmoothReverseFloatBtn.Visible then startSmoothBrake() end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        stopSmoothBoost()
+    elseif input.KeyCode == Enum.KeyCode.E then
+        stopSmoothBrake()
+    end
+end)
+
+-- INTEGRASI TOMBOL UI GAME (HP)
+local isTouchSteeringLeft = false
+local isTouchSteeringRight = false
+
+task.spawn(function()
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+    local interfaceUI = PlayerGui:WaitForChild("Interface", 10)
+    local controlsUI = interfaceUI and interfaceUI:WaitForChild("Controls", 10)
+
+    if controlsUI then
+        local leftBtn = controlsUI:FindFirstChild("Left")
+        local rightBtn = controlsUI:FindFirstChild("Right")
+        
+        if leftBtn and leftBtn:IsA("GuiButton") then
+            leftBtn.MouseButton1Down:Connect(function() isTouchSteeringLeft = true end)
+            leftBtn.MouseButton1Up:Connect(function() isTouchSteeringLeft = false end)
+        end
+        
+        if rightBtn and rightBtn:IsA("GuiButton") then
+            rightBtn.MouseButton1Down:Connect(function() isTouchSteeringRight = true end)
+            rightBtn.MouseButton1Up:Connect(function() isTouchSteeringRight = false end)
+        end
     end
 end)
 
@@ -378,8 +435,16 @@ RunService.RenderStepped:Connect(function(dt)
     if seat then
         local rawSteer = 0
         
+        -- Deteksi gerakan keyboard/analog PC
         if hum and hum.MoveDirection.Magnitude > 0 then
             rawSteer = hum.MoveDirection:Dot(seat.CFrame.RightVector)
+        end
+        
+        -- Deteksi sentuhan tombol UI layar HP (Left & Right)
+        if isTouchSteeringLeft then
+            rawSteer = -1
+        elseif isTouchSteeringRight then
+            rawSteer = 1
         end
         
         if math.abs(rawSteer) < 0.1 and seat:IsA("VehicleSeat") then
