@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -213,7 +212,7 @@ end)
 
 SmoothToggleBtn.MouseButton1Click:Connect(function()
     local active = not SmoothFloatBtn.Visible
-    SmoothFloatBtn.Visible = active
+    SmoothToggleBtn.Visible = active
     SmoothToggleBtn.Text = active and "ON" or "OFF"
     SmoothToggleBtn.BackgroundColor3 = active and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
 end)
@@ -323,7 +322,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
--- SISTEM BELOK UNIVERSAL (TRANSIKSI CEPAT 0.2 DETIK)
+-- SISTEM FAST STEER PERFECT LOCAL-SPACE (STABIL & STICK TO GROUND)
 local currentSteerLerp = 0
 
 RunService.RenderStepped:Connect(function(dt)
@@ -336,28 +335,32 @@ RunService.RenderStepped:Connect(function(dt)
     if seat then
         local rawSteer = 0
         
-        -- Deteksi Arah Input dari Humanoid (HP / Mobile & PC)
+        -- 1. Deteksi Arah Input dari Touchscreen Mobile / Analog / Keyboard
         if hum and hum.MoveDirection.Magnitude > 0 then
             rawSteer = hum.MoveDirection:Dot(seat.CFrame.RightVector)
         end
         
+        -- 2. Fallback jika memakai VehicleSeat standar
         if math.abs(rawSteer) < 0.1 and seat:IsA("VehicleSeat") then
             rawSteer = seat.SteerFloat
         end
         
-        -- Mengubah pengali transisi menjadi 25 (setara 0.2 detik dari 0 ke miring penuh)
-        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 25), -1, 1)
+        -- 3. Respon transisi cepat 0.2 detik (dt * 15)
+        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 15), -1, 1)
         
-        if math.abs(currentSteerLerp) > 0.02 then
-            -- Sudut rotasi instan & responsif
-            local turnAngle = math.rad(-currentSteerLerp * 4.2)
-            seat.CFrame = seat.CFrame * CFrame.Angles(0, turnAngle, 0)
+        if math.abs(currentSteerLerp) > 0.05 then
+            local turnSpeedForce = 3.8
             
-            -- Menyelaraskan arah kecepatan agar tetap stabil
-            local speed = seat.AssemblyLinearVelocity.Magnitude
-            if speed > 1 then
-                seat.AssemblyLinearVelocity = seat.CFrame.LookVector * speed
-            end
+            -- Hitung rotasi murni pada sumbu Y Lokal bodi motor
+            local localAngularVel = Vector3.new(0, -currentSteerLerp * turnSpeedForce, 0)
+            local worldAngularVel = seat.CFrame:VectorToWorldSpace(localAngularVel)
+            
+            -- Terapkan fisika rotasi lokal agar tidak bentrok dengan sumbu map
+            seat.AssemblyAngularVelocity = Vector3.new(
+                worldAngularVel.X,
+                worldAngularVel.Y,
+                worldAngularVel.Z
+            )
         end
     end
 end)
