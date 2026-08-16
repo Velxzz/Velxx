@@ -85,7 +85,7 @@ local ActiveFeaturesBtn = createToggle("Active Features:", 45)
 local FastToggleBtn = createToggle("Fast boost :", 85)
 local SmoothToggleBtn = createToggle("Smooth boost :", 125)
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 165)
-local SteerToggleBtn = createToggle("Fast Steer :", 205)
+local SteerToggleBtn = createToggle("Better Steer :", 205)
 local LockToggleBtn = createToggle("Lock button :", 245)
 
 ActiveFeaturesBtn.Text = "ON"
@@ -180,7 +180,7 @@ SmoothReverseStroke.Thickness = 2.5
 
 local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
 SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SteerFloatBtn.Position = UDim2.new(1, -125, 1, -300)
+SteerFloatBtn.Position = UDim2.new(1, -125, 1, -345)
 SteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SteerFloatBtn.BackgroundTransparency = 0.4
 SteerFloatBtn.Text = "↔️"
@@ -197,7 +197,7 @@ local isFeaturesActive = true
 local isLocked = false
 local isSmoothBoosting = false
 local isSmoothReversing = false
-local isFastSteer = false
+local isBetterSteer = false
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -211,7 +211,7 @@ ActiveFeaturesBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then
         isSmoothBoosting = false
         isSmoothReversing = false
-        isFastSteer = false
+        isBetterSteer = false
         SmoothFloatBtn.Text = "⚡"
         SmoothReverseFloatBtn.Text = "🛑"
         SteerFloatBtn.Text = "↔️"
@@ -250,10 +250,10 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 SteerToggleBtn.MouseButton1Click:Connect(function()
-    isFastSteer = not isFastSteer
-    SteerToggleBtn.Text = isFastSteer and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = isFastSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    SteerFloatBtn.Visible = isFastSteer
+    isBetterSteer = not isBetterSteer
+    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
+    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    SteerFloatBtn.Visible = isBetterSteer
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
@@ -353,58 +353,73 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- [DETEKSI DAN EKSEKUSI STEER LANGSUNG DARI TOMBOL UI GAME]
+-- [DETEKSI TOUCH SENTUHAN UI BENTUK TOMBOL BALAP]
 local isTouchSteeringLeft = false
 local isTouchSteeringRight = false
 
 RunService.RenderStepped:Connect(function()
-    if not isFeaturesActive or not isFastSteer then return end
+    if not isFeaturesActive or not isBetterSteer then return end
     
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    local controls = playerGui and playerGui:FindFirstChild("Interface") and playerGui.Interface:FindFirstChild("Controls")
+    local controlsUI = playerGui and playerGui:FindFirstChild("Interface") and playerGui.Interface:FindFirstChild("Controls")
     
-    local leftBtn = controls and controls:FindFirstChild("Left")
-    local rightBtn = controls and controls:FindFirstChild("Right")
+    local leftFrame = controlsUI and controlsUI:FindFirstChild("Left")
+    local rightFrame = controlsUI and controlsUI:FindFirstChild("Right")
     
-    local leftActive, rightActive = false, false
     local touches = UserInputService:GetTouches()
+    local leftActive, rightActive = false, false
     
     for _, touch in pairs(touches) do
-        local pos = touch.Position
-        if leftBtn and leftBtn:IsA("GuiObject") then
-            local lp = leftBtn.AbsolutePosition
-            local sz = leftBtn.AbsoluteSize
+        if leftFrame and leftFrame:IsA("GuiObject") then
+            local pos = touch.Position
+            local lp = leftFrame.AbsolutePosition
+            local sz = leftFrame.AbsoluteSize
             if pos.X >= lp.X and pos.X <= lp.X + sz.X and pos.Y >= lp.Y and pos.Y <= lp.Y + sz.Y then
                 leftActive = true
             end
         end
-        if rightBtn and rightBtn:IsA("GuiObject") then
-            local lp = rightBtn.AbsolutePosition
-            local sz = rightBtn.AbsoluteSize
+        if rightFrame and rightFrame:IsA("GuiObject") then
+            local pos = touch.Position
+            local lp = rightFrame.AbsolutePosition
+            local sz = rightFrame.AbsoluteSize
             if pos.X >= lp.X and pos.X <= lp.X + sz.X and pos.Y >= lp.Y and pos.Y <= lp.Y + sz.Y then
                 rightActive = true
             end
         end
     end
-    
     isTouchSteeringLeft = leftActive
     isTouchSteeringRight = rightActive
 end)
 
+-- [INJEKSI VALUE #SteerT & #SteerC LANGSUNG KE SASIS GAME]
 RunService.Stepped:Connect(function()
-    if not isFeaturesActive or not isFastSteer then return end
+    if not isFeaturesActive or not isBetterSteer then return end
     
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
     
-    if seat and seat:IsA("BasePart") then
-        local turnPower = 6.0 -- Kekuatan putar instan saat belok
+    if seat then
+        -- Mencari folder Values di dalam kendaraan/seat
+        local vehicle = seat:FindFirstAncestorOfClass("Model") or seat.Parent
+        local valuesFolder = vehicle and vehicle:FindFirstChild("Values", true)
         
-        if isTouchSteeringLeft then
-            seat.AssemblyAngularVelocity = Vector3.new(0, turnPower, 0)
-        elseif isTouchSteeringRight then
-            seat.AssemblyAngularVelocity = Vector3.new(0, -turnPower, 0)
+        if valuesFolder then
+            local steerT = valuesFolder:FindFirstChild("#SteerT") or valuesFolder:FindFirstChild("SteerT")
+            local steerC = valuesFolder:FindFirstChild("#SteerC") or valuesFolder:FindFirstChild("SteerC")
+            
+            local steerDir = 0
+            if isTouchSteeringLeft then steerDir = 1 end
+            if isTouchSteeringRight then steerDir = -1 end
+            
+            if steerDir ~= 0 then
+                -- Memaksa Nilai Steer Target & Current ke nilai ekstrem (1.8 untuk belokan super tajam)
+                if steerT then steerT.Value = steerDir * 2 end
+                if steerC then steerC.Value = steerDir * 1.8 end
+                
+                -- Memberikan bantuan rotasi fisik tambahan agar makin responsif
+                seat.AssemblyAngularVelocity = Vector3.new(0, steerDir * 3.5, 0)
+            end
         end
     end
 end)
