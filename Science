@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V2.0"
+Title.Text = "BOOST V2.1"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -205,6 +205,14 @@ local isSmoothBoosting = false
 local isSmoothReversing = false
 local isBetterSteer = false
 
+-- Fungsi sinkronisasi status Better Steer yang diperbaiki
+local function updateSteerStatus(status)
+    isBetterSteer = status
+    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
+    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
+end
+
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
 end)
@@ -217,10 +225,9 @@ ActiveFeaturesBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then
         isSmoothBoosting = false
         isSmoothReversing = false
-        isBetterSteer = false
+        updateSteerStatus(false)
         SmoothFloatBtn.Text = "⚡"
         SmoothReverseFloatBtn.Text = "🛑"
-        SteerFloatBtn.Text = "↔️"
     end
 end)
 
@@ -255,20 +262,17 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Perbaikan Tombol Toggle Better Steer di Menu Utama
 SteerToggleBtn.MouseButton1Click:Connect(function()
-    isBetterSteer = not isBetterSteer
-    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    SteerFloatBtn.Visible = isBetterSteer
-    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
+    local newState = not SteerFloatBtn.Visible
+    SteerFloatBtn.Visible = newState
+    updateSteerStatus(newState)
 end)
 
+-- Perbaikan Tombol Float Better Steer di Layar
 SteerFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
-    isBetterSteer = not isBetterSteer
-    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
+    updateSteerStatus(not isBetterSteer)
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
@@ -368,6 +372,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
+-- Perbaikan Logika Better Steer agar mendeteksi VehicleSeat ataupun Seat biasa dengan aman
 RunService.Stepped:Connect(function()
     if not isFeaturesActive or not isBetterSteer then return end
     
@@ -375,22 +380,28 @@ RunService.Stepped:Connect(function()
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
     
-    if seat and seat:IsA("VehicleSeat") then
+    if seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
         local vehicle = seat:FindFirstAncestorOfClass("Model") or seat.Parent
-        local valuesFolder = vehicle and vehicle:FindFirstChild("Values", true)
+        local valuesFolder = vehicle and (vehicle:FindFirstChild("Values", true) or vehicle:FindFirstChild("Configuration", true))
+        
+        local rawSteer = 0
+        if seat:IsA("VehicleSeat") then
+            rawSteer = seat.SteerFloat
+        end
         
         if valuesFolder then
             local steerT = valuesFolder:FindFirstChild("#SteerT") or valuesFolder:FindFirstChild("SteerT")
             local steerC = valuesFolder:FindFirstChild("#SteerC") or valuesFolder:FindFirstChild("SteerC")
             
-            local rawSteer = seat.SteerFloat
-            
             if rawSteer ~= 0 then
                 if steerT then steerT.Value = rawSteer * 2.0 end
                 if steerC then steerC.Value = rawSteer * 1.8 end
-                
-                seat.AssemblyAngularVelocity = Vector3.new(0, rawSteer * 3.5, 0)
             end
+        end
+        
+        -- Tambahan penanganan rotasi angular langsung jika stir motor/mobil tidak merespons folder
+        if rawSteer ~= 0 then
+            seat.AssemblyAngularVelocity = Vector3.new(0, rawSteer * 4.0, 0)
         end
     end
 end)
