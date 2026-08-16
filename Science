@@ -150,7 +150,7 @@ FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -195)
+SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -215)
 SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothFloatBtn.BackgroundTransparency = 0.4
 SmoothFloatBtn.Text = "⚡"
@@ -165,7 +165,7 @@ SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -120)
+SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -140)
 SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothReverseFloatBtn.BackgroundTransparency = 0.4
 SmoothReverseFloatBtn.Text = "🛑"
@@ -180,7 +180,7 @@ SmoothReverseStroke.Thickness = 2.5
 
 local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
 SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SteerFloatBtn.Position = UDim2.new(1, -125, 1, -345)
+SteerFloatBtn.Position = UDim2.new(1, -220, 1, -65)
 SteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SteerFloatBtn.BackgroundTransparency = 0.4
 SteerFloatBtn.Text = "↔️"
@@ -364,6 +364,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
+-- [DETEKSI TOUCH SENTUHAN UI BENTUK TOMBOL BALAP]
 local isTouchSteeringLeft = false
 local isTouchSteeringRight = false
 
@@ -401,47 +402,27 @@ RunService.RenderStepped:Connect(function()
     isTouchSteeringRight = rightActive
 end)
 
-local currentSteerLerp = 0
-
-RunService.RenderStepped:Connect(function(dt)
+-- [LOGIKA FAST STEER PAKSA VIA ANGULAR VELOCITY DAN CFRAME]
+RunService.Stepped:Connect(function(_, dt)
     if not isFeaturesActive or not isFastSteer then return end
     
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
     
-    if seat then
-        local rawSteer = 0
-        
-        if hum and hum.MoveDirection.Magnitude > 0 then
-            rawSteer = hum.MoveDirection:Dot(seat.CFrame.RightVector)
-        end
+    if seat and seat:IsA("BasePart") then
+        local steerDir = 0
         
         if isTouchSteeringLeft then
-            rawSteer = -1
+            steerDir = 1  -- Putar Kiri
         elseif isTouchSteeringRight then
-            rawSteer = 1
+            steerDir = -1 -- Putar Kanan
         end
         
-        if math.abs(rawSteer) < 0.1 and seat:IsA("VehicleSeat") then
-            rawSteer = seat.SteerFloat
-        end
-        
-        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 8), -1, 1)
-        
-        if math.abs(currentSteerLerp) > 0.05 then
-            local currentSpeed = seat.AssemblyLinearVelocity.Magnitude
-            local turnSpeedForce = math.clamp(2.2 - (currentSpeed * 0.003), 1.0, 2.2)
-            local leanForce = 0.35
-            
-            local localAngularVel = Vector3.new(0, -currentSteerLerp * turnSpeedForce, -currentSteerLerp * leanForce)
-            local worldAngularVel = seat.CFrame:VectorToWorldSpace(localAngularVel)
-            
-            seat.AssemblyAngularVelocity = Vector3.new(
-                worldAngularVel.X,
-                worldAngularVel.Y,
-                worldAngularVel.Z
-            )
+        if steerDir ~= 0 then
+            local turnPower = 4.2 -- Respon rotasi paksa
+            seat.AssemblyAngularVelocity = Vector3.new(0, steerDir * turnPower, 0)
+            seat.CFrame = seat.CFrame * CFrame.Angles(0, math.rad(steerDir * 2.5), 0)
         end
     end
 end)
