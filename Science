@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -31,7 +32,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 210, 0, 325)
+MainFrame.Size = UDim2.new(0, 210, 0, 365)
 MainFrame.Position = UDim2.new(0, 20, 0, 80)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -83,14 +84,15 @@ local ActiveFeaturesBtn = createToggle("Active Features:", 45)
 local FastToggleBtn = createToggle("Fast boost :", 85)
 local SmoothToggleBtn = createToggle("Smooth boost :", 125)
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 165)
-local LockToggleBtn = createToggle("Lock button :", 205)
+local SteerToggleBtn = createToggle("Fast Steer :", 205)
+local LockToggleBtn = createToggle("Lock button :", 245)
 
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
 local GiveLabel = Instance.new("TextLabel", MainFrame)
 GiveLabel.Size = UDim2.new(0, 120, 0, 30)
-GiveLabel.Position = UDim2.new(0, 15, 0, 245)
+GiveLabel.Position = UDim2.new(0, 15, 0, 285)
 GiveLabel.BackgroundTransparency = 1
 GiveLabel.Text = "Click Teleport :"
 GiveLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -100,7 +102,7 @@ GiveLabel.TextSize = 13
 
 local GiveBtn = Instance.new("TextButton", MainFrame)
 GiveBtn.Size = UDim2.new(0, 55, 0, 26)
-GiveBtn.Position = UDim2.new(0, 140, 0, 247)
+GiveBtn.Position = UDim2.new(0, 140, 0, 287)
 GiveBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 GiveBtn.BackgroundTransparency = 0.3
 GiveBtn.Text = "GIVE"
@@ -111,7 +113,7 @@ Instance.new("UICorner", GiveBtn).CornerRadius = UDim.new(0, 8)
 
 local FlyLabel = Instance.new("TextLabel", MainFrame)
 FlyLabel.Size = UDim2.new(0, 120, 0, 30)
-FlyLabel.Position = UDim2.new(0, 15, 0, 285)
+FlyLabel.Position = UDim2.new(0, 15, 0, 325)
 FlyLabel.BackgroundTransparency = 1
 FlyLabel.Text = "Fly GUI :"
 FlyLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -121,7 +123,7 @@ FlyLabel.TextSize = 13
 
 local FlyBtn = Instance.new("TextButton", MainFrame)
 FlyBtn.Size = UDim2.new(0, 55, 0, 26)
-FlyBtn.Position = UDim2.new(0, 140, 0, 287)
+FlyBtn.Position = UDim2.new(0, 140, 0, 327)
 FlyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 FlyBtn.BackgroundTransparency = 0.3
 FlyBtn.Text = "EXECUTE"
@@ -182,6 +184,7 @@ local isFeaturesActive = true
 local isLocked = false
 local isSmoothBoosting = false
 local isSmoothReversing = false
+local isFastSteer = false
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -219,6 +222,12 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Visible = active
     SmoothReverseToggleBtn.Text = active and "ON" or "OFF"
     SmoothReverseToggleBtn.BackgroundColor3 = active and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+end)
+
+SteerToggleBtn.MouseButton1Click:Connect(function()
+    isFastSteer = not isFastSteer
+    SteerToggleBtn.Text = isFastSteer and "ON" or "OFF"
+    SteerToggleBtn.BackgroundColor3 = isFastSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
@@ -310,5 +319,30 @@ GiveBtn.MouseButton1Click:Connect(function()
 end)
 
 FlyBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua'))()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly'))()
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not isFeaturesActive or not isFastSteer then return end
+    
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+    
+    if seat and seat:IsA("VehicleSeat") then
+        seat.TurnSpeed = 2.5
+        
+        local steer = seat.SteerFloat
+        if steer ~= 0 then
+            local rotSpeed = math.rad(-steer * 4.5)
+            seat.AssemblyAngularVelocity = Vector3.new(seat.AssemblyAngularVelocity.X, rotSpeed, seat.AssemblyAngularVelocity.Z)
+        end
+        
+        local animator = hum:FindFirstChildOfClass("Animator")
+        if animator then
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                track.PlaybackSpeed = 2.0
+            end
+        end
+    end
 end)
