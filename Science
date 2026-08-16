@@ -358,7 +358,6 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
     if isSmoothReversing then stopSmoothBrake() else startSmoothBrake() end
 end)
 
--- INTEGRASI INPUT KEYBOARD (PC)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.LeftShift then
@@ -376,7 +375,6 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
--- INTEGRASI IMAGEBUTTON HP (DENGAN PENANGANAN TOUCH SANGAT PEKA)
 local isTouchSteeringLeft = false
 local isTouchSteeringRight = false
 
@@ -387,36 +385,41 @@ task.spawn(function()
         local controlsUI = interfaceUI and interfaceUI:FindFirstChild("Controls")
         
         if controlsUI then
-            local leftBtn = controlsUI:FindFirstChild("Left")
-            local rightBtn = controlsUI:FindFirstChild("Right")
+            local leftObj = controlsUI:FindFirstChild("Left")
+            local rightObj = controlsUI:FindFirstChild("Right")
             
-            local function bindImageButton(btn, direction)
-                if btn and not btn:GetAttribute("FastSteerBound") then
-                    btn:SetAttribute("FastSteerBound", true)
+            local function bindAnyObject(obj, direction)
+                if not obj then return end
+                
+                local targetBtn = obj
+                if obj:IsA("Frame") then
+                    obj.Active = true
+                    targetBtn = obj:FindFirstChildOfClass("GuiButton") or obj:FindFirstChildOfClass("ImageButton") or obj
+                end
+                
+                if not targetBtn:GetAttribute("FastSteerBound") then
+                    targetBtn:SetAttribute("FastSteerBound", true)
                     
-                    -- Event InputBegan (Touch & Mouse)
-                    btn.InputBegan:Connect(function(input)
+                    targetBtn.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                             if direction == "Left" then isTouchSteeringLeft = true end
                             if direction == "Right" then isTouchSteeringRight = true end
                         end
                     end)
                     
-                    -- Event InputEnded (Lepas Touch)
-                    btn.InputEnded:Connect(function(input)
+                    targetBtn.InputEnded:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                             if direction == "Left" then isTouchSteeringLeft = false end
                             if direction == "Right" then isTouchSteeringRight = false end
                         end
                     end)
                     
-                    -- Backup tambahan via MouseButton1Down/Up
-                    if btn:IsA("GuiButton") then
-                        btn.MouseButton1Down:Connect(function()
+                    if targetBtn:IsA("GuiButton") then
+                        targetBtn.MouseButton1Down:Connect(function()
                             if direction == "Left" then isTouchSteeringLeft = true end
                             if direction == "Right" then isTouchSteeringRight = true end
                         end)
-                        btn.MouseButton1Up:Connect(function()
+                        targetBtn.MouseButton1Up:Connect(function()
                             if direction == "Left" then isTouchSteeringLeft = false end
                             if direction == "Right" then isTouchSteeringRight = false end
                         end)
@@ -424,10 +427,10 @@ task.spawn(function()
                 end
             end
             
-            bindImageButton(leftBtn, "Left")
-            bindImageButton(rightBtn, "Right")
+            bindAnyObject(leftObj, "Left")
+            bindAnyObject(rightObj, "Right")
         end
-        task.wait(1) -- Cek ulang setiap 1 detik untuk memastikan UI terhubung
+        task.wait(1)
     end
 end)
 
@@ -452,7 +455,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
--- SISTEM BELOK DINAMIS ANTI SLIP (SMOOTH & NATURAL LEAN)
 local currentSteerLerp = 0
 
 RunService.RenderStepped:Connect(function(dt)
@@ -465,12 +467,10 @@ RunService.RenderStepped:Connect(function(dt)
     if seat then
         local rawSteer = 0
         
-        -- Deteksi gerakan keyboard/analog PC
         if hum and hum.MoveDirection.Magnitude > 0 then
             rawSteer = hum.MoveDirection:Dot(seat.CFrame.RightVector)
         end
         
-        -- Deteksi sentuhan tombol ImageButton layar HP (Left & Right)
         if isTouchSteeringLeft then
             rawSteer = -1
         elseif isTouchSteeringRight then
