@@ -51,10 +51,16 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST SYSTEM"
+Title.Text = "BOOST V2.0"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
+
+-- Fitur Teks RGB Bergerak untuk Judul
+RunService.RenderStepped:Connect(function()
+    local hue = (tick() % 5) / 5
+    Title.TextColor3 = Color3.fromHSV(hue, 1, 1)
+end)
 
 local function createToggle(name, yPos)
     local Label = Instance.new("TextLabel", MainFrame)
@@ -150,7 +156,7 @@ FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -215)
+SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -195)
 SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothFloatBtn.BackgroundTransparency = 0.4
 SmoothFloatBtn.Text = "⚡"
@@ -165,7 +171,7 @@ SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -140)
+SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -120)
 SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 SmoothReverseFloatBtn.BackgroundTransparency = 0.4
 SmoothReverseFloatBtn.Text = "🛑"
@@ -254,6 +260,15 @@ SteerToggleBtn.MouseButton1Click:Connect(function()
     SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
     SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
     SteerFloatBtn.Visible = isBetterSteer
+    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
+end)
+
+SteerFloatBtn.MouseButton1Click:Connect(function()
+    if not isFeaturesActive then return end
+    isBetterSteer = not isBetterSteer
+    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
+    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
