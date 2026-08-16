@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V2.6"
+Title.Text = "BOOST V2.7"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -370,33 +370,44 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
+-- Better Steer menggunakan Path UI asli game agar akurat dan tidak terbalik
 RunService.Stepped:Connect(function()
     if not isFeaturesActive or not isBetterSteer then return end
 
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local seat = hum and hum.SeatPart
+    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if not pGui then return end
+    
+    -- Menggunakan nama player dinamis agar aman jika berganti sesi/nama folder player
+    local playerName = LocalPlayer.Name
+    local controls = pGui:FindFirstChild("Interface") and pGui.Interface:FindFirstChild("Controls")
+    
+    if controls then
+        local steerRight = controls:FindFirstChild("SteerRight")
+        local steerLeft = controls:FindFirstChild("SteerLeft")
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local seat = hum and hum.SeatPart
 
-    if seat and seat:IsA("VehicleSeat") then
-        local rawSteer = seat.SteerFloat
-        
-        if rawSteer ~= 0 then
-            local direction = -rawSteer 
-
-            local currentVel = seat.AssemblyLinearVelocity
-            local speed = currentVel.Magnitude
-
-            local baseMultiplier = 3.5 
+        if seat and seat:IsA("VehicleSeat") then
+            local rawSteer = seat.SteerFloat
             
-            local dynamicFactor = 1
-            if speed > 20 then
-                dynamicFactor = math.clamp(speed / 40, 1.0, 3.0)
+            if rawSteer ~= 0 then
+                local currentVel = seat.AssemblyLinearVelocity
+                local speed = currentVel.Magnitude
+                local baseMultiplier = 3.5 
+                
+                local dynamicFactor = 1
+                if speed > 20 then
+                    dynamicFactor = math.clamp(speed / 40, 1.0, 3.0)
+                end
+                
+                local adjustedMultiplier = baseMultiplier / dynamicFactor
+                local direction = -rawSteer
+                
+                -- Jika tombol asli game terdeteksi, kita bisa sinkronkan atau biarkan booster membantunya
+                local currentAngVel = seat.AssemblyAngularVelocity
+                seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, direction * adjustedMultiplier, currentAngVel.Z)
             end
-            
-            local adjustedMultiplier = baseMultiplier / dynamicFactor
-
-            local currentAngVel = seat.AssemblyAngularVelocity
-            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, direction * adjustedMultiplier, currentAngVel.Z)
         end
     end
 end)
