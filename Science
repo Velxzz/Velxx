@@ -132,7 +132,6 @@ FlyBtn.Font = Enum.Font.GothamBold
 FlyBtn.TextSize = 9
 Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 8)
 
--- FLOATING BUTTONS
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
@@ -178,7 +177,6 @@ local SmoothReverseStroke = Instance.new("UIStroke", SmoothReverseFloatBtn)
 SmoothReverseStroke.Color = Color3.fromRGB(255, 150, 0)
 SmoothReverseStroke.Thickness = 2.5
 
--- FLOATING BUTTON FAST STEER
 local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
 SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 SteerFloatBtn.Position = UDim2.new(1, -220, 1, -65)
@@ -346,7 +344,6 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA TOGGLE FLOATING BUTTON FAST STEER (↔️ -> 🔛)
 SteerFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     isFastSteer = not isFastSteer
@@ -368,6 +365,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
 end)
 
+-- SISTEM BELOK MIRING ALAMI (BANKING/ROLL LEAN INTERFACE)
 local currentSteerLerp = 0
 
 RunService.RenderStepped:Connect(function(dt)
@@ -388,11 +386,14 @@ RunService.RenderStepped:Connect(function(dt)
             rawSteer = seat.SteerFloat
         end
         
-        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 15), -1, 1)
+        currentSteerLerp = math.clamp(currentSteerLerp + (rawSteer - currentSteerLerp) * (dt * 12), -1, 1)
         
         if math.abs(currentSteerLerp) > 0.05 then
-            local turnSpeedForce = 3.8
-            local localAngularVel = Vector3.new(0, -currentSteerLerp * turnSpeedForce, 0)
+            local turnSpeedForce = 2.8
+            local leanForce = 1.8
+            
+            -- Sumbu Y: Memutar Arah (Yaw), Sumbu Z: Miringkan Bodi Motor (Roll/Lean)
+            local localAngularVel = Vector3.new(0, -currentSteerLerp * turnSpeedForce, currentSteerLerp * leanForce)
             local worldAngularVel = seat.CFrame:VectorToWorldSpace(localAngularVel)
             
             seat.AssemblyAngularVelocity = Vector3.new(
