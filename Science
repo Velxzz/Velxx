@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V2.7"
+Title.Text = "BOOST V2.9"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -370,20 +370,19 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- Better Steer menggunakan Path UI asli game agar akurat dan tidak terbalik
+-- Better Steer menggunakan TextButton Path Asli Game
 RunService.Stepped:Connect(function()
     if not isFeaturesActive or not isBetterSteer then return end
 
     local pGui = LocalPlayer:FindFirstChild("PlayerGui")
     if not pGui then return end
     
-    -- Menggunakan nama player dinamis agar aman jika berganti sesi/nama folder player
-    local playerName = LocalPlayer.Name
-    local controls = pGui:FindFirstChild("Interface") and pGui.Interface:FindFirstChild("Controls")
+    local interface = pGui:FindFirstChild("Interface")
+    local buttons = interface and interface:FindFirstChild("Buttons")
     
-    if controls then
-        local steerRight = controls:FindFirstChild("SteerRight")
-        local steerLeft = controls:FindFirstChild("SteerLeft")
+    if buttons then
+        local rightBtn = buttons:FindFirstChild("Right")
+        local leftBtn = buttons:FindFirstChild("Left")
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local seat = hum and hum.SeatPart
@@ -402,9 +401,8 @@ RunService.Stepped:Connect(function()
                 end
                 
                 local adjustedMultiplier = baseMultiplier / dynamicFactor
-                local direction = -rawSteer
+                local direction = rawSteer 
                 
-                -- Jika tombol asli game terdeteksi, kita bisa sinkronkan atau biarkan booster membantunya
                 local currentAngVel = seat.AssemblyAngularVelocity
                 seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, direction * adjustedMultiplier, currentAngVel.Z)
             end
