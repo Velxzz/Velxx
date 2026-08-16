@@ -1,41 +1,135 @@
-# Compiled Lua sources
-luac.out
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
-# luarocks build files
-*.src.rock
-*.zip
-*.tar.gz
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
-# Object files
-*.o
-*.os
-*.ko
-*.obj
-*.elf
+-- Buat Container ScreenGui Utama
+local parentGui = (gethui and gethui()) or CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+local oldGui = parentGui:FindFirstChild("MiniDexGui")
+if oldGui then oldGui:Destroy() end
 
-# Precompiled Headers
-*.gch
-*.pch
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MiniDexGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = parentGui
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
+-- Panel Explorer
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Position = UDim2.new(1, -230, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "MINI DEX & INSPECT"
+Title.TextColor3 = Color3.fromRGB(0, 255, 200)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 12
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+-- Tombol Inspect (Click to Select)
+local InspectBtn = Instance.new("TextButton", MainFrame)
+InspectBtn.Size = UDim2.new(0, 190, 0, 32)
+InspectBtn.Position = UDim2.new(0, 15, 0, 35)
+InspectBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+InspectBtn.Text = "🔍 Click to Select (OFF)"
+InspectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+InspectBtn.Font = Enum.Font.GothamBold
+InspectBtn.TextSize = 11
+Instance.new("UICorner", InspectBtn).CornerRadius = UDim.new(0, 6)
 
+-- Area Display Path Objek
+local PathScroll = Instance.new("ScrollingFrame", MainFrame)
+PathScroll.Size = UDim2.new(0, 190, 0, 190)
+PathScroll.Position = UDim2.new(0, 15, 0, 75)
+PathScroll.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+PathScroll.CanvasSize = UDim2.new(2, 0, 5, 0)
+Instance.new("UICorner", PathScroll).CornerRadius = UDim.new(0, 6)
+
+local PathText = Instance.new("TextLabel", PathScroll)
+PathText.Size = UDim2.new(1, -10, 1, -10)
+PathText.Position = UDim2.new(0, 5, 0, 5)
+PathText.BackgroundTransparency = 1
+PathText.Text = "Klik tombol di atas lalu sentuh UI atau MeshPart/Part untuk melihat Nama & Path..."
+PathText.TextColor3 = Color3.fromRGB(200, 200, 200)
+PathText.Font = Enum.Font.Code
+PathText.TextSize = 11
+PathText.TextXAlignment = Enum.TextXAlignment.Left
+PathText.TextYAlignment = Enum.TextYAlignment.Top
+PathText.TextWrapped = true
+
+local isSelecting = false
+
+-- Fungsi Mengambil Full Path Objek
+local function getFullPath(obj)
+    local path = obj.Name
+    local current = obj.Parent
+    while current and current ~= game do
+        path = current.Name .. "." .. path
+        current = current.Parent
+    end
+    return "game." .. path
+end
+
+-- Toggle Fitur Select
+InspectBtn.MouseButton1Click:Connect(function()
+    isSelecting = not isSelecting
+    if isSelecting then
+        InspectBtn.Text = "🎯 PILIH OBJEK DI LAYAR..."
+        InspectBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+    else
+        InspectBtn.Text = "🔍 Click to Select (OFF)"
+        InspectBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+-- Event Pendeteksi Sentuhan / Klik
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not isSelecting then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local selectedObject = nil
+        
+        -- 1. CEK ELEMEN UI (PlayerGui)
+        local guiObjects = LocalPlayer:WaitForChild("PlayerGui"):GetGuiObjectsAtPosition(input.Position.X, input.Position.Y)
+        for _, gui in ipairs(guiObjects) do
+            if not gui:IsDescendantOf(ScreenGui) then -- Abaikan UI dari MiniDex sendiri
+                selectedObject = gui
+                break
+            end
+        end
+        
+        -- 2. JIKA BUKAN UI, CEK OBJEK 3D (MeshPart/BasePart di Workspace)
+        if not selectedObject then
+            local unitRay = workspace.CurrentCamera:ScreenPointToRay(input.Position.X, input.Position.Y)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterType = RaycastFilterType.Exclude
+            if LocalPlayer.Character then
+                raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+            end
+            
+            local result = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000, raycastParams)
+            if result and result.Instance then
+                selectedObject = result.Instance
+            end
+        end
+        
+        -- 3. TAMPILKAN HASIL DETEKSI
+        if selectedObject then
+            local fullPath = getFullPath(selectedObject)
+            PathText.Text = "NAME:\n" .. selectedObject.Name .. "\n\nCLASS:\n" .. selectedObject.ClassName .. "\n\nFULL PATH:\n" .. fullPath
+            print("[MiniDex] Selected:", fullPath)
+            
+            -- Matikan Mode Select setelah berhasil memilih
+            isSelecting = false
+            InspectBtn.Text = "🔍 Click to Select (OFF)"
+            InspectBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        end
+    end
+end)
