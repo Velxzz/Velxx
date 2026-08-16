@@ -376,28 +376,58 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
--- INTEGRASI TOMBOL UI GAME (HP)
+-- INTEGRASI IMAGEBUTTON HP (DENGAN PENANGANAN TOUCH SANGAT PEKA)
 local isTouchSteeringLeft = false
 local isTouchSteeringRight = false
 
 task.spawn(function()
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-    local interfaceUI = PlayerGui:WaitForChild("Interface", 10)
-    local controlsUI = interfaceUI and interfaceUI:WaitForChild("Controls", 10)
-
-    if controlsUI then
-        local leftBtn = controlsUI:FindFirstChild("Left")
-        local rightBtn = controlsUI:FindFirstChild("Right")
+    while true do
+        local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        local interfaceUI = PlayerGui and PlayerGui:FindFirstChild("Interface")
+        local controlsUI = interfaceUI and interfaceUI:FindFirstChild("Controls")
         
-        if leftBtn and leftBtn:IsA("GuiButton") then
-            leftBtn.MouseButton1Down:Connect(function() isTouchSteeringLeft = true end)
-            leftBtn.MouseButton1Up:Connect(function() isTouchSteeringLeft = false end)
+        if controlsUI then
+            local leftBtn = controlsUI:FindFirstChild("Left")
+            local rightBtn = controlsUI:FindFirstChild("Right")
+            
+            local function bindImageButton(btn, direction)
+                if btn and not btn:GetAttribute("FastSteerBound") then
+                    btn:SetAttribute("FastSteerBound", true)
+                    
+                    -- Event InputBegan (Touch & Mouse)
+                    btn.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            if direction == "Left" then isTouchSteeringLeft = true end
+                            if direction == "Right" then isTouchSteeringRight = true end
+                        end
+                    end)
+                    
+                    -- Event InputEnded (Lepas Touch)
+                    btn.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            if direction == "Left" then isTouchSteeringLeft = false end
+                            if direction == "Right" then isTouchSteeringRight = false end
+                        end
+                    end)
+                    
+                    -- Backup tambahan via MouseButton1Down/Up
+                    if btn:IsA("GuiButton") then
+                        btn.MouseButton1Down:Connect(function()
+                            if direction == "Left" then isTouchSteeringLeft = true end
+                            if direction == "Right" then isTouchSteeringRight = true end
+                        end)
+                        btn.MouseButton1Up:Connect(function()
+                            if direction == "Left" then isTouchSteeringLeft = false end
+                            if direction == "Right" then isTouchSteeringRight = false end
+                        end)
+                    end
+                end
+            end
+            
+            bindImageButton(leftBtn, "Left")
+            bindImageButton(rightBtn, "Right")
         end
-        
-        if rightBtn and rightBtn:IsA("GuiButton") then
-            rightBtn.MouseButton1Down:Connect(function() isTouchSteeringRight = true end)
-            rightBtn.MouseButton1Up:Connect(function() isTouchSteeringRight = false end)
-        end
+        task.wait(1) -- Cek ulang setiap 1 detik untuk memastikan UI terhubung
     end
 end)
 
@@ -440,7 +470,7 @@ RunService.RenderStepped:Connect(function(dt)
             rawSteer = hum.MoveDirection:Dot(seat.CFrame.RightVector)
         end
         
-        -- Deteksi sentuhan tombol UI layar HP (Left & Right)
+        -- Deteksi sentuhan tombol ImageButton layar HP (Left & Right)
         if isTouchSteeringLeft then
             rawSteer = -1
         elseif isTouchSteeringRight then
