@@ -1,0 +1,267 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- System Colors & Theme Settings
+local Theme = {
+	Bg = Color3.fromRGB(5, 8, 6),
+	Panel = Color3.fromRGB(8, 12, 10),
+	Field = Color3.fromRGB(10, 15, 12),
+	Accent = Color3.fromRGB(0, 255, 128),
+	AccentDim = Color3.fromRGB(0, 120, 60),
+	Text = Color3.fromRGB(180, 255, 210),
+	TextDim = Color3.fromRGB(80, 140, 100),
+	Danger = Color3.fromRGB(255, 60, 60),
+	Font = Enum.Font.Code
+}
+
+-- Destroy old UI if exists
+local oldGui = CoreGui:FindFirstChild("CleanUI_System")
+if oldGui then oldGui:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CleanUI_System"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = CoreGui
+
+local Backdrop = Instance.new("Frame")
+Backdrop.Name = "Backdrop"
+Backdrop.Size = UDim2.new(1, 0, 1, 0)
+Backdrop.BackgroundColor3 = Color3.new(0, 0, 0)
+Backdrop.BackgroundTransparency = 1
+Backdrop.BorderSizePixel = 0
+Backdrop.ZIndex = 0
+Backdrop.Parent = ScreenGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "Main"
+MainFrame.Size = UDim2.new(0, 380, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -150)
+MainFrame.BackgroundColor3 = Theme.Bg
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 6)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Theme.Accent
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.1
+MainStroke.Parent = MainFrame
+
+local Glow = Instance.new("ImageLabel")
+Glow.Name = "Glow"
+Glow.BackgroundTransparency = 1
+Glow.Image = "rbxassetid://5028857084"
+Glow.ImageColor3 = Theme.Accent
+Glow.ImageTransparency = 0.75
+Glow.ScaleType = Enum.ScaleType.Slice
+Glow.SliceCenter = Rect.new(24, 24, 276, 276)
+Glow.Size = UDim2.new(1, 60, 1, 60)
+Glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Glow.AnchorPoint = Vector2.new(0.5, 0.5)
+Glow.ZIndex = -1
+Glow.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 36)
+TitleBar.BackgroundColor3 = Theme.Panel
+TitleBar.BackgroundTransparency = 1
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleLine = Instance.new("Frame")
+TitleLine.Size = UDim2.new(1, 0, 0, 1)
+TitleLine.Position = UDim2.new(0, 0, 1, -1)
+TitleLine.BackgroundColor3 = Theme.Accent
+TitleLine.BackgroundTransparency = 0.4
+TitleLine.BorderSizePixel = 0
+TitleLine.Parent = TitleBar
+
+local DotIndicator = Instance.new("Frame")
+DotIndicator.Size = UDim2.new(0, 8, 0, 8)
+DotIndicator.Position = UDim2.new(0, 14, 0.5, 0)
+DotIndicator.AnchorPoint = Vector2.new(0, 0.5)
+DotIndicator.BackgroundColor3 = Theme.Accent
+DotIndicator.BorderSizePixel = 0
+DotIndicator.Parent = TitleBar
+
+local DotCorner = Instance.new("UICorner")
+DotCorner.CornerRadius = UDim.new(1, 0)
+DotCorner.Parent = DotIndicator
+
+task.spawn(function()
+	while DotIndicator.Parent do
+		TweenService:Create(DotIndicator, TweenInfo.new(0.6), {BackgroundTransparency = 0.8}):Play()
+		task.wait(0.6)
+		TweenService:Create(DotIndicator, TweenInfo.new(0.6), {BackgroundTransparency = 0}):Play()
+		task.wait(0.6)
+	end
+end)
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.BackgroundTransparency = 1
+TitleText.Size = UDim2.new(1, -60, 1, 0)
+TitleText.Position = UDim2.new(0, 32, 0, 0)
+TitleText.Text = ""
+TitleText.TextColor3 = Theme.Accent
+TitleText.Font = Theme.Font
+TitleText.TextSize = 16
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0.5, 0)
+CloseBtn.AnchorPoint = Vector2.new(0, 0.5)
+CloseBtn.BackgroundColor3 = Theme.Panel
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Theme.Danger
+CloseBtn.Font = Theme.Font
+CloseBtn.TextSize = 14
+CloseBtn.Parent = TitleBar
+
+local CloseStroke = Instance.new("UIStroke")
+CloseStroke.Color = Theme.Danger
+CloseStroke.Transparency = 0.5
+CloseStroke.Parent = CloseBtn
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseEnter:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Danger}):Play()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Color3.new(0, 0, 0)}):Play()
+end)
+
+CloseBtn.MouseLeave:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Panel}):Play()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Theme.Danger}):Play()
+end)
+
+local function CloseUI()
+	local closeTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 380, 0, 0)})
+	TweenService:Create(Backdrop, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+	closeTween:Play()
+	closeTween.Completed:Connect(function()
+		ScreenGui.Enabled = false
+	end)
+end
+
+CloseBtn.MouseButton1Click:Connect(CloseUI)
+
+local Body = Instance.new("Frame")
+Body.Name = "Body"
+Body.Size = UDim2.new(1, 0, 1, -36)
+Body.Position = UDim2.new(0, 0, 0, 36)
+Body.BackgroundTransparency = 1
+Body.Parent = MainFrame
+
+local Padding = Instance.new("UIPadding")
+Padding.PaddingTop = UDim.new(0, 16)
+Padding.PaddingLeft = UDim.new(0, 22)
+Padding.PaddingRight = UDim2.new(0, 22)
+Padding.PaddingBottom = UDim.new(0, 16)
+Padding.Parent = Body
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 12)
+ListLayout.Parent = Body
+
+local IconLabel = Instance.new("TextLabel")
+IconLabel.Name = "Icon"
+IconLabel.BackgroundTransparency = 1
+IconLabel.Size = UDim2.new(1, 0, 0, 36)
+IconLabel.Text = "[ UI MENU ]"
+IconLabel.TextColor3 = Theme.Accent
+IconLabel.Font = Theme.Font
+IconLabel.TextSize = 22
+IconLabel.LayoutOrder = 1
+IconLabel.Parent = Body
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Name = "Subtitle"
+Subtitle.BackgroundTransparency = 1
+Subtitle.Size = UDim2.new(1, 0, 0, 18)
+Subtitle.Text = "SYSTEM READY"
+Subtitle.TextColor3 = Theme.TextDim
+Subtitle.Font = Enum.Font.RobotoMono
+Subtitle.TextSize = 12
+Subtitle.LayoutOrder = 2
+Subtitle.Parent = Body
+
+local StatusLine = Instance.new("TextLabel")
+StatusLine.Name = "StatusLine"
+StatusLine.BackgroundTransparency = 1
+StatusLine.Size = UDim2.new(1, 0, 0, 24)
+StatusLine.Text = "> System operational."
+StatusLine.TextColor3 = Theme.TextDim
+StatusLine.Font = Theme.Font
+StatusLine.TextSize = 12
+StatusLine.TextXAlignment = Enum.TextXAlignment.Left
+StatusLine.LayoutOrder = 3
+StatusLine.Parent = Body
+
+local ScannerLine = Instance.new("Frame")
+ScannerLine.Size = UDim2.new(1, 0, 0, 2)
+ScannerLine.BackgroundColor3 = Theme.Accent
+ScannerLine.BackgroundTransparency = 0.7
+ScannerLine.BorderSizePixel = 0
+ScannerLine.ZIndex = 50
+ScannerLine.Parent = MainFrame
+
+task.spawn(function()
+	while MainFrame.Parent do
+		ScannerLine.Position = UDim2.new(0, 0, 0, 0)
+		local tween = TweenService:Create(ScannerLine, TweenInfo.new(2.5, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, 1, 0)})
+		tween:Play()
+		tween.Completed:Wait()
+	end
+end)
+
+local function TypeTitle()
+	local text = "SYSTEM DASHBOARD"
+	TitleText.Text = ""
+	for i = 1, #text do
+		TitleText.Text = string.sub(text, 1, i) .. "_"
+		task.wait(0.03)
+	end
+	TitleText.Text = text
+end
+
+local function OpenUI()
+	ScreenGui.Enabled = true
+	MainFrame.Size = UDim2.new(0, 380, 0, 0)
+	TweenService:Create(Backdrop, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
+	local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 380, 0, 300)})
+	openTween:Play()
+	task.spawn(TypeTitle)
+end
+
+-- Toggle UI via tombol RightControl
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.RightControl then
+		if ScreenGui.Enabled then
+			CloseUI()
+		else
+			OpenUI()
+		end
+	end
+end)
+
+-- Buka UI pertama kali
+OpenUI()
