@@ -350,7 +350,7 @@ GiveBtn.MouseButton1Click:Connect(function()
 end)
 
 FlyBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly.Lua' .. '?t=' .. tick()))()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
 -- [DETEKSI DAN EKSEKUSI STEER LANGSUNG DARI TOMBOL UI GAME]
