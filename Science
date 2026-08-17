@@ -15,14 +15,14 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MenuShortcut = Instance.new("TextButton", ScreenGui)
 MenuShortcut.Name = "MenuShortcut"
-MenuShortcut.Size = UDim2.new(0, 50, 0, 50)
-MenuShortcut.Position = UDim2.new(0, 20, 0, 20)
+MenuShortcut.Size = UDim2.new(0, 45, 0, 45)
+MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuShortcut.BackgroundTransparency = 0.2
 MenuShortcut.TextColor3 = Color3.fromRGB(0, 255, 220)
 MenuShortcut.Text = "MENU"
 MenuShortcut.Font = Enum.Font.GothamSemibold
-MenuShortcut.TextSize = 12
+MenuShortcut.TextSize = 11
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
 Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(1, 0)
@@ -31,29 +31,30 @@ local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Color = Color3.fromRGB(0, 255, 220)
 MenuStroke.Thickness = 0.5
 
+-- MainFrame diperkecil lebarnya (dari 240 ke 180)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 240, 0, 440)
-MainFrame.Position = UDim2.new(0, 20, 0, 80)
+MainFrame.Size = UDim2.new(0, 180, 0, 380)
+MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
 MainFrame.Visible = true
 MainFrame.Active = true
 MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
 local FrameStroke = Instance.new("UIStroke", MainFrame)
 FrameStroke.Color = Color3.fromRGB(255, 255, 255)
 FrameStroke.Transparency = 0.8
-FrameStroke.Thickness = 1.5
+FrameStroke.Thickness = 1.2
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Position = UDim2.new(0, 0, 0, 5)
+Title.Size = UDim2.new(1, 0, 0, 28)
+Title.Position = UDim2.new(0, 0, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.5 PRO"
+Title.Text = "BOOST V4.6 PRO"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize = 12
 
 RunService.RenderStepped:Connect(function()
     local hue = (tick() % 5) / 5
@@ -61,169 +62,168 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local ScrollFrame = Instance.new("ScrollingFrame", MainFrame)
-ScrollFrame.Size = UDim2.new(1, -10, 1, -40)
-ScrollFrame.Position = UDim2.new(0, 5, 0, 35)
+ScrollFrame.Size = UDim2.new(1, -8, 1, -36)
+ScrollFrame.Position = UDim2.new(0, 4, 0, 32)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 540)
-ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520)
+ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 100, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
+    Label.Size = UDim2.new(0, 105, 0, 24)
+    Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name
     Label.TextColor3 = Color3.fromRGB(220, 220, 220)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
+    Label.TextSize = 10
 
     local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 55, 0, 24)
-    Btn.Position = UDim2.new(0, 155, 0, yPos + 1)
+    Btn.Size = UDim2.new(0, 45, 0, 22)
+    Btn.Position = UDim2.new(0, 115, 0, yPos + 1)
     Btn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     Btn.BackgroundTransparency = 0.3
     Btn.Text = "OFF"
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 11
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.TextSize = 10
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
 
     return Btn
 end
 
 local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 90, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
+    Label.Size = UDim2.new(0, 105, 0, 24)
+    Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.TextColor3 = Color3.fromRGB(200, 200, 200)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
+    Label.TextSize = 9
 
     if not isDouble then
         local Box = Instance.new("TextBox", ScrollFrame)
-        Box.Size = UDim2.new(0, 55, 0, 24)
-        Box.Position = UDim2.new(0, 155, 0, yPos + 1)
+        Box.Size = UDim2.new(0, 45, 0, 22)
+        Box.Position = UDim2.new(0, 115, 0, yPos + 1)
         Box.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box.Text = tostring(defaultVal1)
         Box.Font = Enum.Font.GothamBold
-        Box.TextSize = 11
-        Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+        Box.TextSize = 9
+        Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 5)
         return Box
     else
         local Box1 = Instance.new("TextBox", ScrollFrame)
-        Box1.Size = UDim2.new(0, 35, 0, 24)
+        Box1.Size = UDim2.new(0, 26, 0, 22)
         Box1.Position = UDim2.new(0, 105, 0, yPos + 1)
         Box1.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box1.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box1.Text = tostring(defaultVal1)
         Box1.Font = Enum.Font.GothamBold
-        Box1.TextSize = 10
-        Instance.new("UICorner", Box1).CornerRadius = UDim.new(0, 6)
+        Box1.TextSize = 8
+        Instance.new("UICorner", Box1).CornerRadius = UDim.new(0, 5)
 
         local Box2 = Instance.new("TextBox", ScrollFrame)
-        Box2.Size = UDim2.new(0, 35, 0, 24)
-        Box2.Position = UDim2.new(0, 145, 0, yPos + 1)
+        Box2.Size = UDim2.new(0, 26, 0, 22)
+        Box2.Position = UDim2.new(0, 134, 0, yPos + 1)
         Box2.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box2.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box2.Text = tostring(defaultVal2)
         Box2.Font = Enum.Font.GothamBold
-        Box2.TextSize = 10
-        Instance.new("UICorner", Box2).CornerRadius = UDim.new(0, 6)
+        Box2.TextSize = 8
+        Instance.new("UICorner", Box2).CornerRadius = UDim.new(0, 5)
         return Box1, Box2
     end
 end
 
 local ActiveFeaturesBtn = createToggle("Active Features:", 5)
-local FastToggleBtn = createToggle("Fast boost :", 35)
-local FastSpeedBox = createConfigRow("Fast Spd:", 100, nil, 65, false)
+local FastToggleBtn = createToggle("Fast boost :", 32)
+local FastSpeedBox = createConfigRow("Fast Spd:", 100, nil, 58, false)
 
-local SmoothToggleBtn = createToggle("Smooth boost :", 95)
-local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 125, true)
+local SmoothToggleBtn = createToggle("Smooth boost :", 85)
+local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 111, true)
 
-local SmoothReverseToggleBtn = createToggle("Smooth brake :", 155)
-local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 185, true)
+local SmoothReverseToggleBtn = createToggle("Smooth brake :", 138)
+local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
-local FastSteerToggleBtn = createToggle("Fast Steer :", 215)
-local SteerToggleBtn = createToggle("Better Steer :", 245)
-local LockToggleBtn = createToggle("Lock button :", 275)
+local FastSteerToggleBtn = createToggle("Fast Steer :", 191)
+local SteerToggleBtn = createToggle("Better Steer :", 218)
+local LockToggleBtn = createToggle("Lock button :", 245)
 
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
 local function createTriggerRow(name, yPos)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 50, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
+    Label.Size = UDim2.new(0, 45, 0, 24)
+    Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name .. ":"
     Label.TextColor3 = Color3.fromRGB(220, 220, 220)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
+    Label.TextSize = 10
 
     local SetBtn = Instance.new("TextButton", ScrollFrame)
-    SetBtn.Size = UDim2.new(0, 70, 0, 24)
-    SetBtn.Position = UDim2.new(0, 65, 0, yPos + 1)
+    SetBtn.Size = UDim2.new(0, 58, 0, 22)
+    SetBtn.Position = UDim2.new(0, 52, 0, yPos + 1)
     SetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     SetBtn.BackgroundTransparency = 0.3
     SetBtn.Text = "Set Trigger"
     SetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     SetBtn.Font = Enum.Font.GothamBold
-    SetBtn.TextSize = 9
-    Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 6)
+    SetBtn.TextSize = 8
+    Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 5)
 
     local ResetBtn = Instance.new("TextButton", ScrollFrame)
-    ResetBtn.Size = UDim2.new(0, 55, 0, 24)
-    ResetBtn.Position = UDim2.new(0, 140, 0, yPos + 1)
+    ResetBtn.Size = UDim2.new(0, 45, 0, 22)
+    ResetBtn.Position = UDim2.new(0, 115, 0, yPos + 1)
     ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     ResetBtn.BackgroundTransparency = 0.3
     ResetBtn.Text = "Reset"
     ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     ResetBtn.Font = Enum.Font.GothamBold
-    ResetBtn.TextSize = 10
-    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 6)
+    ResetBtn.TextSize = 9
+    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 5)
 
     return SetBtn, ResetBtn
 end
 
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 305)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 335)
+local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 272)
+local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 299)
 
 local function createFeatureBtn(name, yPos)
     local Lbl = Instance.new("TextLabel", ScrollFrame)
-    Lbl.Size = UDim2.new(0, 100, 0, 26)
-    Lbl.Position = UDim2.new(0, 10, 0, yPos)
+    Lbl.Size = UDim2.new(0, 105, 0, 24)
+    Lbl.Position = UDim2.new(0, 5, 0, yPos)
     Lbl.BackgroundTransparency = 1
     Lbl.Text = name
     Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
     Lbl.TextXAlignment = Enum.TextXAlignment.Left
     Lbl.Font = Enum.Font.GothamSemibold
-    Lbl.TextSize = 12
+    Lbl.TextSize = 10
 
     local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 55, 0, 24)
-    Btn.Position = UDim2.new(0, 140, 0, yPos + 1)
+    Btn.Size = UDim2.new(0, 45, 0, 22)
+    Btn.Position = UDim2.new(0, 115, 0, yPos + 1)
     Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     Btn.BackgroundTransparency = 0.3
     Btn.Text = "EXEC"
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 10
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.TextSize = 9
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
     return Btn
 end
 
-local GiveBtn = createFeatureBtn("Teleport Tool:", 370)
-local FlyBtn = createFeatureBtn("Fly GUI:", 400)
+local GiveBtn = createFeatureBtn("Teleport Tool:", 326)
+local FlyBtn = createFeatureBtn("Fly GUI:", 353)
 
--- =================[ FLOAT BUTTONS SETUP ]================= --
-
+-- Float Buttons
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
@@ -235,9 +235,6 @@ FastFloatBtn.Visible = false
 FastFloatBtn.Active = true
 FastFloatBtn.Draggable = true
 Instance.new("UICorner", FastFloatBtn).CornerRadius = UDim.new(1, 0)
-local FastStroke = Instance.new("UIStroke", FastFloatBtn)
-FastStroke.Color = Color3.fromRGB(255, 50, 50)
-FastStroke.Thickness = 2.5
 
 local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -250,9 +247,6 @@ SmoothFloatBtn.Visible = false
 SmoothFloatBtn.Active = true
 SmoothFloatBtn.Draggable = true
 Instance.new("UICorner", SmoothFloatBtn).CornerRadius = UDim.new(1, 0)
-local SmoothStroke = Instance.new("UIStroke", SmoothFloatBtn)
-SmoothStroke.Color = Color3.fromRGB(50, 255, 100)
-SmoothStroke.Thickness = 2.5
 
 local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
 SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -265,9 +259,6 @@ SmoothReverseFloatBtn.Visible = false
 SmoothReverseFloatBtn.Active = true
 SmoothReverseFloatBtn.Draggable = true
 Instance.new("UICorner", SmoothReverseFloatBtn).CornerRadius = UDim.new(1, 0)
-local SmoothReverseStroke = Instance.new("UIStroke", SmoothReverseFloatBtn)
-SmoothReverseStroke.Color = Color3.fromRGB(255, 150, 0)
-SmoothReverseStroke.Thickness = 2.5
 
 local FastSteerFloatBtn = Instance.new("TextButton", ScreenGui)
 FastSteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -280,9 +271,6 @@ FastSteerFloatBtn.Visible = false
 FastSteerFloatBtn.Active = true
 FastSteerFloatBtn.Draggable = true
 Instance.new("UICorner", FastSteerFloatBtn).CornerRadius = UDim.new(1, 0)
-local FastSteerStroke = Instance.new("UIStroke", FastSteerFloatBtn)
-FastSteerStroke.Color = Color3.fromRGB(255, 200, 0)
-FastSteerStroke.Thickness = 2.5
 
 local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
 SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -295,11 +283,6 @@ SteerFloatBtn.Visible = false
 SteerFloatBtn.Active = true
 SteerFloatBtn.Draggable = true
 Instance.new("UICorner", SteerFloatBtn).CornerRadius = UDim.new(1, 0)
-local SteerStroke = Instance.new("UIStroke", SteerFloatBtn)
-SteerStroke.Color = Color3.fromRGB(0, 200, 255)
-SteerStroke.Thickness = 2.5
-
--- =================[ STATE VARIABLES ]================= --
 
 local isFeaturesActive = true
 local isLocked = false
@@ -313,8 +296,6 @@ local boundLeftButton = nil
 local settingTarget = nil
 local isRightPressed = false
 local isLeftPressed = false
-
--- =================[ UI CONNECTIONS ]================= --
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -330,8 +311,6 @@ ActiveFeaturesBtn.MouseButton1Click:Connect(function()
         isSmoothReversing = false
         isFastSteer = false
         isBetterSteer = false
-        SmoothFloatBtn.Text = "⚡"
-        SmoothReverseFloatBtn.Text = "🛑"
         FastSteerFloatBtn.Text = "⚡"
         SteerFloatBtn.Text = "↔️"
     end
@@ -368,7 +347,6 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Perbaikan Fast Steer Toggle & Float Btn
 FastSteerToggleBtn.MouseButton1Click:Connect(function()
     local newState = not FastSteerFloatBtn.Visible
     FastSteerFloatBtn.Visible = newState
@@ -387,7 +365,6 @@ FastSteerFloatBtn.MouseButton1Click:Connect(function()
     FastSteerFloatBtn.Text = isFastSteer and "💨" or "⚡"
 end)
 
--- Perbaikan Better Steer Toggle & Float Btn
 SteerToggleBtn.MouseButton1Click:Connect(function()
     local newState = not SteerFloatBtn.Visible
     SteerFloatBtn.Visible = newState
@@ -548,7 +525,7 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
 
     if isSmoothReversing then
-        task.spawn(function()
+       task.spawn(function()
             while isSmoothReversing and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -597,9 +574,10 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA STEER
+-- LOGIKA STEER ANTI-SLIP
 RunService.Stepped:Connect(function(dt)
     if not isFeaturesActive then return end
+    if not (isFastSteer or isBetterSteer) then return end
 
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -616,11 +594,12 @@ RunService.Stepped:Connect(function(dt)
         
         if steerInput ~= 0 then
             local speed = seat.AssemblyLinearVelocity.Magnitude
-            local turnPower = -steerInput * 2.0
+            local turnPower = -steerInput * 1.8
             
             if isBetterSteer then
-                if speed > 20 then
-                    turnPower = turnPower * math.clamp(45 / speed, 0.65, 1.0)
+                if speed > 15 then
+                    local speedFactor = math.clamp(35 / speed, 0.12, 1.0)
+                    turnPower = turnPower * speedFactor
                 end
             end
             
@@ -628,10 +607,20 @@ RunService.Stepped:Connect(function(dt)
             local targetY = turnPower
             
             if isFastSteer then
-                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * 17, 0, 1)
+                local responsiveness = math.clamp(18 - (speed * 0.04), 4, 15)
+                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * responsiveness, 0, 1)
             end
             
             seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
+
+            if speed > 35 and isBetterSteer then
+                local lookVector = seat.CFrame.LookVector
+                local currentVel = seat.AssemblyLinearVelocity
+                local forwardSpeed = currentVel:Dot(lookVector)
+                
+                local correctedVel = currentVel:Lerp(lookVector * forwardSpeed + Vector3.new(0, currentVel.Y, 0), 0.12)
+                seat.AssemblyLinearVelocity = correctedVel
+            end
         end
     end
 end)
