@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.2 PRO"
+Title.Text = "BOOST V4.3 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -313,12 +313,10 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 FastSteerToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not FastSteerFloatBtn.Visible
-    FastSteerFloatBtn.Visible = newState
-    if not newState then
-        isFastSteer = false
-        FastSteerFloatBtn.Text = "⚡"
-    end
+    isFastSteer = not isFastSteer
+    FastSteerToggleBtn.Text = isFastSteer and "ON" or "OFF"
+    FastSteerToggleBtn.BackgroundColor3 = isFastSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    FastSteerFloatBtn.Text = isFastSteer and "💨" or "⚡"
 end)
 
 FastSteerFloatBtn.MouseButton1Click:Connect(function()
@@ -330,12 +328,10 @@ FastSteerFloatBtn.MouseButton1Click:Connect(function()
 end)
 
 SteerToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not SteerFloatBtn.Visible
-    SteerFloatBtn.Visible = newState
-    if not newState then
-        isBetterSteer = false
-        SteerFloatBtn.Text = "↔️"
-    end
+    isBetterSteer = not isBetterSteer
+    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
+    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
 end)
 
 SteerFloatBtn.MouseButton1Click:Connect(function()
@@ -390,6 +386,14 @@ LeftResetBtn.MouseButton1Click:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input)
+    if not isFeaturesActive then return end
+    
+    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
+        isRightPressed = true
+    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
+        isLeftPressed = true
+    end
+
     if not settingTarget then return end
     
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -425,6 +429,14 @@ UserInputService.InputBegan:Connect(function(input)
                 break
             end
         end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
+        isRightPressed = false
+    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
+        isLeftPressed = false
     end
 end)
 
@@ -517,7 +529,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- Main Loop untuk mengontrol Value SteerC & SteerT berdasarkan status tombol
 RunService.Stepped:Connect(function()
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
     local interface = playerGui and playerGui:FindFirstChild("Interface")
@@ -532,7 +543,6 @@ RunService.Stepped:Connect(function()
         return
     end
 
-    -- Update Value SteerC dan SteerT sesuai status Fast Steer & Better Steer
     if steerC and steerC:IsA("ValueBase") then
         steerC.Value = isFastSteer and 2.5 or 1.0
     end
