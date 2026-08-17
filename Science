@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V3.7 PRO"
+Title.Text = "BOOST V3.8 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -505,9 +505,11 @@ GiveBtn.MouseButton1Click:Connect(function()
     t.Name = "Teleport Tool"
     t.RequiresHandle = false
     t.Activated:Connect(function()
-        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
-        end
+        (function()
+            if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
+            end
+        end)()
     end)
 end)
 
@@ -533,24 +535,22 @@ RunService.Stepped:Connect(function(dt)
         
         if steerInput ~= 0 then
             local speed = seat.AssemblyLinearVelocity.Magnitude
-            local turnPower = -steerInput * 5.0
+            local turnPower = -steerInput * 3.5
             
             if isBetterSteer then
-                if speed > 20 then
-                    turnPower = turnPower * math.clamp(50 / speed, 0.7, 1.0)
+                if speed > 15 then
+                    turnPower = turnPower * math.clamp(40 / speed, 0.5, 1.0)
                 end
             end
             
             local currentAngVel = seat.AssemblyAngularVelocity
-            local targetY = turnPower
+            local targetY = turnPower * (isFastSteer and 2.5 or 1.0)
+            local finalY = currentAngVel.Y + (targetY - currentAngVel.Y) * math.clamp(dt * (isFastSteer and 35 or 12), 0, 1)
             
-            if isFastSteer then
-                targetY = targetY * 1.8 
-            else
-                targetY = currentAngVel.Y + (targetY - currentAngVel.Y) * math.clamp(dt * 25, 0, 1)
-            end
-            
-            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
+            seat.AssemblyAngularVelocity = Vector3.new(0, finalY, 0)
+        else
+            local currentAngVel = seat.AssemblyAngularVelocity
+            seat.AssemblyAngularVelocity = Vector3.new(0, currentAngVel.Y * 0.85, 0)
         end
     end
 end)
