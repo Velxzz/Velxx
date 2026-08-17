@@ -1,0 +1,161 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("ModifierSystemGui")
+if oldGui then oldGui:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModifierSystemGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local OpenBtn = Instance.new("TextButton", ScreenGui)
+OpenBtn.Size = UDim2.new(0, 80, 0, 40)
+OpenBtn.Position = UDim2.new(1, -100, 0, 20)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Text = "Open"
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 14
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 6)
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 260, 0, 220)
+MainFrame.Position = UDim2.new(1, -280, 0, 70)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+local TitleLabel = Instance.new("TextLabel", MainFrame)
+TitleLabel.Size = UDim2.new(1, -60, 0, 35)
+TitleLabel.Position = UDim2.new(0, 10, 0, 5)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "Modifier Gui"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.Size = UDim2.new(0, 50, 0, 30)
+CloseBtn.Position = UDim2.new(1, -60, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "Close"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 12
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+local ToggleSpawnBtn = Instance.new("TextButton", MainFrame)
+ToggleSpawnBtn.Size = UDim2.new(0, 100, 0, 35)
+ToggleSpawnBtn.Position = UDim2.new(0, 15, 0, 50)
+ToggleSpawnBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+ToggleSpawnBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+ToggleSpawnBtn.Text = "Start"
+ToggleSpawnBtn.Font = Enum.Font.GothamBold
+ToggleSpawnBtn.TextSize = 14
+Instance.new("UICorner", ToggleSpawnBtn).CornerRadius = UDim.new(0, 6)
+
+local ValueBox = Instance.new("TextBox", MainFrame)
+ValueBox.Size = UDim2.new(0, 110, 0, 35)
+ValueBox.Position = UDim2.new(0, 135, 0, 50)
+ValueBox.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+ValueBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+ValueBox.Text = "1"
+ValueBox.Font = Enum.Font.GothamBold
+ValueBox.TextSize = 14
+Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 6)
+
+local SpawnObjBtn = Instance.new("TextButton", MainFrame)
+SpawnObjBtn.Size = UDim2.new(0, 100, 0, 50)
+SpawnObjBtn.Position = UDim2.new(0, 15, 0, 95)
+SpawnObjBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+SpawnObjBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+SpawnObjBtn.Text = "Spawn Modifier"
+SpawnObjBtn.Font = Enum.Font.GothamBold
+SpawnObjBtn.TextSize = 12
+SpawnObjBtn.TextWrapped = true
+Instance.new("UICorner", SpawnObjBtn).CornerRadius = UDim.new(0, 6)
+
+local ResetBtn = Instance.new("TextButton", MainFrame)
+ResetBtn.Size = UDim2.new(0, 110, 0, 50)
+ResetBtn.Position = UDim2.new(0, 135, 0, 95)
+ResetBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+ResetBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+ResetBtn.Text = "Reset"
+ResetBtn.Font = Enum.Font.GothamBold
+ResetBtn.TextSize = 14
+Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 6)
+
+local spawnedParts = {}
+local isRunning = false
+
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenBtn.Visible = false
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    OpenBtn.Visible = true
+end)
+
+ToggleSpawnBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    ToggleSpawnBtn.Text = isRunning and "Pause" or "Start"
+end)
+
+SpawnObjBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1.5, 6, 1.5)
+    part.Position = root.Position + (root.CFrame.LookVector * 4) + Vector3.new(0, 3, 0)
+    part.Anchored = true
+    part.BrickColor = BrickColor.new("White")
+    part.Material = Enum.Material.SmoothPlastic
+    part.Parent = Workspace
+
+    table.insert(spawnedParts, part)
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    isRunning = false
+    ToggleSpawnBtn.Text = "Start"
+    for _, p in ipairs(spawnedParts) do
+        if p and p.Parent then
+            p:Destroy()
+        end
+    end
+    spawnedParts = {}
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not isRunning then return end
+    
+    local speedValue = tonumber(ValueBox.Text) or 0
+    if speedValue <= 0 or #spawnedParts == 0 then return end
+
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local targetPart = hum and hum.SeatPart or (char and char:FindFirstChild("HumanoidRootPart"))
+
+    if targetPart then
+        local targetIndex = math.clamp(math.floor(tick() * speedValue) % #spawnedParts + 1, 1, #spawnedParts)
+        local activeBlock = spawnedParts[targetIndex]
+        
+        if activeBlock and activeBlock.Parent then
+            local direction = (activeBlock.Position - targetPart.Position)
+            if targetPart:IsA("BasePart") then
+                targetPart.AssemblyLinearVelocity = direction.Unit * math.min(direction.Magnitude * 10, 50)
+            end
+        end
+    end
+end)
