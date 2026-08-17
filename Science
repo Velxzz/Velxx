@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.3 PRO"
+Title.Text = "BOOST V4.4 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -513,15 +513,13 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
 end)
 
 GiveBtn.MouseButton1Click:Connect(function()
-    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
+    local t = = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
     t.Name = "Teleport Tool"
     t.RequiresHandle = false
     t.Activated:Connect(function()
-        (function()
-            if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
-            end
-        end)()
+        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
+        end
     end)
 end)
 
@@ -529,25 +527,40 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
-RunService.Stepped:Connect(function()
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    local interface = playerGui and playerGui:FindFirstChild("Interface")
-    local valuesFolder = interface and interface:FindFirstChild("Values")
-    
-    local steerC = valuesFolder and valuesFolder:FindFirstChild("SteerC")
-    local steerT = valuesFolder and valuesFolder:FindFirstChild("SteerT")
+RunService.Stepped:Connect(function(dt)
+    if not isFeaturesActive then return end
 
-    if not isFeaturesActive then
-        if steerC and steerC:IsA("ValueBase") then steerC.Value = 1 end
-        if steerT and steerT:IsA("ValueBase") then steerT.Value = 1 end
-        return
-    end
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
 
-    if steerC and steerC:IsA("ValueBase") then
-        steerC.Value = isFastSteer and 2.5 or 1.0
-    end
-
-    if steerT and steerT:IsA("ValueBase") then
-        steerT.Value = isBetterSteer and 2.0 or 1.0
+    if seat and seat:IsA("VehicleSeat") then
+        local steerInput = 0
+        if isRightPressed then steerInput = 1 end
+        if isLeftPressed then steerInput = -1 end
+        
+        if steerInput == 0 then
+            steerInput = seat.SteerFloat
+        end
+        
+        if steerInput ~= 0 then
+            local speed = seat.AssemblyLinearVelocity.Magnitude
+            local turnPower = -steerInput * 2.0
+            
+            if isBetterSteer then
+                if speed > 20 then
+                    turnPower = turnPower * math.clamp(50 / speed, 0.7, 1.0)
+                end
+            end
+            
+            local currentAngVel = seat.AssemblyAngularVelocity
+            local targetY = turnPower
+            
+            if isFastSteer then
+                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * 20, 0, 1)
+            end
+            
+            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
+        end
     end
 end)
