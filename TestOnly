@@ -116,9 +116,11 @@ SpawnObjBtn.MouseButton1Click:Connect(function()
     if not root then return end
 
     local part = Instance.new("Part")
-    part.Size = Vector3.new(1.5, 6, 1.5)
-    part.Position = root.Position + (root.CFrame.LookVector * 4) + Vector3.new(0, 3, 0)
+    part.Size = Vector3.new(2, 15, 2)
+    part.Position = root.Position + (root.CFrame.LookVector * 5) + Vector3.new(0, 5, 0)
     part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.5
     part.BrickColor = BrickColor.new("White")
     part.Material = Enum.Material.SmoothPlastic
     part.Parent = Workspace
@@ -144,18 +146,16 @@ RunService.Heartbeat:Connect(function()
     if speedValue <= 0 or #spawnedParts == 0 then return end
 
     local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local targetPart = hum and hum.SeatPart or (char and char:FindFirstChild("HumanoidRootPart"))
+    local targetPart = hum and hum.SeatPart or root
 
     if targetPart then
         local targetIndex = math.clamp(math.floor(tick() * speedValue) % #spawnedParts + 1, 1, #spawnedParts)
         local activeBlock = spawnedParts[targetIndex]
         
         if activeBlock and activeBlock.Parent then
-            local direction = (activeBlock.Position - targetPart.Position)
-            if targetPart:IsA("BasePart") then
-                targetPart.AssemblyLinearVelocity = direction.Unit * math.min(direction.Magnitude * 10, 50)
-            end
+            targetPart.CFrame = activeBlock.CFrame
         end
     end
 end)
