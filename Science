@@ -52,7 +52,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V3.4 SMOOTH"
+Title.Text = "BOOST V3.5 SMOOTH"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -421,7 +421,7 @@ SmoothFloatBtn.MouseButton1Click:Connect(function()
                     SmoothFloatBtn.Text = "⚡"
                     break
                 end
-                task.task.wait(0.03)
+                task.wait(0.03)
             end
         end)
     end
@@ -479,7 +479,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA BETTER STEER BARU: Menggunakan Angular Velocity / SteerFloat yang Mulus (Tidak Ekstrem/Patah-patah)
+-- LOGIKA BETTER STEER V3.5 (Smooth & Speed-Scaled Steering)
 RunService.Stepped:Connect(function(dt)
     if not isFeaturesActive or not isBetterSteer then return end
 
@@ -497,10 +497,17 @@ RunService.Stepped:Connect(function(dt)
         end
         
         if steerInput ~= 0 then
-            -- Mengatur rotasi menyamping dengan mulus lewat AngularVelocity sumbu Y agar kendaraan tidak terpental/terbalik ekstrem
-            local turnPower = -steerInput * 3.2
+            local speed = seat.AssemblyLinearVelocity.Magnitude
+            
+            -- Tenaga putar diperkecil dan disesuaikan dengan kecepatan kendaraan (Speed Scaling)
+            local basePower = -steerInput * 1.5 
+            
+            if speed > 20 then
+                basePower = basePower * math.clamp(35 / speed, 0.3, 1.0)
+            end
+            
             local currentAngVel = seat.AssemblyAngularVelocity
-            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, turnPower, currentAngVel.Z)
+            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, basePower, currentAngVel.Z)
         end
     end
 end)
