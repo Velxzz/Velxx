@@ -464,6 +464,95 @@ SmoothFloatBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-SmoothReverseFloatBtn.MouseButton1Click:Connect(function`() -- fixed minor syntax safety
-    -- skipped replacement inner text for safety
+SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
+    if not isFeaturesActive then return end
+    isSmoothReversing = not isSmoothReversing
+    SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
+
+    if isSmoothReversing then
+        task.spawn(function()
+            while isSmoothReversing and isFeaturesActive do
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                local seat = hum and hum.SeatPart
+
+                if seat and seat:IsA("BasePart") then
+                    local currentVel = seat.AssemblyLinearVelocity
+                    local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
+
+                    if forwardSpeed > 0 then
+                        local newVel = currentVel - (seat.CFrame.LookVector * 4)
+                        if newVel:Dot(seat.CFrame.LookVector) < 0 then
+                            seat.AssemblyLinearVelocity = Vector3.zero
+                        else
+                            seat.AssemblyLinearVelocity = newVel
+                        end
+                    elseif forwardSpeed > -1 then
+                        seat.AssemblyLinearVelocity = Vector3.zero
+                    end
+                else
+                    isSmoothReversing = false
+                    SmoothReverseFloatBtn.Text = "🛑"
+                    break
+                end
+                task.wait(0.0225)
+            end
+        end)
+    end
+end)
+
+GiveBtn.MouseButton1Click:Connect(function()
+    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
+    t.Name = "Teleport Tool"
+    t.RequiresHandle = false
+    t.Activated:Connect(function()
+        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
+        end
+    end)
+end)
+
+FlyBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
+end)
+
+-- LOGIKA STEER GABUNGAN (Fast Steer & Better Steer)
+RunService.Stepped:Connect(function(dt)
+    if not isFeaturesActive then return end
+
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+
+    if seat and seat:IsA("VehicleSeat") then
+        local steerInput = 0
+        if isRightPressed then steerInput = 1 end
+        if isLeftPressed then steerInput = -1 end
+        
+        if steerInput == 0 then
+            steerInput = seat.SteerFloat
+        end
+        
+        if steerInput ~= 0 then
+            local speed = seat.AssemblyLinearVelocity.Magnitude
+            local turnPower = -steerInput * 2.0
+            
+            -- Better Steer (Menjaga tenaga di kecepatan tinggi)
+            if isBetterSteer then
+                if speed > 20 then
+                    turnPower = turnPower * math.clamp(45 / speed, 0.6, 1.0)
+                end
+            end
+            
+            local currentAngVel = seat.AssemblyAngularVelocity
+            local targetY = turnPower
+            
+            -- Fast Steer (Mempercepat transisi perpindahan arah kanan-kiri)
+            if isFastSteer then
+                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * 15, 0, 1)
+            end
+            
+            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
+        end
+    end
 end)
