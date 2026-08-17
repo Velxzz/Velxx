@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V3.8 PRO"
+Title.Text = "BOOST V4.1 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -104,45 +104,6 @@ local LockToggleBtn = createToggle("Lock button :", 185)
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
-local function createTriggerRow(name, yPos)
-    local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 50, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
-    Label.BackgroundTransparency = 1
-    Label.Text = name .. ":"
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
-
-    local SetBtn = Instance.new("TextButton", ScrollFrame)
-    SetBtn.Size = UDim2.new(0, 70, 0, 24)
-    SetBtn.Position = UDim2.new(0, 60, 0, yPos + 1)
-    SetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    SetBtn.BackgroundTransparency = 0.3
-    SetBtn.Text = "Set Trigger"
-    SetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SetBtn.Font = Enum.Font.GothamBold
-    SetBtn.TextSize = 9
-    Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 6)
-
-    local ResetBtn = Instance.new("TextButton", ScrollFrame)
-    ResetBtn.Size = UDim2.new(0, 55, 0, 24)
-    ResetBtn.Position = UDim2.new(0, 135, 0, yPos + 1)
-    ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    ResetBtn.BackgroundTransparency = 0.3
-    ResetBtn.Text = "Reset"
-    ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ResetBtn.Font = Enum.Font.GothamBold
-    ResetBtn.TextSize = 10
-    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 6)
-
-    return SetBtn, ResetBtn
-end
-
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 215)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 245)
-
 local function createFeatureBtn(name, yPos)
     local Lbl = Instance.new("TextLabel", ScrollFrame)
     Lbl.Size = UDim2.new(0, 100, 0, 26)
@@ -167,8 +128,8 @@ local function createFeatureBtn(name, yPos)
     return Btn
 end
 
-local GiveBtn = createFeatureBtn("Teleport Tool:", 280)
-local FlyBtn = createFeatureBtn("Fly GUI:", 310)
+local GiveBtn = createFeatureBtn("Teleport Tool:", 220)
+local FlyBtn = createFeatureBtn("Fly GUI:", 250)
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -251,12 +212,6 @@ local isSmoothBoosting = false
 local isSmoothReversing = false
 local isFastSteer = false
 local isBetterSteer = false
-
-local boundRightButton = nil
-local boundLeftButton = nil
-local settingTarget = nil
-local isRightPressed = false
-local isLeftPressed = false
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -357,77 +312,6 @@ LockToggleBtn.MouseButton1Click:Connect(function()
     SteerFloatBtn.Draggable = not isLocked
 end)
 
-RightSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Right"
-    RightSetBtn.Text = "Setting..."
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-RightResetBtn.MouseButton1Click:Connect(function()
-    RightResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundRightButton = nil
-    isRightPressed = false
-    RightSetBtn.Text = "Set Trigger"
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    RightResetBtn.Text = "Reset"
-end)
-
-LeftSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Left"
-    LeftSetBtn.Text = "Setting..."
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-LeftResetBtn.MouseButton1Click:Connect(function()
-    LeftResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundLeftButton = nil
-    isLeftPressed = false
-    LeftSetBtn.Text = "Set Trigger"
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    LeftResetBtn.Text = "Reset"
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if not settingTarget then return end
-    
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local mousePos = UserInputService:GetMouseLocation()
-        local guiObjects = LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
-        
-        for _, gui in ipairs(guiObjects) do
-            if (gui:IsA("TextButton") or gui:IsA("ImageButton")) and gui ~= RightSetBtn and gui ~= LeftSetBtn and gui ~= SteerToggleBtn and gui ~= FastSteerToggleBtn and gui ~= MenuShortcut and gui ~= SteerFloatBtn and gui ~= FastSteerFloatBtn then
-                
-                gui.MouseButton1Down:Connect(function()
-                    if isBetterSteer or isFastSteer then
-                        if gui == boundRightButton then isRightPressed = true end
-                        if gui == boundLeftButton then isLeftPressed = true end
-                    end
-                end)
-                
-                gui.MouseButton1Up:Connect(function()
-                    if gui == boundRightButton then isRightPressed = false end
-                    if gui == boundLeftButton then isLeftPressed = false end
-                end)
-
-                if settingTarget == "Right" then
-                    boundRightButton = gui
-                    RightSetBtn.Text = "Saved!"
-                    RightSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                elseif settingTarget == "Left" then
-                    boundLeftButton = gui
-                    LeftSetBtn.Text = "Saved!"
-                    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                end
-                
-                settingTarget = nil
-                break
-            end
-        end
-    end
-end)
-
 FastFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     local char = LocalPlayer.Character
@@ -517,42 +401,49 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
-RunService.Stepped:Connect(function(dt)
-    if not isFeaturesActive then 
-        return 
-    end
+-- Loop utama untuk mendeteksi tombol UI secara langsung dan mengubah Value SteerC & SteerT
+RunService.Stepped:Connect(function()
+    if not isFeaturesActive then return end
 
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if not playerGui then return end
+    
+    local interface = playerGui:FindFirstChild("Interface")
+    if not interface then return end
+    
+    -- Deteksi tombol <> dari Path PlayerGui.Interface.Buttons
+    local buttons = interface:FindFirstChild("Buttons")
+    local leftBtn = buttons and buttons:FindFirstChild("Left")
+    local rightBtn = buttons and buttons:FindFirstChild("Right")
+    
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
 
     if seat and seat:IsA("VehicleSeat") then
         local steerInput = 0
-        if isRightPressed then steerInput = 1 end
-        if isLeftPressed then steerInput = -1 end
+        if rightBtn and rightBtn:IsA("TextButton") and rightBtn.GuiState == Enum.GuiState.Press then
+            steerInput = 1
+        end
+        if leftBtn and leftBtn:IsA("TextButton") and leftBtn.GuiState == Enum.GuiState.Press then
+            steerInput = -1
+        end
         
         if steerInput == 0 then
             steerInput = seat.SteerFloat
         end
-        
-        if steerInput ~= 0 then
-            local speed = seat.AssemblyLinearVelocity.Magnitude
-            local basePower = -steerInput * 2.0
-            
-            if isBetterSteer then
-                if speed > 15 then
-                    basePower = basePower * math.clamp(35 / speed, 0.5, 1.0)
-                end
-            end
-            
-            local currentAng = seat.AssemblyAngularVelocity
-            local targetZ = basePower * (isFastSteer and 2.2 or 1.0)
-            local finalZ = currentAng.Z + (targetZ - currentAng.Z) * math.clamp(dt * (isFastSteer and 25 or 10), 0, 1)
-            
-            seat.AssemblyAngularVelocity = Vector3.new(currentAng.X, currentAng.Y, finalZ)
-        else
-            local currentAng = seat.AssemblyAngularVelocity
-            seat.AssemblyAngularVelocity = Vector3.new(currentAng.X, currentAng.Y, currentAng.Y ~= 0 and currentAng.Z * 0.8 or 0)
-        end
+    end
+
+    -- Update Value SteerC dan SteerT sesuai status Fast Steer & Better Steer
+    local valuesFolder = interface:FindFirstChild("Values")
+    local steerC = valuesFolder and valuesFolder:FindFirstChild("SteerC")
+    local steerT = valuesFolder and valuesFolder:FindFirstChild("SteerT")
+
+    if steerC and steerC:IsA("ValueBase") then
+        steerC.Value = isFastSteer and 2.5 or 1.0
+    end
+
+    if steerT and steerT:IsA("ValueBase") then
+        steerT.Value = isBetterSteer and 2.0 or 1.0
     end
 end)
