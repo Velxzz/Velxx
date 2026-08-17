@@ -31,10 +31,10 @@ local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Color = Color3.fromRGB(0, 255, 220)
 MenuStroke.Thickness = 0.5
 
--- MainFrame diperkecil lebarnya (dari 240 ke 180)
+-- MainFrame diperlebar (dari 180 ke 220) dan diperpendek (dari 380 ke 300)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 180, 0, 380)
+MainFrame.Size = UDim2.new(0, 220, 0, 300)
 MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -52,7 +52,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
 Title.Position = UDim2.new(0, 0, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.6 PRO"
+Title.Text = "BOOST V4.7 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
 
@@ -71,7 +71,7 @@ ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 105, 0, 24)
+    Label.Size = UDim2.new(0, 130, 0, 24)
     Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name
@@ -81,8 +81,8 @@ local function createToggle(name, yPos)
     Label.TextSize = 10
 
     local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 45, 0, 22)
-    Btn.Position = UDim2.new(0, 115, 0, yPos + 1)
+    Btn.Size = UDim2.new(0, 60, 0, 22)
+    Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
     Btn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     Btn.BackgroundTransparency = 0.3
     Btn.Text = "OFF"
@@ -96,7 +96,7 @@ end
 
 local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 105, 0, 24)
+    Label.Size = UDim2.new(0, 130, 0, 24)
     Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name
@@ -107,8 +107,8 @@ local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
 
     if not isDouble then
         local Box = Instance.new("TextBox", ScrollFrame)
-        Box.Size = UDim2.new(0, 45, 0, 22)
-        Box.Position = UDim2.new(0, 115, 0, yPos + 1)
+        Box.Size = UDim2.new(0, 60, 0, 22)
+        Box.Position = UDim2.new(0, 138, 0, yPos + 1)
         Box.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box.Text = tostring(defaultVal1)
@@ -118,8 +118,8 @@ local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
         return Box
     else
         local Box1 = Instance.new("TextBox", ScrollFrame)
-        Box1.Size = UDim2.new(0, 26, 0, 22)
-        Box1.Position = UDim2.new(0, 105, 0, yPos + 1)
+        Box1.Size = UDim2.new(0, 28, 0, 22)
+        Box1.Position = UDim2.new(0, 138, 0, yPos + 1)
         Box1.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box1.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box1.Text = tostring(defaultVal1)
@@ -128,8 +128,8 @@ local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
         Instance.new("UICorner", Box1).CornerRadius = UDim.new(0, 5)
 
         local Box2 = Instance.new("TextBox", ScrollFrame)
-        Box2.Size = UDim2.new(0, 26, 0, 22)
-        Box2.Position = UDim2.new(0, 134, 0, yPos + 1)
+        Box2.Size = UDim2.new(0, 28, 0, 22)
+        Box2.Position = UDim2.new(0, 170, 0, yPos + 1)
         Box2.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         Box2.TextColor3 = Color3.fromRGB(255, 255, 255)
         Box2.Text = tostring(defaultVal2)
@@ -159,7 +159,7 @@ ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
 local function createTriggerRow(name, yPos)
     local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 45, 0, 24)
+    Label.Size = UDim2.new(0, 50, 0, 24)
     Label.Position = UDim2.new(0, 5, 0, yPos)
     Label.BackgroundTransparency = 1
     Label.Text = name .. ":"
@@ -169,8 +169,8 @@ local function createTriggerRow(name, yPos)
     Label.TextSize = 10
 
     local SetBtn = Instance.new("TextButton", ScrollFrame)
-    SetBtn.Size = UDim2.new(0, 58, 0, 22)
-    SetBtn.Position = UDim2.new(0, 52, 0, yPos + 1)
+    SetBtn.Size = UDim2.new(0, 74, 0, 22)
+    SetBtn.Position = UDim2.new(0, 57, 0, yPos + 1)
     SetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     SetBtn.BackgroundTransparency = 0.3
     SetBtn.Text = "Set Trigger"
@@ -180,8 +180,8 @@ local function createTriggerRow(name, yPos)
     Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 5)
 
     local ResetBtn = Instance.new("TextButton", ScrollFrame)
-    ResetBtn.Size = UDim2.new(0, 45, 0, 22)
-    ResetBtn.Position = UDim2.new(0, 115, 0, yPos + 1)
+    ResetBtn.Size = UDim2.new(0, 60, 0, 22)
+    ResetBtn.Position = UDim2.new(0, 138, 0, yPos + 1)
     ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     ResetBtn.BackgroundTransparency = 0.3
     ResetBtn.Text = "Reset"
@@ -198,7 +198,7 @@ local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 299)
 
 local function createFeatureBtn(name, yPos)
     local Lbl = Instance.new("TextLabel", ScrollFrame)
-    Lbl.Size = UDim2.new(0, 105, 0, 24)
+    Lbl.Size = UDim2.new(0, 130, 0, 24)
     Lbl.Position = UDim2.new(0, 5, 0, yPos)
     Lbl.BackgroundTransparency = 1
     Lbl.Text = name
@@ -208,8 +208,8 @@ local function createFeatureBtn(name, yPos)
     Lbl.TextSize = 10
 
     local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 45, 0, 22)
-    Btn.Position = UDim2.new(0, 115, 0, yPos + 1)
+    Btn.Size = UDim2.new(0, 60, 0, 22)
+    Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
     Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     Btn.BackgroundTransparency = 0.3
     Btn.Text = "EXEC"
@@ -223,7 +223,6 @@ end
 local GiveBtn = createFeatureBtn("Teleport Tool:", 326)
 local FlyBtn = createFeatureBtn("Fly GUI:", 353)
 
--- Float Buttons
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
 FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
@@ -488,7 +487,9 @@ FastFloatBtn.MouseButton1Click:Connect(function()
     local seat = hum and hum.SeatPart
     if seat then
         local customSpeed = tonumber(FastSpeedBox.Text) or 100
-        seat.AssemblyLinearVelocity = seat.CFrame.LookVector * (seat.AssemblyLinearVelocity.Magnitude + customSpeed)
+        local currentVel = seat.AssemblyLinearVelocity
+        local forwardDir = seat.CFrame.LookVector
+        seat.AssemblyLinearVelocity = (forwardDir * (currentVel.Magnitude + customSpeed)) + Vector3.new(0, math.clamp(currentVel.Y, -5, 3), 0)
     end
 end)
 
@@ -507,7 +508,8 @@ SmoothFloatBtn.MouseButton1Click:Connect(function()
                 if seat and seat:IsA("BasePart") then
                     local addPower = tonumber(SmoothBox1.Text) or 3.5
                     local delayVal = tonumber(SmoothBox2.Text) or 0.03
-                    seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity + (seat.CFrame.LookVector * addPower)
+                    local curVel = seat.AssemblyLinearVelocity
+                    seat.AssemblyLinearVelocity = (curVel + (seat.CFrame.LookVector * addPower)) + Vector3.new(0, math.clamp(curVel.Y, -5, 3), 0)
                     task.wait(delayVal)
                 else
                     isSmoothBoosting = false
@@ -525,7 +527,7 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
 
     if isSmoothReversing then
-       task.spawn(function()
+        task.spawn(function()
             while isSmoothReversing and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -540,13 +542,9 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
 
                     if forwardSpeed > 0 then
                         local newVel = currentVel - (seat.CFrame.LookVector * brakePower)
-                        if newVel:Dot(seat.CFrame.LookVector) < 0 then
-                            seat.AssemblyLinearVelocity = Vector3.zero
-                        else
-                            seat.AssemblyLinearVelocity = newVel
-                        end
+                        seat.AssemblyLinearVelocity = Vector3.new(newVel.X, math.clamp(newVel.Y, -5, 3), newVel.Z)
                     elseif forwardSpeed > -1 then
-                        seat.AssemblyLinearVelocity = Vector3.zero
+                        seat.AssemblyLinearVelocity = Vector3.new(0, math.clamp(currentVel.Y, -5, 3), 0)
                     end
                     task.wait(delayVal)
                 else
@@ -574,16 +572,23 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA STEER ANTI-SLIP
+-- LOGIKA STEER + PEREDAM MELOMPAT/MELAYANG SAAT BELOK (BETTER STEER FIX)
 RunService.Stepped:Connect(function(dt)
     if not isFeaturesActive then return end
-    if not (isFastSteer or isBetterSteer) then return end
 
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
 
     if seat and seat:IsA("VehicleSeat") then
+        local vel = seat.AssemblyLinearVelocity
+        
+        if vel.Y > 8 or vel.Y < -15 then
+            seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
+        end
+
+        if not (isFastSteer or isBetterSteer) then return end
+
         local steerInput = 0
         if isRightPressed then steerInput = 1 end
         if isLeftPressed then steerInput = -1 end
@@ -593,7 +598,7 @@ RunService.Stepped:Connect(function(dt)
         end
         
         if steerInput ~= 0 then
-            local speed = seat.AssemblyLinearVelocity.Magnitude
+            local speed = vel.Magnitude
             local turnPower = -steerInput * 1.8
             
             if isBetterSteer then
@@ -615,10 +620,10 @@ RunService.Stepped:Connect(function(dt)
 
             if speed > 35 and isBetterSteer then
                 local lookVector = seat.CFrame.LookVector
-                local currentVel = seat.AssemblyLinearVelocity
-                local forwardSpeed = currentVel:Dot(lookVector)
+                local forwardSpeed = vel:Dot(lookVector)
                 
-                local correctedVel = currentVel:Lerp(lookVector * forwardSpeed + Vector3.new(0, currentVel.Y, 0), 0.12)
+                local targetVel = (lookVector * forwardSpeed) + Vector3.new(0, math.clamp(vel.Y, -2, 2), 0)
+                local correctedVel = vel:Lerp(targetVel, 0.08)
                 seat.AssemblyLinearVelocity = correctedVel
             end
         end
