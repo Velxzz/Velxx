@@ -31,7 +31,6 @@ local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Color = Color3.fromRGB(0, 255, 220)
 MenuStroke.Thickness = 0.5
 
--- MainFrame Utama (ScrollingFrame)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 220, 0, 340)
@@ -52,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V3.6 PRO"
+Title.Text = "BOOST V3.7 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 
@@ -516,7 +515,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA STEER GABUNGAN (Fast Steer & Better Steer)
 RunService.Stepped:Connect(function(dt)
     if not isFeaturesActive then return end
 
@@ -535,21 +533,21 @@ RunService.Stepped:Connect(function(dt)
         
         if steerInput ~= 0 then
             local speed = seat.AssemblyLinearVelocity.Magnitude
-            local turnPower = -steerInput * 2.0
+            local turnPower = -steerInput * 5.0
             
-            -- Better Steer (Menjaga tenaga di kecepatan tinggi)
             if isBetterSteer then
                 if speed > 20 then
-                    turnPower = turnPower * math.clamp(45 / speed, 0.6, 1.0)
+                    turnPower = turnPower * math.clamp(50 / speed, 0.7, 1.0)
                 end
             end
             
             local currentAngVel = seat.AssemblyAngularVelocity
             local targetY = turnPower
             
-            -- Fast Steer (Mempercepat transisi perpindahan arah kanan-kiri)
             if isFastSteer then
-                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * 15, 0, 1)
+                targetY = targetY * 1.8 
+            else
+                targetY = currentAngVel.Y + (targetY - currentAngVel.Y) * math.clamp(dt * 25, 0, 1)
             end
             
             seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
