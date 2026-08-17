@@ -518,7 +518,9 @@ FlyBtn.MouseButton1Click:Connect(function()
 end)
 
 RunService.Stepped:Connect(function(dt)
-    if not isFeaturesActive then return end
+    if not isFeaturesActive then 
+        return 
+    end
 
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -535,22 +537,22 @@ RunService.Stepped:Connect(function(dt)
         
         if steerInput ~= 0 then
             local speed = seat.AssemblyLinearVelocity.Magnitude
-            local turnPower = -steerInput * 3.5
+            local basePower = -steerInput * 2.0
             
             if isBetterSteer then
                 if speed > 15 then
-                    turnPower = turnPower * math.clamp(40 / speed, 0.5, 1.0)
+                    basePower = basePower * math.clamp(35 / speed, 0.5, 1.0)
                 end
             end
             
-            local currentAngVel = seat.AssemblyAngularVelocity
-            local targetY = turnPower * (isFastSteer and 2.5 or 1.0)
-            local finalY = currentAngVel.Y + (targetY - currentAngVel.Y) * math.clamp(dt * (isFastSteer and 35 or 12), 0, 1)
+            local currentAng = seat.AssemblyAngularVelocity
+            local targetZ = basePower * (isFastSteer and 2.2 or 1.0)
+            local finalZ = currentAng.Z + (targetZ - currentAng.Z) * math.clamp(dt * (isFastSteer and 25 or 10), 0, 1)
             
-            seat.AssemblyAngularVelocity = Vector3.new(0, finalY, 0)
+            seat.AssemblyAngularVelocity = Vector3.new(currentAng.X, currentAng.Y, finalZ)
         else
-            local currentAngVel = seat.AssemblyAngularVelocity
-            seat.AssemblyAngularVelocity = Vector3.new(0, currentAngVel.Y * 0.85, 0)
+            local currentAng = seat.AssemblyAngularVelocity
+            seat.AssemblyAngularVelocity = Vector3.new(currentAng.X, currentAng.Y, currentAng.Y ~= 0 and currentAng.Z * 0.8 or 0)
         end
     end
 end)
