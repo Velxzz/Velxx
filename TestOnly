@@ -10,6 +10,7 @@ if writefile and not isfolder("ModifierConfigs") then
     makefolder("ModifierConfigs")
 end
 
+--// ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
@@ -45,9 +46,9 @@ SpeedBtn.Size = UDim2.new(0, 90, 0, 35)
 SpeedBtn.Position = UDim2.new(0, 115, 0, 40)
 SpeedBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
 SpeedBtn.BackgroundTransparency = 0.5
-SpeedBtn.Text = "Speed: 1"
+SpeedBtn.Text = "1"
 SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.TextSize, SpeedBtn.BorderSizePixel = 11, 0
+SpeedBtn.TextSize, SpeedBtn.BorderSizePixel = 12, 0
 
 local SpawnBtn = Instance.new("TextButton", MainFrame)
 SpawnBtn.Size = UDim2.new(0, 90, 0, 45)
@@ -115,27 +116,109 @@ StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize, StatusLabel.BackgroundTransparency = 10, 1
 
+--// Floating Button Utama untuk buka/tutup UI Lengkap
+local MainFloatBtn = Instance.new("TextButton", ScreenGui)
+MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
+MainFloatBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFloatBtn.BackgroundTransparency = 0.4
+MainFloatBtn.Text = "UI"
+MainFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainFloatBtn.Font = Enum.Font.GothamBold
+MainFloatBtn.TextSize = 14
+MainFloatBtn.BorderSizePixel = 0
+MainFloatBtn.Active = true
+MainFloatBtn.Draggable = true
+
+MainFloatBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+--// Floating Button Khusus (FloatBtns) untuk aksi cepat di luar UI Utama
+local FloatContainer = Instance.new("Frame", ScreenGui)
+FloatContainer.Size = UDim2.new(0, 110, 0, 220)
+FloatContainer.Position = UDim2.new(0.02, 0, 0.45, 0)
+FloatContainer.BackgroundTransparency = 1
+FloatContainer.Active = true
+FloatContainer.Draggable = true
+
+-- 1. FloatBtn Spawn Balok
+local FloatSpawn = Instance.new("TextButton", FloatContainer)
+FloatSpawn.Size = UDim2.new(0, 100, 0, 40)
+FloatSpawn.Position = UDim2.new(0, 0, 0, 0)
+FloatSpawn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatSpawn.BackgroundTransparency = 0.4
+FloatSpawn.Text = "Spawn"
+FloatSpawn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatSpawn.Font = Enum.Font.GothamBold
+FloatSpawn.TextSize = 11
+FloatSpawn.BorderSizePixel = 0
+
+-- 2. FloatBtn Start/Stop
+local FloatStart = Instance.new("TextButton", FloatContainer)
+FloatStart.Size = UDim2.new(0, 100, 0, 40)
+FloatStart.Position = UDim2.new(0, 0, 0, 45)
+FloatStart.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatStart.BackgroundTransparency = 0.4
+FloatStart.Text = "Start"
+FloatStart.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatStart.Font = Enum.Font.GothamBold
+FloatStart.TextSize = 11
+FloatStart.BorderSizePixel = 0
+
+-- 3. FloatBtn Reset
+local FloatReset = Instance.new("TextButton", FloatContainer)
+FloatReset.Size = UDim2.new(0, 100, 0, 40)
+FloatReset.Position = UDim2.new(0, 0, 0, 90)
+FloatReset.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatReset.BackgroundTransparency = 0.4
+FloatReset.Text = "Reset"
+FloatReset.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatReset.Font = Enum.Font.GothamBold
+FloatReset.TextSize = 11
+FloatReset.BorderSizePixel = 0
+
+-- 4. FloatBtn Speed (Hanya menampilkan angka)
+local FloatSpeed = Instance.new("TextButton", FloatContainer)
+FloatSpeed.Size = UDim2.new(0, 100, 0, 40)
+FloatSpeed.Position = UDim2.new(0, 0, 0, 135)
+FloatSpeed.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatSpeed.BackgroundTransparency = 0.4
+FloatSpeed.Text = "1"
+FloatSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatSpeed.Font = Enum.Font.GothamBold
+FloatSpeed.TextSize = 12
+FloatSpeed.BorderSizePixel = 0
+
 local spawnedBlocks = {}
 local isRunning = false
 local currentIndex = 1
 local currentSpeed = 1
 local lastPos = nil
-
--- Variabel baru untuk sistem transisi linear berbasis waktu
 local startingCFrame = nil
 local currentTransitionTime = 0
 
+-- Fungsi sinkronisasi tombol kecepatan (UI Utama & Floating)
+local function updateSpeed(newSpeed)
+    currentSpeed = newSpeed
+    SpeedBtn.Text = tostring(currentSpeed)
+    FloatSpeed.Text = tostring(currentSpeed)
+end
+
 SpeedBtn.MouseButton1Click:Connect(function()
-    currentSpeed = currentSpeed - 1
-    if currentSpeed < 0 then
-        currentSpeed = 10
-    end
-    SpeedBtn.Text = "Speed: " .. tostring(currentSpeed)
+    local spd = currentSpeed - 1
+    if spd < 0 then spd = 10 end
+    updateSpeed(spd)
+end)
+
+FloatSpeed.MouseButton1Click:Connect(function()
+    local spd = currentSpeed - 1
+    if spd < 0 then spd = 10 end
+    updateSpeed(spd)
 end)
 
 local function createVisualBlock(cf)
     local block = Instance.new("Part")
-    -- Diperbarui: X=1 (lebar), Y=10 (tinggi vertikal), Z=1 (panjang)
     block.Size = Vector3.new(1, 10, 1)
     block.CFrame = cf
     block.Anchored = true
@@ -177,31 +260,34 @@ local function spawnBlockAtPlayer()
         
         lastPos = currentPos
         
-        -- CFrame membuat balok menghadap arah gerakan, dan karena Size.Y = 10, balok berdiri vertikal (tegak lurus)
         local finalCFrame = CFrame.lookAt(currentPos, currentPos + Vector3.new(lookVector.X, 0, lookVector.Z), Vector3.new(0, 1, 0))
         createVisualBlock(finalCFrame)
     end
 end
 
-SpawnBtn.MouseButton1Click:Connect(function()
-    spawnBlockAtPlayer()
-end)
+SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
+FloatSpawn.MouseButton1Click:Connect(spawnBlockAtPlayer)
 
-StartBtn.MouseButton1Click:Connect(function()
+local function toggleStart()
     if #spawnedBlocks == 0 then return end
     isRunning = not isRunning
-    StartBtn.Text = isRunning and "Pause" or "Start"
+    local stateText = isRunning and "Pause" or "Start"
+    StartBtn.Text = stateText
+    FloatStart.Text = stateText
     
-    -- Reset state transisi ketika mulai/melanjutkan agar pergerakan selalu dihitung dari posisi terkini
     if isRunning then
         startingCFrame = nil
         currentTransitionTime = 0
     end
-end)
+end
 
-ResetBtn.MouseButton1Click:Connect(function()
+StartBtn.MouseButton1Click:Connect(toggleStart)
+FloatStart.MouseButton1Click:Connect(toggleStart)
+
+local function resetAll()
     isRunning = false
     StartBtn.Text = "Start"
+    FloatStart.Text = "Start"
     currentIndex = 1
     lastPos = nil
     startingCFrame = nil
@@ -211,7 +297,10 @@ ResetBtn.MouseButton1Click:Connect(function()
     end
     spawnedBlocks = {}
     StatusLabel.Text = "Reseted!"
-end)
+end
+
+ResetBtn.MouseButton1Click:Connect(resetAll)
+FloatReset.MouseButton1Click:Connect(resetAll)
 
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
@@ -262,6 +351,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         spawnedBlocks = {}
         isRunning = false
         StartBtn.Text = "Start"
+        FloatStart.Text = "Start"
         lastPos = nil
         startingCFrame = nil
         currentTransitionTime = 0
@@ -314,16 +404,12 @@ RunService.Heartbeat:Connect(function(dt)
                 end
                 startingCFrame = nil
             else
-                -- Inisialisasi titik awal transisi agar linear dan tidak melambat di akhir
                 if not startingCFrame then
                     startingCFrame = targetPart.CFrame
                     currentTransitionTime = 0
                 end
                 
                 currentTransitionTime = currentTransitionTime + dt
-                
-                -- Menghitung progress transisi murni berdasarkan waktu (speedVal = detik).
-                -- Jika Speed 1, transisi selesai tepat 1 detik. Jika Speed 10, selesai dalam 10 detik.
                 local alpha = currentTransitionTime / speedVal
                 
                 if alpha >= 1 then
@@ -332,7 +418,7 @@ RunService.Heartbeat:Connect(function(dt)
                     if currentIndex > #spawnedBlocks then
                         currentIndex = 1
                     end
-                    startingCFrame = nil -- Reset untuk balok selanjutnya
+                    startingCFrame = nil
                 else
                     targetPart.CFrame = startingCFrame:Lerp(targetCFrame, alpha)
                 end
