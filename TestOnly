@@ -1,3 +1,4 @@
+-- Modifier Gui V2.0
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,7 +23,7 @@ local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 300)
 MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BackgroundTransparency = 0.5 -- Transparan 50%
+MainFrame.BackgroundTransparency = 0.5
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -32,7 +33,7 @@ UICornerMain.CornerRadius = UDim.new(0, 10)
 
 -- Border Tipis RGB Melingkari Menu Utama
 local RGBStroke = Instance.new("UIStroke", MainFrame)
-RGBStroke.Thickness = 1.5 -- Ukuran corner/border tipis
+RGBStroke.Thickness = 1.5
 RGBStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 RGBStroke.Color = Color3.fromRGB(255, 0, 0)
 
@@ -40,7 +41,7 @@ RGBStroke.Color = Color3.fromRGB(255, 0, 0)
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 35)
 HeaderBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-HeaderBar.BackgroundTransparency = 0.5 -- Transparan 50%
+HeaderBar.BackgroundTransparency = 0.5
 HeaderBar.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner", HeaderBar)
@@ -222,7 +223,7 @@ Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 -- Toggle Lock Button
 local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
 
--- UI Config (Save & Load)
+-- UI Config (Save & Load Global)
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
@@ -249,29 +250,11 @@ LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 10
 Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
--- UI Code Box
-local loadBoxRow = Instance.new("Frame", ContentScroll)
-loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
-loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 9
-
-local LoadBox = Instance.new("TextBox", loadBoxRow)
-LoadBox.Size = UDim2.new(1, 0, 1, 0)
-LoadBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-LoadBox.BackgroundTransparency = 0.3
-LoadBox.BorderSizePixel = 0
-LoadBox.PlaceholderText = "Paste Code Config Here..."
-LoadBox.Text = ""
-LoadBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadBox.Font = Enum.Font.Gotham
-LoadBox.TextSize = 10
-Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
-
 -- Status Text
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 10
+statusRow.LayoutOrder = 9
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -546,19 +529,11 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- Logika Save Config
+-- Logika Save Config (Independen dari Sesi/Game ID)
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
         return
-    end
-    
-    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local randomCode = "C_"
-    math.randomseed(tick())
-    for i = 1, 13 do
-        local randIndex = math.random(1, #chars)
-        randomCode = randomCode .. chars:sub(randIndex, randIndex)
     end
     
     local dataToSave = {}
@@ -570,26 +545,16 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     
     if writefile then
         local encodedData = game:GetService("HttpService"):JSONEncode(dataToSave)
-        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
-    end
-    
-    if setclipboard then
-        setclipboard(randomCode)
-        StatusLabel.Text = "Saved & Copied!"
+        writefile("ModifierConfigs/GlobalConfig.json", encodedData)
+        StatusLabel.Text = "Config Saved Globally!"
     else
-        StatusLabel.Text = "Saved Code: " .. randomCode
+        StatusLabel.Text = "File write not supported!"
     end
 end)
 
--- Logika Load Config
+-- Logika Load Config (Otomatis Muat Koordinat Tersimpan)
 LoadConfigBtn.MouseButton1Click:Connect(function()
-    local codeToLoad = LoadBox.Text:gsub("%s+", "")
-    if codeToLoad == "" then
-        StatusLabel.Text = "Enter code first!"
-        return
-    end
-    
-    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
+    local fileName = "ModifierConfigs/GlobalConfig.json"
     if readfile and pcall(readfile, fileName) then
         for _, block in ipairs(spawnedBlocks) do
             if block then block:Destroy() end
@@ -604,16 +569,16 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         currentTransitionTime = 0
         
         local rawData = readfile(fileName)
-        local decodedData = game:GetService("HttpService"):JSONEncode(rawData)
+        local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
         
         for _, comps in ipairs(decodedData) do
             local cf = CFrame.new(table.unpack(comps))
             createVisualBlock(cf)
         end
         
-        StatusLabel.Text = "Loaded Successfully!"
+        StatusLabel.Text = "Global Config Loaded!"
     else
-        StatusLabel.Text = "Code not found!"
+        StatusLabel.Text = "No saved config found!"
     end
 end)
 
