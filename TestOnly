@@ -17,11 +17,12 @@ ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Frame Utama
+-- Frame Utama (Transparan 50%)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 300)
 MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.5 -- Transparan 50%
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -29,10 +30,17 @@ MainFrame.Draggable = true
 local UICornerMain = Instance.new("UICorner", MainFrame)
 UICornerMain.CornerRadius = UDim.new(0, 10)
 
--- Header UI
+-- Border Tipis RGB Melingkari Menu Utama
+local RGBStroke = Instance.new("UIStroke", MainFrame)
+RGBStroke.Thickness = 1.5 -- Ukuran corner/border tipis
+RGBStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+RGBStroke.Color = Color3.fromRGB(255, 0, 0)
+
+-- Header UI (Transparan 50%)
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 35)
-HeaderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HeaderBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+HeaderBar.BackgroundTransparency = 0.5 -- Transparan 50%
 HeaderBar.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner", HeaderBar)
@@ -42,7 +50,7 @@ local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.Text = "MODIFIER V1.0 PRO"
-Title.TextColor3 = Color3.fromRGB(0, 102, 204)
+Title.TextColor3 = Color3.fromRGB(0, 170, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -71,7 +79,7 @@ local function createToggleRow(parent, labelText, order)
     local label = Instance.new("TextLabel", row)
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Text = labelText .. " :"
-    label.TextColor3 = Color3.fromRGB(40, 40, 40)
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
     label.Font = Enum.Font.GothamBold
     label.TextSize = 10
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -116,7 +124,7 @@ speedRow.LayoutOrder = 3
 local speedLabel = Instance.new("TextLabel", speedRow)
 speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
 speedLabel.Text = "Modifier Speed :"
-speedLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+speedLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
 speedLabel.Font = Enum.Font.GothamBold
 speedLabel.TextSize = 10
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -142,7 +150,7 @@ spawnRow.LayoutOrder = 4
 local spawnLabel = Instance.new("TextLabel", spawnRow)
 spawnLabel.Size = UDim2.new(0.6, 0, 1, 0)
 spawnLabel.Text = "Spawn Block :"
-spawnLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+spawnLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
 spawnLabel.Font = Enum.Font.GothamBold
 spawnLabel.TextSize = 10
 spawnLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -168,7 +176,7 @@ undoRow.LayoutOrder = 5
 local undoLabel = Instance.new("TextLabel", undoRow)
 undoLabel.Size = UDim2.new(0.6, 0, 1, 0)
 undoLabel.Text = "Undo Last Block :"
-undoLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+undoLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
 undoLabel.Font = Enum.Font.GothamBold
 undoLabel.TextSize = 10
 undoLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -194,7 +202,7 @@ resetRow.LayoutOrder = 6
 local resetLabel = Instance.new("TextLabel", resetRow)
 resetLabel.Size = UDim2.new(0.6, 0, 1, 0)
 resetLabel.Text = "Reset Modifier :"
-resetLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+resetLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
 resetLabel.Font = Enum.Font.GothamBold
 resetLabel.TextSize = 10
 resetLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -249,11 +257,12 @@ loadBoxRow.LayoutOrder = 9
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
-LoadBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+LoadBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+LoadBox.BackgroundTransparency = 0.3
 LoadBox.BorderSizePixel = 0
 LoadBox.PlaceholderText = "Paste Code Config Here..."
 LoadBox.Text = ""
-LoadBox.TextColor3 = Color3.fromRGB(30, 30, 30)
+LoadBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoadBox.Font = Enum.Font.Gotham
 LoadBox.TextSize = 10
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
@@ -267,7 +276,7 @@ statusRow.LayoutOrder = 10
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.Text = ""
-StatusLabel.TextColor3 = Color3.fromRGB(0, 150, 0)
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
 StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
@@ -608,8 +617,13 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Loop Heartbeat Teleport
+-- Loop Heartbeat Teleport & Animasi RGB Border
+local hue = 0
 RunService.Heartbeat:Connect(function(dt)
+    -- Animasi RGB pada border tipis
+    hue = (hue + dt * 0.3) % 1
+    RGBStroke.Color = Color3.fromHSV(hue, 1, 1)
+
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
     
     local speedVal = getSpeedValue()
