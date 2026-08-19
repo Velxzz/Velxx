@@ -119,6 +119,7 @@ local spawnedBlocks = {}
 local isRunning = false
 local currentIndex = 1
 local currentSpeed = 1
+local lastPos = nil
 
 SpeedBtn.MouseButton1Click:Connect(function()
     currentSpeed = currentSpeed - 1
@@ -155,7 +156,24 @@ local function spawnBlockAtPlayer()
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
     
     if targetPart then
-        createVisualBlock(targetPart.CFrame)
+        local currentPos = targetPart.Position
+        local lookVector
+        
+        if lastPos then
+            local moveDir = currentPos - lastPos
+            if moveDir.Magnitude > 0.01 then
+                lookVector = moveDir.Unit
+            else
+                lookVector = targetPart.CFrame.LookVector
+            end
+        else
+            lookVector = targetPart.CFrame.LookVector
+        end
+        
+        lastPos = currentPos
+        
+        local finalCFrame = CFrame.lookAt(currentPos, currentPos + Vector3.new(lookVector.X, 0, lookVector.Z), Vector3.new(0, 1, 0))
+        createVisualBlock(finalCFrame)
     end
 end
 
@@ -174,6 +192,7 @@ ResetBtn.MouseButton1Click:Connect(function()
     isRunning = false
     StartBtn.Text = "Start"
     currentIndex = 1
+    lastPos = nil
     for _, block in ipairs(spawnedBlocks) do
         if block then block:Destroy() end
     end
@@ -219,7 +238,6 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
         StatusLabel.Text = "Enter code first!"
-        return
     end
     
     local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
@@ -230,6 +248,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         spawnedBlocks = {}
         isRunning = false
         StartBtn.Text = "Start"
+        lastPos = nil
         
         local rawData = readfile(fileName)
         local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
@@ -279,11 +298,20 @@ RunService.Heartbeat:Connect(function(dt)
                     targetPart.CFrame = spawnedBlocks[1].CFrame
                 end
             else
-                local alpha = math.clamp(1 - ((speedVal - 0.1) / 9.9), 0.05, 1)
                 local distance = (targetPart.Position - targetCFrame.Position).Magnitude
                 
-                if distance < 3.5 then
+                -- Sistem dinamis: Semakin jauh jarak, alpha semakin besar (bergerak lebih cepat mengejar). 
+                -- Semakin dekat, alpha melambat secara proporsional. 
+                -- Pada kecepatan 1, dengan skala ini menghasilkan durasi perpindahan sekitar 1 detik ketika posisi dekat.
+                local baseSpeedFactor = speedVal * 0.05
+                local dynamicMultiplier = math.clamp(distance * 0.3, 0.2, 3.0)
+                local alpha = math.clamp(baseSpeedFactor * dynamicMultiplier, 0.005, 1)
+                
+                if distance < 1.0 then
                     currentIndex = currentIndex + 1
+                    if currentIndex > #spawnedBorder and currentIndex > #spawnedBlocks then
+                        currentIndex = 1
+                    end
                     if currentIndex > #spawnedBlocks then
                         currentIndex = 1
                         targetPart.CFrame = spawnedBlocks[1].CFrame
