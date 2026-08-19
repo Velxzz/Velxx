@@ -26,7 +26,7 @@ MainFrame.Draggable = true
 
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "Modifier Gui (Permanent)"
+Title.Text = "Modifier Gui (Hard Lock)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize, Title.BackgroundTransparency = 13, 1
@@ -40,14 +40,14 @@ StartBtn.Text = "Start"
 StartBtn.Font = Enum.Font.GothamBold
 StartBtn.TextSize, StartBtn.BorderSizePixel = 12, 0
 
-local SpeedBox = Instance.new("TextBox", MainFrame)
-SpeedBox.Size = UDim2.new(0, 90, 0, 35)
-SpeedBox.Position = UDim2.new(0, 115, 0, 40)
-SpeedBox.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-SpeedBox.BackgroundTransparency = 0.5
-SpeedBox.Text = "1"
-SpeedBox.Font = Enum.Font.GothamBold
-SpeedBox.TextSize, SpeedBox.BorderSizePixel = 14, 0
+local SpeedBtn = Instance.new("TextButton", MainFrame)
+SpeedBtn.Size = UDim2.new(0, 90, 0, 35)
+SpeedBtn.Position = UDim2.new(0, 115, 0, 40)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+SpeedBtn.BackgroundTransparency = 0.5
+SpeedBtn.Text = "Speed: 1"
+SpeedBtn.Font = Enum.Font.GothamBold
+SpeedBtn.TextSize, SpeedBtn.BorderSizePixel = 11, 0
 
 local SpawnBtn = Instance.new("TextButton", MainFrame)
 SpawnBtn.Size = UDim2.new(0, 90, 0, 45)
@@ -118,11 +118,20 @@ StatusLabel.TextSize, StatusLabel.BackgroundTransparency = 10, 1
 local spawnedBlocks = {}
 local isRunning = false
 local currentIndex = 1
+local currentSpeed = 1
 
-local function createVisualBlock(pos)
+SpeedBtn.MouseButton1Click:Connect(function()
+    currentSpeed = currentSpeed - 1
+    if currentSpeed < 0 then
+        currentSpeed = 10
+    end
+    SpeedBtn.Text = "Speed: " .. tostring(currentSpeed)
+end)
+
+local function createVisualBlock(cf)
     local block = Instance.new("Part")
-    block.Size = Vector3.new(4, 10, 4)
-    block.Position = pos
+    block.Size = Vector3.new(1, 1, 10)
+    block.CFrame = cf
     block.Anchored = true
     block.CanCollide = false
     block.Transparency = 0.5
@@ -146,8 +155,7 @@ local function spawnBlockAtPlayer()
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
     
     if targetPart then
-        local pos = targetPart.Position
-        createVisualBlock(pos)
+        createVisualBlock(targetPart.CFrame)
     end
 end
 
@@ -189,8 +197,9 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
-        local p = block.Position
-        table.insert(dataToSave, {p.X, p.Y, p.Z})
+        local cf = block.CFrame
+        local comps = {cf:GetComponents()}
+        table.insert(dataToSave, comps)
     end
     
     if writefile then
@@ -225,9 +234,9 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         local rawData = readfile(fileName)
         local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
         
-        for _, posData in ipairs(decodedData) do
-            local pos = Vector3.new(posData[1], posData[2], posData[3])
-            createVisualBlock(pos)
+        for _, comps in ipairs(decodedData) do
+            local cf = CFrame.new(table.unpack(comps))
+            createVisualBlock(cf)
         end
         
         StatusLabel.Text = "Loaded Successfully!"
@@ -240,11 +249,10 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function(dt)
     if not isRunning or #spawnedBlocks == 0 then return end
     
-    local speedVal = tonumber(SpeedBox.Text) or 0
-    if speedVal <= 0 then return end
+    local speedVal = currentSpeed
     
     local char = LocalPlayer.Character
     if not char then return end
@@ -254,19 +262,35 @@ RunService.RenderStepped:Connect(function()
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
     
     if targetPart then
+        if targetPart:IsA("BasePart") then
+            targetPart.AssemblyLinearVelocity = Vector3.zero
+            targetPart.AssemblyAngularVelocity = Vector3.zero
+        end
+        
         local targetBlock = spawnedBlocks[currentIndex]
         if targetBlock then
             local targetCFrame = targetBlock.CFrame
-            local distance = (targetPart.Position - targetCFrame.Position).Magnitude
             
-            if distance < 3 then
+            if speedVal == 0 then
+                targetPart.CFrame = targetCFrame
                 currentIndex = currentIndex + 1
                 if currentIndex > #spawnedBlocks then
                     currentIndex = 1
                     targetPart.CFrame = spawnedBlocks[1].CFrame
                 end
             else
-                targetPart.CFrame = targetPart.CFrame:Lerp(targetCFrame, math.clamp(speedVal * 0.1, 0.01, 1))
+                local alpha = math.clamp(1 - ((speedVal - 0.1) / 9.9), 0.05, 1)
+                local distance = (targetPart.Position - targetCFrame.Position).Magnitude
+                
+                if distance < 3.5 then
+                    currentIndex = currentIndex + 1
+                    if currentIndex > #spawnedBlocks then
+                        currentIndex = 1
+                        targetPart.CFrame = spawnedBlocks[1].CFrame
+                    end
+                else
+                    targetPart.CFrame = targetPart.CFrame:Lerp(targetCFrame, alpha)
+                end
             end
         end
     end
