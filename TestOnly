@@ -1,8 +1,9 @@
---// Layanan Roblox
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+-- Clean Up & Folder
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("ModifierGui")
 if oldGui then oldGui:Destroy() end
 
@@ -10,180 +11,289 @@ if writefile and not isfolder("ModifierConfigs") then
     makefolder("ModifierConfigs")
 end
 
---// ScreenGui Utama
+-- ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 335)
-MainFrame.Position = UDim2.new(0.7, 0, 0.3, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BackgroundTransparency = 0.5
+MainFrame.Size = UDim2.new(0, 240, 0, 450)
+MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "Modifier Gui (Hard Lock)"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+local UICornerMain = Instance.new("UICorner", MainFrame)
+UICornerMain.CornerRadius = UDim.new(0, 10)
+
+-- Header UI
+local HeaderBar = Instance.new("Frame", MainFrame)
+HeaderBar.Size = UDim2.new(1, 0, 0, 35)
+HeaderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HeaderBar.BorderSizePixel = 0
+
+local HeaderCorner = Instance.new("UICorner", HeaderBar)
+HeaderCorner.CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel", HeaderBar)
+Title.Size = UDim2.new(1, -10, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Text = "MODIFIER V1.0 PRO"
+Title.TextColor3 = Color3.fromRGB(0, 102, 204)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize, Title.BackgroundTransparency = 13, 1
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
 
-local StartBtn = Instance.new("TextButton", MainFrame)
-StartBtn.Size = UDim2.new(0, 90, 0, 35)
-StartBtn.Position = UDim2.new(0, 15, 0, 40)
-StartBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-StartBtn.BackgroundTransparency = 0.5
-StartBtn.Text = "Start"
-StartBtn.Font = Enum.Font.GothamBold
-StartBtn.TextSize, StartBtn.BorderSizePixel = 12, 0
+-- Scroll Content
+local ContentScroll = Instance.new("ScrollingFrame", MainFrame)
+ContentScroll.Size = UDim2.new(1, -10, 1, -45)
+ContentScroll.Position = UDim2.new(0, 5, 0, 40)
+ContentScroll.BackgroundTransparency = 1
+ContentScroll.BorderSizePixel = 0
+ContentScroll.ScrollBarThickness = 4
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 420)
 
-local SpeedBtn = Instance.new("TextButton", MainFrame)
-SpeedBtn.Size = UDim2.new(0, 90, 0, 35)
-SpeedBtn.Position = UDim2.new(0, 115, 0, 40)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-SpeedBtn.BackgroundTransparency = 0.5
+local UIListLayout = Instance.new("UIListLayout", ContentScroll)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
+
+-- Helper Toggle Row
+local function createToggleRow(parent, labelText, order)
+    local row = Instance.new("Frame", parent)
+    row.Size = UDim2.new(1, -6, 0, 28)
+    row.BackgroundTransparency = 1
+    row.LayoutOrder = order
+    
+    local label = Instance.new("TextLabel", row)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Text = labelText .. " :"
+    label.TextColor3 = Color3.fromRGB(40, 40, 40)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 10
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    
+    local btn = Instance.new("TextButton", row)
+    btn.Size = UDim2.new(0, 75, 0, 22)
+    btn.Position = UDim2.new(1, -75, 0.5, -11)
+    btn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    btn.BorderSizePixel = 0
+    btn.Text = "OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 10
+    
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0, 4)
+    
+    return row, btn
+end
+
+-- Variables
+local activeFeatures = true
+local isRunning = false
+local floatFunctionActive = true
+local isLocked = false
+
+-- Toggle Active Features
+local _, ActiveFeaturesBtn = createToggleRow(ContentScroll, "Active Features", 1)
+ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+ActiveFeaturesBtn.Text = "ON"
+
+-- Toggle Start
+local _, StartToggleBtn = createToggleRow(ContentScroll, "Start Modifier", 2)
+
+-- UI Speed
+local speedRow = Instance.new("Frame", ContentScroll)
+speedRow.Size = UDim2.new(1, -6, 0, 28)
+speedRow.BackgroundTransparency = 1
+speedRow.LayoutOrder = 3
+
+local speedLabel = Instance.new("TextLabel", speedRow)
+speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
+speedLabel.Text = "Modifier Speed :"
+speedLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 10
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.BackgroundTransparency = 1
+
+local SpeedBtn = Instance.new("TextButton", speedRow)
+SpeedBtn.Size = UDim2.new(0, 75, 0, 22)
+SpeedBtn.Position = UDim2.new(1, -75, 0.5, -11)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+SpeedBtn.BorderSizePixel = 0
 SpeedBtn.Text = "1"
+SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.TextSize, SpeedBtn.BorderSizePixel = 12, 0
+SpeedBtn.TextSize = 10
+Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 4)
 
-local SpawnBtn = Instance.new("TextButton", MainFrame)
-SpawnBtn.Size = UDim2.new(0, 90, 0, 45)
-SpawnBtn.Position = UDim2.new(0, 15, 0, 85)
-SpawnBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-SpawnBtn.BackgroundTransparency = 0.5
-SpawnBtn.Text = "Spawn Modifier"
-SpawnBtn.Font = Enum.Font.GothamSemibold
-SpawnBtn.TextSize, SpawnBtn.TextWrapped, SpawnBtn.BorderSizePixel = 10, true, 0
+-- UI Spawn
+local spawnRow = Instance.new("Frame", ContentScroll)
+spawnRow.Size = UDim2.new(1, -6, 0, 28)
+spawnRow.BackgroundTransparency = 1
+spawnRow.LayoutOrder = 4
 
-local ResetBtn = Instance.new("TextButton", MainFrame)
-ResetBtn.Size = UDim2.new(0, 90, 0, 45)
-ResetBtn.Position = UDim2.new(0, 115, 0, 85)
-ResetBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-ResetBtn.BackgroundTransparency = 0.5
-ResetBtn.Text = "Reset"
+local spawnLabel = Instance.new("TextLabel", spawnRow)
+spawnLabel.Size = UDim2.new(0.6, 0, 1, 0)
+spawnLabel.Text = "Spawn Block :"
+spawnLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+spawnLabel.Font = Enum.Font.GothamBold
+spawnLabel.TextSize = 10
+spawnLabel.TextXAlignment = Enum.TextXAlignment.Left
+spawnLabel.BackgroundTransparency = 1
+
+local SpawnBtn = Instance.new("TextButton", spawnRow)
+SpawnBtn.Size = UDim2.new(0, 75, 0, 22)
+SpawnBtn.Position = UDim2.new(1, -75, 0.5, -11)
+SpawnBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+SpawnBtn.BorderSizePixel = 0
+SpawnBtn.Text = "SPAWN"
+SpawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnBtn.Font = Enum.Font.GothamBold
+SpawnBtn.TextSize = 9
+Instance.new("UICorner", SpawnBtn).CornerRadius = UDim.new(0, 4)
+
+-- UI Undo
+local undoRow = Instance.new("Frame", ContentScroll)
+undoRow.Size = UDim2.new(1, -6, 0, 28)
+undoRow.BackgroundTransparency = 1
+undoRow.LayoutOrder = 5
+
+local undoLabel = Instance.new("TextLabel", undoRow)
+undoLabel.Size = UDim2.new(0.6, 0, 1, 0)
+undoLabel.Text = "Undo Last Block :"
+undoLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+undoLabel.Font = Enum.Font.GothamBold
+undoLabel.TextSize = 10
+undoLabel.TextXAlignment = Enum.TextXAlignment.Left
+undoLabel.BackgroundTransparency = 1
+
+local UndoBtn = Instance.new("TextButton", undoRow)
+UndoBtn.Size = UDim2.new(0, 75, 0, 22)
+UndoBtn.Position = UDim2.new(1, -75, 0.5, -11)
+UndoBtn.BackgroundColor3 = Color3.fromRGB(230, 140, 0)
+UndoBtn.BorderSizePixel = 0
+UndoBtn.Text = "UNDO"
+UndoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+UndoBtn.Font = Enum.Font.GothamBold
+UndoBtn.TextSize = 9
+Instance.new("UICorner", UndoBtn).CornerRadius = UDim.new(0, 4)
+
+-- UI Reset
+local resetRow = Instance.new("Frame", ContentScroll)
+resetRow.Size = UDim2.new(1, -6, 0, 28)
+resetRow.BackgroundTransparency = 1
+resetRow.LayoutOrder = 6
+
+local resetLabel = Instance.new("TextLabel", resetRow)
+resetLabel.Size = UDim2.new(0.6, 0, 1, 0)
+resetLabel.Text = "Reset Modifier :"
+resetLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+resetLabel.Font = Enum.Font.GothamBold
+resetLabel.TextSize = 10
+resetLabel.TextXAlignment = Enum.TextXAlignment.Left
+resetLabel.BackgroundTransparency = 1
+
+local ResetBtn = Instance.new("TextButton", resetRow)
+ResetBtn.Size = UDim2.new(0, 75, 0, 22)
+ResetBtn.Position = UDim2.new(1, -75, 0.5, -11)
+ResetBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+ResetBtn.BorderSizePixel = 0
+ResetBtn.Text = "RESET"
+ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ResetBtn.Font = Enum.Font.GothamBold
-ResetBtn.TextSize, ResetBtn.BorderSizePixel = 12, 0
+ResetBtn.TextSize = 9
+Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 
-local SaveConfigBtn = Instance.new("TextButton", MainFrame)
-SaveConfigBtn.Size = UDim2.new(0, 190, 0, 35)
-SaveConfigBtn.Position = UDim2.new(0, 15, 0, 138)
-SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-SaveConfigBtn.BackgroundTransparency = 0.3
+-- Toggle Lock Button
+local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
+
+-- UI Config (Save & Load)
+local configRow = Instance.new("Frame", ContentScroll)
+configRow.Size = UDim2.new(1, -6, 0, 32)
+configRow.BackgroundTransparency = 1
+configRow.LayoutOrder = 8
+
+local SaveConfigBtn = Instance.new("TextButton", configRow)
+SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
+SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+SaveConfigBtn.BorderSizePixel = 0
 SaveConfigBtn.Text = "Save Config"
 SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SaveConfigBtn.Font = Enum.Font.GothamBold
-SaveConfigBtn.TextSize, SaveConfigBtn.BorderSizePixel = 12, 0
+SaveConfigBtn.TextSize = 10
+Instance.new("UICorner", SaveConfigBtn).CornerRadius = UDim.new(0, 4)
 
-local LoadBox = Instance.new("TextBox", MainFrame)
-LoadBox.Size = UDim2.new(0, 115, 0, 35)
-LoadBox.Position = UDim2.new(0, 15, 0, 180)
-LoadBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-LoadBox.BackgroundTransparency = 0.4
-LoadBox.PlaceholderText = "Paste Code Here"
-LoadBox.Text = ""
-LoadBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadBox.Font = Enum.Font.Gotham
-LoadBox.TextSize, LoadBox.BorderSizePixel = 10, 0
-
-local LoadConfigBtn = Instance.new("TextButton", MainFrame)
-LoadConfigBtn.Size = UDim2.new(0, 70, 0, 35)
-LoadConfigBtn.Position = UDim2.new(0, 135, 0, 180)
-LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-LoadConfigBtn.BackgroundTransparency = 0.3
-LoadConfigBtn.Text = "Load"
+local LoadConfigBtn = Instance.new("TextButton", configRow)
+LoadConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
+LoadConfigBtn.Position = UDim2.new(0.52, 0, 0, 0)
+LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+LoadConfigBtn.BorderSizePixel = 0
+LoadConfigBtn.Text = "Load Config"
 LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoadConfigBtn.Font = Enum.Font.GothamBold
-LoadConfigBtn.TextSize, LoadConfigBtn.BorderSizePixel = 11, 0
+LoadConfigBtn.TextSize = 10
+Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
-local CloseBtn = Instance.new("TextButton", MainFrame)
-CloseBtn.Size = UDim2.new(0, 190, 0, 35)
-CloseBtn.Position = UDim2.new(0, 15, 0, 225)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-CloseBtn.BackgroundTransparency = 0.5
-CloseBtn.Text = "Close"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize, CloseBtn.BorderSizePixel = 12, 0
+-- UI Code Box
+local loadBoxRow = Instance.new("Frame", ContentScroll)
+loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
+loadBoxRow.BackgroundTransparency = 1
+loadBoxRow.LayoutOrder = 9
 
-local StatusLabel = Instance.new("TextLabel", MainFrame)
-StatusLabel.Size = UDim2.new(1, 0, 0, 25)
-StatusLabel.Position = UDim2.new(0, 0, 0, 275)
+local LoadBox = Instance.new("TextBox", loadBoxRow)
+LoadBox.Size = UDim2.new(1, 0, 1, 0)
+LoadBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+LoadBox.BorderSizePixel = 0
+LoadBox.PlaceholderText = "Paste Code Config Here..."
+LoadBox.Text = ""
+LoadBox.TextColor3 = Color3.fromRGB(30, 30, 30)
+LoadBox.Font = Enum.Font.Gotham
+LoadBox.TextSize = 10
+Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
+
+-- Status Text
+local statusRow = Instance.new("Frame", ContentScroll)
+statusRow.Size = UDim2.new(1, -6, 0, 20)
+statusRow.BackgroundTransparency = 1
+statusRow.LayoutOrder = 10
+
+local StatusLabel = Instance.new("TextLabel", statusRow)
+StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.Text = ""
-StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+StatusLabel.TextColor3 = Color3.fromRGB(0, 150, 0)
 StatusLabel.Font = Enum.Font.GothamSemibold
-StatusLabel.TextSize, StatusLabel.BackgroundTransparency = 10, 1
+StatusLabel.TextSize = 10
+StatusLabel.BackgroundTransparency = 1
 
---// Panel Kontrol Floating (Dilengkapi Tombol Active On/Off & Lock)
-local FloatControlPanel = Instance.new("Frame", ScreenGui)
-FloatControlPanel.Size = UDim2.new(0, 210, 0, 40)
-FloatControlPanel.Position = UDim2.new(0.02, 0, 0.22, 0)
-FloatControlPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FloatControlPanel.BackgroundTransparency = 0.4
-FloatControlPanel.BorderSizePixel = 0
-FloatControlPanel.Active = true
-FloatControlPanel.Draggable = true
-
-local PanelTitle = Instance.new("TextLabel", FloatControlPanel)
-PanelTitle.Size = UDim2.new(0, 60, 1, 0)
-PanelTitle.Position = UDim2.new(0, 8, 0, 0)
-PanelTitle.Text = "Float Menu"
-PanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-PanelTitle.Font = Enum.Font.GothamBold
-PanelTitle.TextSize = 10
-PanelTitle.BackgroundTransparency = 1
-PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
-
--- Tombol Active
-local ActiveFloatBtn = Instance.new("TextButton", FloatControlPanel)
-ActiveFloatBtn.Size = UDim2.new(0, 62, 0, 26)
-ActiveFloatBtn.Position = UDim2.new(0, 68, 0.5, -13)
-ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-ActiveFloatBtn.BackgroundTransparency = 0.3
-ActiveFloatBtn.Text = "Active: On"
-ActiveFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ActiveFloatBtn.Font = Enum.Font.GothamBold
-ActiveFloatBtn.TextSize = 9
-ActiveFloatBtn.BorderSizePixel = 0
-
--- Tombol Lock
-local LockFloatBtn = Instance.new("TextButton", FloatControlPanel)
-LockFloatBtn.Size = UDim2.new(0, 65, 0, 26)
-LockFloatBtn.Position = UDim2.new(0, 136, 0.5, -13)
-LockFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-LockFloatBtn.BackgroundTransparency = 0.3
-LockFloatBtn.Text = "Lock: Off"
-LockFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockFloatBtn.Font = Enum.Font.GothamBold
-LockFloatBtn.TextSize = 9
-LockFloatBtn.BorderSizePixel = 0
-
---// Main Floating Button untuk Buka/Tutup UI Utama
+-- Float Logo Menu
 local MainFloatBtn = Instance.new("TextButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-MainFloatBtn.Position = UDim2.new(0.02, 0, 0.28, 0)
+MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
 MainFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFloatBtn.BackgroundTransparency = 0.4
-MainFloatBtn.Text = "UI"
-MainFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainFloatBtn.BackgroundTransparency = 0.2
+MainFloatBtn.Text = "M"
+MainFloatBtn.TextColor3 = Color3.fromRGB(0, 150, 255)
 MainFloatBtn.Font = Enum.Font.GothamBold
-MainFloatBtn.TextSize = 13
+MainFloatBtn.TextSize = 18
 MainFloatBtn.BorderSizePixel = 0
 MainFloatBtn.Active = true
 MainFloatBtn.Draggable = true
 
-local UICornerMain = Instance.new("UICorner", MainFloatBtn)
-UICornerMain.CornerRadius = UDim.new(1, 0)
+local UICornerMainFloat = Instance.new("UICorner", MainFloatBtn)
+UICornerMainFloat.CornerRadius = UDim.new(1, 0)
 
 MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
-local floatFunctionActive = true
-
--- Fungsi Pembuat Floating Button Bulat dengan Posisi Spesifik & Fitur Drag/Lock
+-- Helper Float Button
 local function createCircularFloat(name, text, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = UDim2.new(0, 45, 0, 45)
@@ -201,7 +311,7 @@ local function createCircularFloat(name, text, customPos, callback)
     corner.CornerRadius = UDim.new(1, 0)
     
     btn.MouseButton1Click:Connect(function()
-        if floatFunctionActive then
+        if activeFeatures and floatFunctionActive then
             callback()
         end
     end)
@@ -230,7 +340,7 @@ local function createCircularFloat(name, text, customPos, callback)
     end)
     
     game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == dragInput and dragging and LockFloatBtn.Text == "Lock: Off" then
+        if input == dragInput and dragging and not isLocked then
             local delta = input.Position - dragStart
             btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -239,15 +349,14 @@ local function createCircularFloat(name, text, customPos, callback)
     return btn
 end
 
+-- Variables Logic
 local spawnedBlocks = {}
-local isRunning = false
 local currentIndex = 1
-local currentSpeedIndex = 11 -- Indeks awal kecepatan 1
+local currentSpeedIndex = 11
 local lastPos = nil
 local startingCFrame = nil
 local currentTransitionTime = 0
 
--- Daftar nilai kecepatan lengkap (0 s.d 0.9, dan 1 s.d 10)
 local speedValues = {
     0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
@@ -257,17 +366,28 @@ local function getSpeedValue()
     return speedValues[currentSpeedIndex]
 end
 
+local FastSteerFloatBtn
+
+-- Logika Speed
+local function updateSpeedUI()
+    local val = getSpeedValue()
+    SpeedBtn.Text = tostring(val)
+    if FastSteerFloatBtn then
+        FastSteerFloatBtn.Text = tostring(val)
+    end
+end
+
 local function cycleSpeed()
     currentSpeedIndex = currentSpeedIndex - 1
     if currentSpeedIndex < 1 then
         currentSpeedIndex = #speedValues
     end
-    local val = getSpeedValue()
-    SpeedBtn.Text = tostring(val)
+    updateSpeedUI()
 end
 
 SpeedBtn.MouseButton1Click:Connect(cycleSpeed)
 
+-- Logika Block
 local function createVisualBlock(cf)
     local block = Instance.new("Part")
     block.Size = Vector3.new(1, 10, 1)
@@ -287,7 +407,9 @@ local function createVisualBlock(cf)
     table.insert(spawnedBlocks, block)
 end
 
+-- Logika Spawn
 local function spawnBlockAtPlayer()
+    if not activeFeatures then return end
     local char = LocalPlayer.Character
     if not char then return end
     local rootPart = char:FindFirstChild("HumanoidRootPart")
@@ -296,41 +418,78 @@ local function spawnBlockAtPlayer()
     
     if targetPart then
         local currentPos = targetPart.Position
-        local lookVector
+        local finalCFrame
         
         if lastPos then
             local moveDir = currentPos - lastPos
             if moveDir.Magnitude > 0.01 then
-                lookVector = moveDir.Unit
+                local forwardVector = moveDir.Unit
+                local upVector = targetPart.CFrame.UpVector
+                local rightVector = forwardVector:Cross(upVector).Unit
+                
+                upVector = rightVector:Cross(forwardVector).Unit
+                finalCFrame = CFrame.fromMatrix(currentPos, rightVector, upVector, -forwardVector)
             else
-                lookVector = targetPart.CFrame.LookVector
+                finalCFrame = targetPart.CFrame
             end
         else
-            lookVector = targetPart.CFrame.LookVector
+            finalCFrame = targetPart.CFrame
         end
         
         lastPos = currentPos
-        
-        local finalCFrame = CFrame.lookAt(currentPos, currentPos + Vector3.new(lookVector.X, 0, lookVector.Z), Vector3.new(0, 1, 0))
         createVisualBlock(finalCFrame)
+        StatusLabel.Text = "Block Spawned!"
     end
 end
 
+-- Logika Undo
+local function undoLastBlock()
+    if not activeFeatures then return end
+    if #spawnedBlocks > 0 then
+        local lastBlock = table.remove(spawnedBlocks, #spawnedBlocks)
+        if lastBlock then
+            lastBlock:Destroy()
+        end
+        if currentIndex > #spawnedBlocks then
+            currentIndex = math.max(1, #spawnedBlocks)
+        end
+        if #spawnedBlocks > 0 then
+            lastPos = spawnedBlocks[#spawnedBlocks].Position
+        else
+            lastPos = nil
+        end
+        StatusLabel.Text = "Last Block Removed!"
+    else
+        StatusLabel.Text = "No blocks to undo!"
+    end
+end
+
+local FloatStart
+
+-- Logika Start/Pause
 local function toggleStart()
-    if #spawnedBlocks == 0 then return end
+    if not activeFeatures or #spawnedBlocks == 0 then return end
     isRunning = not isRunning
-    local stateText = isRunning and "Pause" or "Start"
-    StartBtn.Text = stateText
-    
     if isRunning then
+        StartToggleBtn.Text = "ON"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        if FloatStart then FloatStart.Text = "Pause" end
         startingCFrame = nil
         currentTransitionTime = 0
+    else
+        StartToggleBtn.Text = "OFF"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if FloatStart then FloatStart.Text = "Start" end
     end
 end
 
+-- Logika Reset
 local function resetAll()
+    if not activeFeatures then return end
     isRunning = false
-    StartBtn.Text = "Start"
+    StartToggleBtn.Text = "OFF"
+    StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    if FloatStart then FloatStart.Text = "Start" end
     currentIndex = 1
     lastPos = nil
     startingCFrame = nil
@@ -342,66 +501,43 @@ local function resetAll()
     StatusLabel.Text = "Reseted!"
 end
 
--- Inisialisasi FloatBtn dengan Posisi Khusus Sesuai Permintaan
-local FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), function()
-    toggleStart()
-    FloatStart.Text = StartBtn.Text
-end)
-
+-- Posisi Float Buttons
+FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -180, 1, -195), undoLastBlock)
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -220, 1, -120), resetAll)
+FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -180, 1, -345), cycleSpeed)
 
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -220, 1, -120), function()
-    resetAll()
-    FloatStart.Text = "Start"
-end)
-
-local FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -180, 1, -345), function()
-    cycleSpeed()
-    FastSteerFloatBtn.Text = SpeedBtn.Text
-end)
-
--- Hubungkan update teks SpeedBtn ke FastSteerFloatBtn
-local oldCycle = cycleSpeed
-cycleSpeed = function()
-    oldCycle()
-    FastSteerFloatBtn.Text = SpeedBtn.Text
-end
-
+-- Event UI
+StartToggleBtn.MouseButton1Click:Connect(toggleStart)
 SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
-StartBtn.MouseButton1Click:Connect(function()
-    toggleStart()
-    FloatStart.Text = StartBtn.Text
-end)
-ResetBtn.MouseButton1Click:Connect(function()
-    resetAll()
-    FloatStart.Text = "Start"
-end)
+UndoBtn.MouseButton1Click:Connect(undoLastBlock)
+ResetBtn.MouseButton1Click:Connect(resetAll)
 
--- Sistem Active Button
-ActiveFloatBtn.MouseButton1Click:Connect(function()
-    floatFunctionActive = not floatFunctionActive
-    if floatFunctionActive then
-        ActiveFloatBtn.Text = "Active: On"
-        ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+ActiveFeaturesBtn.MouseButton1Click:Connect(function()
+    activeFeatures = not activeFeatures
+    if activeFeatures then
+        ActiveFeaturesBtn.Text = "ON"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
     else
-        ActiveFloatBtn.Text = "Active: Off"
-        ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        ActiveFeaturesBtn.Text = "OFF"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if isRunning then toggleStart() end
     end
 end)
 
--- Sistem Lock Button
-local isLocked = false
-LockFloatBtn.MouseButton1Click:Connect(function()
+LockButtonToggle.MouseButton1Click:Connect(function()
     isLocked = not isLocked
     if isLocked then
-        LockFloatBtn.Text = "Lock: On"
-        LockFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        LockButtonToggle.Text = "ON"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
     else
-        LockFloatBtn.Text = "Lock: Off"
-        LockFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        LockButtonToggle.Text = "OFF"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     end
 end)
 
+-- Logika Save Config
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
@@ -436,6 +572,7 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Logika Load Config
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
@@ -450,8 +587,9 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         end
         spawnedBlocks = {}
         isRunning = false
-        StartBtn.Text = "Start"
-        FloatStart.Text = "Start"
+        StartToggleBtn.Text = "OFF"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if FloatStart then FloatStart.Text = "Start" end
         lastPos = nil
         startingCFrame = nil
         currentTransitionTime = 0
@@ -470,15 +608,11 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
+-- Loop Heartbeat Teleport
 RunService.Heartbeat:Connect(function(dt)
-    if not isRunning or #spawnedBlocks == 0 then return end
+    if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
     
     local speedVal = getSpeedValue()
-    
     local char = LocalPlayer.Character
     if not char then return end
     
