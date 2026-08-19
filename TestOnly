@@ -55,7 +55,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 420)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -296,7 +296,7 @@ end)
 -- Helper Float Button
 local function createCircularFloat(name, text, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
-    btn.Size = UDim2.new(0, 45, 0, 45)
+    btn.Size = UDim2.new(0, 55, 0, 55)
     btn.Position = customPos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.BackgroundTransparency = 0.4
@@ -504,8 +504,8 @@ end
 -- Posisi Float Buttons
 FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
-local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -180, 1, -195), undoLastBlock)
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -220, 1, -120), resetAll)
+local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
 FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -180, 1, -345), cycleSpeed)
 
 -- Event UI
