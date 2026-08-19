@@ -116,106 +116,157 @@ StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize, StatusLabel.BackgroundTransparency = 10, 1
 
---// Floating Button Utama untuk buka/tutup UI Lengkap
+--// Panel Kontrol Floating (Dilengkapi Tombol Active On/Off & Lock)
+local FloatControlPanel = Instance.new("Frame", ScreenGui)
+FloatControlPanel.Size = UDim2.new(0, 210, 0, 40)
+FloatControlPanel.Position = UDim2.new(0.02, 0, 0.22, 0)
+FloatControlPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatControlPanel.BackgroundTransparency = 0.4
+FloatControlPanel.BorderSizePixel = 0
+FloatControlPanel.Active = true
+FloatControlPanel.Draggable = true
+
+local PanelTitle = Instance.new("TextLabel", FloatControlPanel)
+PanelTitle.Size = UDim2.new(0, 60, 1, 0)
+PanelTitle.Position = UDim2.new(0, 8, 0, 0)
+PanelTitle.Text = "Float Menu"
+PanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+PanelTitle.Font = Enum.Font.GothamBold
+PanelTitle.TextSize = 10
+PanelTitle.BackgroundTransparency = 1
+PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Tombol Active
+local ActiveFloatBtn = Instance.new("TextButton", FloatControlPanel)
+ActiveFloatBtn.Size = UDim2.new(0, 62, 0, 26)
+ActiveFloatBtn.Position = UDim2.new(0, 68, 0.5, -13)
+ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+ActiveFloatBtn.BackgroundTransparency = 0.3
+ActiveFloatBtn.Text = "Active: On"
+ActiveFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ActiveFloatBtn.Font = Enum.Font.GothamBold
+ActiveFloatBtn.TextSize = 9
+ActiveFloatBtn.BorderSizePixel = 0
+
+-- Tombol Lock
+local LockFloatBtn = Instance.new("TextButton", FloatControlPanel)
+LockFloatBtn.Size = UDim2.new(0, 65, 0, 26)
+LockFloatBtn.Position = UDim2.new(0, 136, 0.5, -13)
+LockFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+LockFloatBtn.BackgroundTransparency = 0.3
+LockFloatBtn.Text = "Lock: Off"
+LockFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockFloatBtn.Font = Enum.Font.GothamBold
+LockFloatBtn.TextSize = 9
+LockFloatBtn.BorderSizePixel = 0
+
+--// Main Floating Button untuk Buka/Tutup UI Utama
 local MainFloatBtn = Instance.new("TextButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-MainFloatBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFloatBtn.Position = UDim2.new(0.02, 0, 0.28, 0)
 MainFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFloatBtn.BackgroundTransparency = 0.4
 MainFloatBtn.Text = "UI"
 MainFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MainFloatBtn.Font = Enum.Font.GothamBold
-MainFloatBtn.TextSize = 14
+MainFloatBtn.TextSize = 13
 MainFloatBtn.BorderSizePixel = 0
 MainFloatBtn.Active = true
 MainFloatBtn.Draggable = true
+
+local UICornerMain = Instance.new("UICorner", MainFloatBtn)
+UICornerMain.CornerRadius = UDim.new(1, 0)
 
 MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
---// Floating Button Khusus (FloatBtns) untuk aksi cepat di luar UI Utama
-local FloatContainer = Instance.new("Frame", ScreenGui)
-FloatContainer.Size = UDim2.new(0, 110, 0, 220)
-FloatContainer.Position = UDim2.new(0.02, 0, 0.45, 0)
-FloatContainer.BackgroundTransparency = 1
-FloatContainer.Active = true
-FloatContainer.Draggable = true
+local floatFunctionActive = true
 
--- 1. FloatBtn Spawn Balok
-local FloatSpawn = Instance.new("TextButton", FloatContainer)
-FloatSpawn.Size = UDim2.new(0, 100, 0, 40)
-FloatSpawn.Position = UDim2.new(0, 0, 0, 0)
-FloatSpawn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FloatSpawn.BackgroundTransparency = 0.4
-FloatSpawn.Text = "Spawn"
-FloatSpawn.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatSpawn.Font = Enum.Font.GothamBold
-FloatSpawn.TextSize = 11
-FloatSpawn.BorderSizePixel = 0
-
--- 2. FloatBtn Start/Stop
-local FloatStart = Instance.new("TextButton", FloatContainer)
-FloatStart.Size = UDim2.new(0, 100, 0, 40)
-FloatStart.Position = UDim2.new(0, 0, 0, 45)
-FloatStart.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FloatStart.BackgroundTransparency = 0.4
-FloatStart.Text = "Start"
-FloatStart.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatStart.Font = Enum.Font.GothamBold
-FloatStart.TextSize = 11
-FloatStart.BorderSizePixel = 0
-
--- 3. FloatBtn Reset
-local FloatReset = Instance.new("TextButton", FloatContainer)
-FloatReset.Size = UDim2.new(0, 100, 0, 40)
-FloatReset.Position = UDim2.new(0, 0, 0, 90)
-FloatReset.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FloatReset.BackgroundTransparency = 0.4
-FloatReset.Text = "Reset"
-FloatReset.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatReset.Font = Enum.Font.GothamBold
-FloatReset.TextSize = 11
-FloatReset.BorderSizePixel = 0
-
--- 4. FloatBtn Speed (Hanya menampilkan angka)
-local FloatSpeed = Instance.new("TextButton", FloatContainer)
-FloatSpeed.Size = UDim2.new(0, 100, 0, 40)
-FloatSpeed.Position = UDim2.new(0, 0, 0, 135)
-FloatSpeed.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FloatSpeed.BackgroundTransparency = 0.4
-FloatSpeed.Text = "1"
-FloatSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatSpeed.Font = Enum.Font.GothamBold
-FloatSpeed.TextSize = 12
-FloatSpeed.BorderSizePixel = 0
+-- Fungsi Pembuat Floating Button Bulat dengan Posisi Spesifik & Fitur Drag/Lock
+local function createCircularFloat(name, text, customPos, callback)
+    local btn = Instance.new("TextButton", ScreenGui)
+    btn.Size = UDim2.new(0, 45, 0, 45)
+    btn.Position = customPos
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BackgroundTransparency = 0.4
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = name == "Speed" and 12 or 10
+    btn.BorderSizePixel = 0
+    btn.Active = true
+    
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(1, 0)
+    
+    btn.MouseButton1Click:Connect(function()
+        if floatFunctionActive then
+            callback()
+        end
+    end)
+    
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = btn.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    btn.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging and LockFloatBtn.Text == "Lock: Off" then
+            local delta = input.Position - dragStart
+            btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    return btn
+end
 
 local spawnedBlocks = {}
 local isRunning = false
 local currentIndex = 1
-local currentSpeed = 1
+local currentSpeedIndex = 11 -- Indeks awal kecepatan 1
 local lastPos = nil
 local startingCFrame = nil
 local currentTransitionTime = 0
 
--- Fungsi sinkronisasi tombol kecepatan (UI Utama & Floating)
-local function updateSpeed(newSpeed)
-    currentSpeed = newSpeed
-    SpeedBtn.Text = tostring(currentSpeed)
-    FloatSpeed.Text = tostring(currentSpeed)
+-- Daftar nilai kecepatan lengkap (0 s.d 0.9, dan 1 s.d 10)
+local speedValues = {
+    0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+}
+
+local function getSpeedValue()
+    return speedValues[currentSpeedIndex]
 end
 
-SpeedBtn.MouseButton1Click:Connect(function()
-    local spd = currentSpeed - 1
-    if spd < 0 then spd = 10 end
-    updateSpeed(spd)
-end)
+local function cycleSpeed()
+    currentSpeedIndex = currentSpeedIndex - 1
+    if currentSpeedIndex < 1 then
+        currentSpeedIndex = #speedValues
+    end
+    local val = getSpeedValue()
+    SpeedBtn.Text = tostring(val)
+end
 
-FloatSpeed.MouseButton1Click:Connect(function()
-    local spd = currentSpeed - 1
-    if spd < 0 then spd = 10 end
-    updateSpeed(spd)
-end)
+SpeedBtn.MouseButton1Click:Connect(cycleSpeed)
 
 local function createVisualBlock(cf)
     local block = Instance.new("Part")
@@ -265,15 +316,11 @@ local function spawnBlockAtPlayer()
     end
 end
 
-SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
-FloatSpawn.MouseButton1Click:Connect(spawnBlockAtPlayer)
-
 local function toggleStart()
     if #spawnedBlocks == 0 then return end
     isRunning = not isRunning
     local stateText = isRunning and "Pause" or "Start"
     StartBtn.Text = stateText
-    FloatStart.Text = stateText
     
     if isRunning then
         startingCFrame = nil
@@ -281,13 +328,9 @@ local function toggleStart()
     end
 end
 
-StartBtn.MouseButton1Click:Connect(toggleStart)
-FloatStart.MouseButton1Click:Connect(toggleStart)
-
 local function resetAll()
     isRunning = false
     StartBtn.Text = "Start"
-    FloatStart.Text = "Start"
     currentIndex = 1
     lastPos = nil
     startingCFrame = nil
@@ -299,8 +342,65 @@ local function resetAll()
     StatusLabel.Text = "Reseted!"
 end
 
-ResetBtn.MouseButton1Click:Connect(resetAll)
-FloatReset.MouseButton1Click:Connect(resetAll)
+-- Inisialisasi FloatBtn dengan Posisi Khusus Sesuai Permintaan
+local FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), function()
+    toggleStart()
+    FloatStart.Text = StartBtn.Text
+end)
+
+local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -220, 1, -120), function()
+    resetAll()
+    FloatStart.Text = "Start"
+end)
+
+local FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -180, 1, -345), function()
+    cycleSpeed()
+    FastSteerFloatBtn.Text = SpeedBtn.Text
+end)
+
+-- Hubungkan update teks SpeedBtn ke FastSteerFloatBtn
+local oldCycle = cycleSpeed
+cycleSpeed = function()
+    oldCycle()
+    FastSteerFloatBtn.Text = SpeedBtn.Text
+end
+
+SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
+StartBtn.MouseButton1Click:Connect(function()
+    toggleStart()
+    FloatStart.Text = StartBtn.Text
+end)
+ResetBtn.MouseButton1Click:Connect(function()
+    resetAll()
+    FloatStart.Text = "Start"
+end)
+
+-- Sistem Active Button
+ActiveFloatBtn.MouseButton1Click:Connect(function()
+    floatFunctionActive = not floatFunctionActive
+    if floatFunctionActive then
+        ActiveFloatBtn.Text = "Active: On"
+        ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        ActiveFloatBtn.Text = "Active: Off"
+        ActiveFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    end
+end)
+
+-- Sistem Lock Button
+local isLocked = false
+LockFloatBtn.MouseButton1Click:Connect(function()
+    isLocked = not isLocked
+    if isLocked then
+        LockFloatBtn.Text = "Lock: On"
+        LockFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        LockFloatBtn.Text = "Lock: Off"
+        LockFloatBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    end
+end)
 
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
@@ -357,7 +457,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         currentTransitionTime = 0
         
         local rawData = readfile(fileName)
-        local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
+        local decodedData = game:GetService("HttpService"):JSONEncode(rawData)
         
         for _, comps in ipairs(decodedData) do
             local cf = CFrame.new(table.unpack(comps))
@@ -377,7 +477,7 @@ end)
 RunService.Heartbeat:Connect(function(dt)
     if not isRunning or #spawnedBlocks == 0 then return end
     
-    local speedVal = currentSpeed
+    local speedVal = getSpeedValue()
     
     local char = LocalPlayer.Character
     if not char then return end
