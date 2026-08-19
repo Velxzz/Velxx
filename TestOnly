@@ -1,7 +1,8 @@
--- Modifier Gui V2.0
+-- Modifier Gui v2.1
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Clean Up & Folder
@@ -18,12 +19,11 @@ ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Frame Utama (Transparan 50%)
+-- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 300)
 MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BackgroundTransparency = 0.5
+MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -31,17 +31,10 @@ MainFrame.Draggable = true
 local UICornerMain = Instance.new("UICorner", MainFrame)
 UICornerMain.CornerRadius = UDim.new(0, 10)
 
--- Border Tipis RGB Melingkari Menu Utama
-local RGBStroke = Instance.new("UIStroke", MainFrame)
-RGBStroke.Thickness = 1.5
-RGBStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-RGBStroke.Color = Color3.fromRGB(255, 0, 0)
-
--- Header UI (Transparan 50%)
+-- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 35)
-HeaderBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-HeaderBar.BackgroundTransparency = 0.5
+HeaderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 HeaderBar.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner", HeaderBar)
@@ -51,7 +44,7 @@ local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.Text = "MODIFIER V1.0 PRO"
-Title.TextColor3 = Color3.fromRGB(0, 170, 255)
+Title.TextColor3 = Color3.fromRGB(0, 102, 204)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -80,7 +73,7 @@ local function createToggleRow(parent, labelText, order)
     local label = Instance.new("TextLabel", row)
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Text = labelText .. " :"
-    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextColor3 = Color3.fromRGB(40, 40, 40)
     label.Font = Enum.Font.GothamBold
     label.TextSize = 10
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -125,7 +118,7 @@ speedRow.LayoutOrder = 3
 local speedLabel = Instance.new("TextLabel", speedRow)
 speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
 speedLabel.Text = "Modifier Speed :"
-speedLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+speedLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
 speedLabel.Font = Enum.Font.GothamBold
 speedLabel.TextSize = 10
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -151,7 +144,7 @@ spawnRow.LayoutOrder = 4
 local spawnLabel = Instance.new("TextLabel", spawnRow)
 spawnLabel.Size = UDim2.new(0.6, 0, 1, 0)
 spawnLabel.Text = "Spawn Block :"
-spawnLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+spawnLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
 spawnLabel.Font = Enum.Font.GothamBold
 spawnLabel.TextSize = 10
 spawnLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -177,7 +170,7 @@ undoRow.LayoutOrder = 5
 local undoLabel = Instance.new("TextLabel", undoRow)
 undoLabel.Size = UDim2.new(0.6, 0, 1, 0)
 undoLabel.Text = "Undo Last Block :"
-undoLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+undoLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
 undoLabel.Font = Enum.Font.GothamBold
 undoLabel.TextSize = 10
 undoLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -203,7 +196,7 @@ resetRow.LayoutOrder = 6
 local resetLabel = Instance.new("TextLabel", resetRow)
 resetLabel.Size = UDim2.new(0.6, 0, 1, 0)
 resetLabel.Text = "Reset Modifier :"
-resetLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+resetLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
 resetLabel.Font = Enum.Font.GothamBold
 resetLabel.TextSize = 10
 resetLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -223,7 +216,7 @@ Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 -- Toggle Lock Button
 local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
 
--- UI Config (Save & Load Global)
+-- UI Config (Save & Load)
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
@@ -250,16 +243,33 @@ LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 10
 Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
+-- UI Code Box
+local loadBoxRow = Instance.new("Frame", ContentScroll)
+loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
+loadBoxRow.BackgroundTransparency = 1
+loadBoxRow.LayoutOrder = 9
+
+local LoadBox = Instance.new("TextBox", loadBoxRow)
+LoadBox.Size = UDim2.new(1, 0, 1, 0)
+LoadBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+LoadBox.BorderSizePixel = 0
+LoadBox.PlaceholderText = "Paste Code Config Here..."
+LoadBox.Text = ""
+LoadBox.TextColor3 = Color3.fromRGB(30, 30, 30)
+LoadBox.Font = Enum.Font.Gotham
+LoadBox.TextSize = 10
+Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
+
 -- Status Text
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 9
+statusRow.LayoutOrder = 10
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.Text = ""
-StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+StatusLabel.TextColor3 = Color3.fromRGB(0, 150, 0)
 StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
@@ -397,6 +407,7 @@ local function createVisualBlock(cf)
     
     block.Parent = workspace
     table.insert(spawnedBlocks, block)
+    return block
 end
 
 -- Logika Spawn
@@ -529,33 +540,52 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- Logika Save Config (Independen dari Sesi/Game ID)
+-- LOGIKA SAVE CONFIG (Murni Menyimpan Matriks Koordinat World Space)
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
         return
     end
     
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local randomCode = "C_"
+    math.randomseed(os.time() + math.floor(tick() * 1000))
+    for i = 1, 13 do
+        local randIndex = math.random(1, #chars)
+        randomCode = randomCode .. chars:sub(randIndex, randIndex)
+    end
+    
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
         local cf = block.CFrame
-        local comps = {cf:GetComponents()}
-        table.insert(dataToSave, comps)
+        -- Menyimpan seluruh komponen CFrame (posisi X,Y,Z dan matriks rotasi)
+        table.insert(dataToSave, {cf:GetComponents()})
     end
     
     if writefile then
-        local encodedData = game:GetService("HttpService"):JSONEncode(dataToSave)
-        writefile("ModifierConfigs/GlobalConfig.json", encodedData)
-        StatusLabel.Text = "Config Saved Globally!"
+        local encodedData = HttpService:JSONEncode(dataToSave)
+        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+    end
+    
+    if setclipboard then
+        setclipboard(randomCode)
+        StatusLabel.Text = "Saved & Copied!"
     else
-        StatusLabel.Text = "File write not supported!"
+        StatusLabel.Text = "Saved Code: " .. randomCode
     end
 end)
 
--- Logika Load Config (Otomatis Muat Koordinat Tersimpan)
+-- LOGIKA LOAD CONFIG (Murni Memunculkan Balok di Koordinat Persis Tanpa Pandang Sesi/Game)
 LoadConfigBtn.MouseButton1Click:Connect(function()
-    local fileName = "ModifierConfigs/GlobalConfig.json"
+    local codeToLoad = LoadBox.Text:gsub("%s+", "")
+    if codeToLoad == "" then
+        StatusLabel.Text = "Enter code first!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
     if readfile and pcall(readfile, fileName) then
+        -- Bersihkan Balok Lama
         for _, block in ipairs(spawnedBlocks) do
             if block then block:Destroy() end
         end
@@ -564,31 +594,138 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         StartToggleBtn.Text = "OFF"
         StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
         if FloatStart then FloatStart.Text = "Start" end
+    currentIndex = 1
+    lastPos = nil
+    startingCFrame = nil
+    currentTransitionTime = 0
+    for _, block in ipairs(spawnedBlocks) do
+        if block then block:Destroy() end
+    end
+    spawnedBlocks = {}
+    StatusLabel.Text = "Reseted!"
+end
+
+-- Posisi Float Buttons
+FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
+local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
+FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
+
+-- Event UI
+StartToggleBtn.MouseButton1Click:Connect(toggleStart)
+SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
+UndoBtn.MouseButton1Click:Connect(undoLastBlock)
+ResetBtn.MouseButton1Click:Connect(resetAll)
+
+ActiveFeaturesBtn.MouseButton1Click:Connect(function()
+    activeFeatures = not activeFeatures
+    if activeFeatures then
+        ActiveFeaturesBtn.Text = "ON"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        ActiveFeaturesBtn.Text = "OFF"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if isRunning then toggleStart() end
+    end
+end)
+
+LockButtonToggle.MouseButton1Click:Connect(function()
+    isLocked = not isLocked
+    if isLocked then
+        LockButtonToggle.Text = "ON"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        LockButtonToggle.Text = "OFF"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end
+end)
+
+-- LOGIKA SAVE CONFIG (Murni Menyimpan Matriks Koordinat World Space)
+SaveConfigBtn.MouseButton1Click:Connect(function()
+    if #spawnedBlocks == 0 then
+        StatusLabel.Text = "Spawn blocks first!"
+        return
+    end
+    
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local randomCode = "C_"
+    math.randomseed(os.time() + math.floor(tick() * 1000))
+    for i = 1, 13 do
+        local randIndex = math.random(1, #chars)
+        randomCode = randomCode .. chars:sub(randIndex, randIndex)
+    end
+    
+    local dataToSave = {}
+    for _, block in ipairs(spawnedBlocks) do
+        local cf = block.CFrame
+        -- Menyimpan seluruh komponen CFrame (posisi X,Y,Z dan matriks rotasi)
+        table.insert(dataToSave, {cf:GetComponents()})
+    end
+    
+    if writefile then
+        local encodedData = HttpService:JSONEncode(dataToSave)
+        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+    end
+    
+    if setclipboard then
+        setclipboard(randomCode)
+        StatusLabel.Text = "Saved & Copied!"
+    else
+        StatusLabel.Text = "Saved Code: " .. randomCode
+    end
+end)
+
+-- LOGIKA LOAD CONFIG (Murni Memunculkan Balok di Koordinat Persis Tanpa Pandang Sesi/Game)
+LoadConfigBtn.MouseButton1Click:Connect(function()
+    local codeToLoad = LoadBox.Text:gsub("%s+", "")
+    if codeToLoad == "" then
+        StatusLabel.Text = "Enter code first!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
+    if readfile and pcall(readfile, fileName) then
+        -- Bersihkan Balok Lama
+        for _, block in ipairs(spawnedBlocks) do
+            if block then block:Destroy() end
+        end
+        spawnedBlocks = {}
+        isRunning = false
+        StartToggleBtn.Text = "OFF"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if FloatStart then FloatStart.Text = "Start" end
+        currentIndex = 1
         lastPos = nil
         startingCFrame = nil
         currentTransitionTime = 0
         
         local rawData = readfile(fileName)
-        local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
+        local success, decodedData = pcall(function()
+            return HttpService:JSONDecode(rawData)
+        end)
         
-        for _, comps in ipairs(decodedData) do
-            local cf = CFrame.new(table.unpack(comps))
-            createVisualBlock(cf)
+        if success and type(decodedData) == "table" then
+            for _, comps in ipairs(decodedData) do
+                -- Buat CFrame tepat sesuai matriks koordinat tersimpan
+                local cf = CFrame.new(table.unpack(comps))
+                createVisualBlock(cf)
+            end
+            
+            if #spawnedBlocks > 0 then
+                lastPos = spawnedBlocks[#spawnedBlocks].Position
+            end
+            StatusLabel.Text = "Loaded Successfully!"
+        else
+            StatusLabel.Text = "Invalid Config Format!"
         end
-        
-        StatusLabel.Text = "Global Config Loaded!"
     else
-        StatusLabel.Text = "No saved config found!"
+        StatusLabel.Text = "Code not found!"
     end
 end)
 
--- Loop Heartbeat Teleport & Animasi RGB Border
-local hue = 0
+-- Loop Heartbeat Teleport
 RunService.Heartbeat:Connect(function(dt)
-    -- Animasi RGB pada border tipis
-    hue = (hue + dt * 0.3) % 1
-    RGBStroke.Color = Color3.fromHSV(hue, 1, 1)
-
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
     
     local speedVal = getSpeedValue()
