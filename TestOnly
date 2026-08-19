@@ -1,553 +1,273 @@
+--// Layanan Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
-local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("BoostSystemGui")
+local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("ModifierGui")
 if oldGui then oldGui:Destroy() end
 
+if writefile and not isfolder("ModifierConfigs") then
+    makefolder("ModifierConfigs")
+end
+
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BoostSystemGui"
+ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local MenuShortcut = Instance.new("TextButton", ScreenGui)
-MenuShortcut.Name = "MenuShortcut"
-MenuShortcut.Size = UDim2.new(0, 50, 0, 50)
-MenuShortcut.Position = UDim2.new(0, 20, 0, 20)
-MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MenuShortcut.BackgroundTransparency = 0.2
-MenuShortcut.TextColor3 = Color3.fromRGB(0, 255, 220)
-MenuShortcut.Text = "MENU"
-MenuShortcut.Font = Enum.Font.GothamSemibold
-MenuShortcut.TextSize = 12
-MenuShortcut.Active = true
-MenuShortcut.Draggable = true
-Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(1, 0)
-
-local MenuStroke = Instance.new("UIStroke", MenuShortcut)
-MenuStroke.Color = Color3.fromRGB(0, 255, 220)
-MenuStroke.Thickness = 0.5
-
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 360)
-MainFrame.Position = UDim2.new(0, 20, 0, 80)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.Size = UDim2.new(0, 220, 0, 335)
+MainFrame.Position = UDim2.new(0.7, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BackgroundTransparency = 0.5
-MainFrame.Visible = true
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
-
-local FrameStroke = Instance.new("UIStroke", MainFrame)
-FrameStroke.Color = Color3.fromRGB(255, 255, 255)
-FrameStroke.Transparency = 0.8
-FrameStroke.Thickness = 1.5
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Position = UDim2.new(0, 0, 0, 5)
-Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.3 PRO"
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Text = "Modifier Gui (Permanent)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize, Title.BackgroundTransparency = 13, 1
 
-RunService.RenderStepped:Connect(function()
-    local hue = (tick() % 5) / 5
-    Title.TextColor3 = Color3.fromHSV(hue, 1, 1)
-end)
+local StartBtn = Instance.new("TextButton", MainFrame)
+StartBtn.Size = UDim2.new(0, 90, 0, 35)
+StartBtn.Position = UDim2.new(0, 15, 0, 40)
+StartBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+StartBtn.BackgroundTransparency = 0.5
+StartBtn.Text = "Start"
+StartBtn.Font = Enum.Font.GothamBold
+StartBtn.TextSize, StartBtn.BorderSizePixel = 12, 0
 
-local ScrollFrame = Instance.new("ScrollingFrame", MainFrame)
-ScrollFrame.Size = UDim2.new(1, -10, 1, -40)
-ScrollFrame.Position = UDim2.new(0, 5, 0, 35)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
-ScrollFrame.ScrollBarThickness = 4
+local SpeedBox = Instance.new("TextBox", MainFrame)
+SpeedBox.Size = UDim2.new(0, 90, 0, 35)
+SpeedBox.Position = UDim2.new(0, 115, 0, 40)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+SpeedBox.BackgroundTransparency = 0.5
+SpeedBox.Text = "1"
+SpeedBox.Font = Enum.Font.GothamBold
+SpeedBox.TextSize, SpeedBox.BorderSizePixel = 14, 0
 
-local function createToggle(name, yPos)
-    local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 100, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
-    Label.BackgroundTransparency = 1
-    Label.Text = name
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
+local SpawnBtn = Instance.new("TextButton", MainFrame)
+SpawnBtn.Size = UDim2.new(0, 90, 0, 45)
+SpawnBtn.Position = UDim2.new(0, 15, 0, 85)
+SpawnBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+SpawnBtn.BackgroundTransparency = 0.5
+SpawnBtn.Text = "Spawn Modifier"
+SpawnBtn.Font = Enum.Font.GothamSemibold
+SpawnBtn.TextSize, SpawnBtn.TextWrapped, SpawnBtn.BorderSizePixel = 10, true, 0
 
-    local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 55, 0, 24)
-    Btn.Position = UDim2.new(0, 135, 0, yPos + 1)
-    Btn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    Btn.BackgroundTransparency = 0.3
-    Btn.Text = "OFF"
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 11
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+local ResetBtn = Instance.new("TextButton", MainFrame)
+ResetBtn.Size = UDim2.new(0, 90, 0, 45)
+ResetBtn.Position = UDim2.new(0, 115, 0, 85)
+ResetBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+ResetBtn.BackgroundTransparency = 0.5
+ResetBtn.Text = "Reset"
+ResetBtn.Font = Enum.Font.GothamBold
+ResetBtn.TextSize, ResetBtn.BorderSizePixel = 12, 0
 
-    return Btn
-end
+local SaveConfigBtn = Instance.new("TextButton", MainFrame)
+SaveConfigBtn.Size = UDim2.new(0, 190, 0, 35)
+SaveConfigBtn.Position = UDim2.new(0, 15, 0, 138)
+SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+SaveConfigBtn.BackgroundTransparency = 0.3
+SaveConfigBtn.Text = "Save Config"
+SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SaveConfigBtn.Font = Enum.Font.GothamBold
+SaveConfigBtn.TextSize, SaveConfigBtn.BorderSizePixel = 12, 0
 
-local ActiveFeaturesBtn = createToggle("Active Features:", 5)
-local FastToggleBtn = createToggle("Fast boost :", 35)
-local SmoothToggleBtn = createToggle("Smooth boost :", 65)
-local SmoothReverseToggleBtn = createToggle("Smooth brake :", 95)
-local FastSteerToggleBtn = createToggle("Fast Steer :", 125)
-local SteerToggleBtn = createToggle("Better Steer :", 155)
-local LockToggleBtn = createToggle("Lock button :", 185)
+local LoadBox = Instance.new("TextBox", MainFrame)
+LoadBox.Size = UDim2.new(0, 115, 0, 35)
+LoadBox.Position = UDim2.new(0, 15, 0, 180)
+LoadBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+LoadBox.BackgroundTransparency = 0.4
+LoadBox.PlaceholderText = "Paste Code Here"
+LoadBox.Text = ""
+LoadBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadBox.Font = Enum.Font.Gotham
+LoadBox.TextSize, LoadBox.BorderSizePixel = 10, 0
 
-ActiveFeaturesBtn.Text = "ON"
-ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+local LoadConfigBtn = Instance.new("TextButton", MainFrame)
+LoadConfigBtn.Size = UDim2.new(0, 70, 0, 35)
+LoadConfigBtn.Position = UDim2.new(0, 135, 0, 180)
+LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+LoadConfigBtn.BackgroundTransparency = 0.3
+LoadConfigBtn.Text = "Load"
+LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadConfigBtn.Font = Enum.Font.GothamBold
+LoadConfigBtn.TextSize, LoadConfigBtn.BorderSizePixel = 11, 0
 
-local function createTriggerRow(name, yPos)
-    local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 50, 0, 26)
-    Label.Position = UDim2.new(0, 10, 0, yPos)
-    Label.BackgroundTransparency = 1
-    Label.Text = name .. ":"
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 12
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.Size = UDim2.new(0, 190, 0, 35)
+CloseBtn.Position = UDim2.new(0, 15, 0, 225)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+CloseBtn.BackgroundTransparency = 0.5
+CloseBtn.Text = "Close"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize, CloseBtn.BorderSizePixel = 12, 0
 
-    local SetBtn = Instance.new("TextButton", ScrollFrame)
-    SetBtn.Size = UDim2.new(0, 70, 0, 24)
-    SetBtn.Position = UDim2.new(0, 60, 0, yPos + 1)
-    SetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    SetBtn.BackgroundTransparency = 0.3
-    SetBtn.Text = "Set Trigger"
-    SetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SetBtn.Font = Enum.Font.GothamBold
-    SetBtn.TextSize = 9
-    Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 6)
+local StatusLabel = Instance.new("TextLabel", MainFrame)
+StatusLabel.Size = UDim2.new(1, 0, 0, 25)
+StatusLabel.Position = UDim2.new(0, 0, 0, 275)
+StatusLabel.Text = ""
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+StatusLabel.Font = Enum.Font.GothamSemibold
+StatusLabel.TextSize, StatusLabel.BackgroundTransparency = 10, 1
 
-    local ResetBtn = Instance.new("TextButton", ScrollFrame)
-    ResetBtn.Size = UDim2.new(0, 55, 0, 24)
-    ResetBtn.Position = UDim2.new(0, 135, 0, yPos + 1)
-    ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    ResetBtn.BackgroundTransparency = 0.3
-    ResetBtn.Text = "Reset"
-    ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ResetBtn.Font = Enum.Font.GothamBold
-    ResetBtn.TextSize = 10
-    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 6)
+local spawnedBlocks = {}
+local isRunning = false
+local currentIndex = 1
 
-    return SetBtn, ResetBtn
-end
-
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 215)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 245)
-
-local function createFeatureBtn(name, yPos)
-    local Lbl = Instance.new("TextLabel", ScrollFrame)
-    Lbl.Size = UDim2.new(0, 100, 0, 26)
-    Lbl.Position = UDim2.new(0, 10, 0, yPos)
-    Lbl.BackgroundTransparency = 1
-    Lbl.Text = name
-    Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.Font = Enum.Font.GothamSemibold
-    Lbl.TextSize = 12
-
-    local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 55, 0, 24)
-    Btn.Position = UDim2.new(0, 135, 0, yPos + 1)
-    Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    Btn.BackgroundTransparency = 0.3
-    Btn.Text = "EXEC"
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 10
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-    return Btn
-end
-
-local GiveBtn = createFeatureBtn("Teleport Tool:", 280)
-local FlyBtn = createFeatureBtn("Fly GUI:", 310)
-
-local FastFloatBtn = Instance.new("TextButton", ScreenGui)
-FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-FastFloatBtn.Position = UDim2.new(1, -245, 1, -270)
-FastFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-FastFloatBtn.BackgroundTransparency = 0.4
-FastFloatBtn.Text = "🚀"
-FastFloatBtn.TextSize = 20
-FastFloatBtn.Visible = false
-FastFloatBtn.Active = true
-FastFloatBtn.Draggable = true
-Instance.new("UICorner", FastFloatBtn).CornerRadius = UDim.new(1, 0)
-local FastStroke = Instance.new("UIStroke", FastFloatBtn)
-FastStroke.Color = Color3.fromRGB(255, 50, 50)
-FastStroke.Thickness = 2.5
-
-local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
-SmoothFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -195)
-SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-SmoothFloatBtn.BackgroundTransparency = 0.4
-SmoothFloatBtn.Text = "⚡"
-SmoothFloatBtn.TextSize = 20
-SmoothFloatBtn.Visible = false
-SmoothFloatBtn.Active = true
-SmoothFloatBtn.Draggable = true
-Instance.new("UICorner", SmoothFloatBtn).CornerRadius = UDim.new(1, 0)
-local SmoothStroke = Instance.new("UIStroke", SmoothFloatBtn)
-SmoothStroke.Color = Color3.fromRGB(50, 255, 100)
-SmoothStroke.Thickness = 2.5
-
-local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
-SmoothReverseFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -120)
-SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-SmoothReverseFloatBtn.BackgroundTransparency = 0.4
-SmoothReverseFloatBtn.Text = "🛑"
-SmoothReverseFloatBtn.TextSize = 20
-SmoothReverseFloatBtn.Visible = false
-SmoothReverseFloatBtn.Active = true
-SmoothReverseFloatBtn.Draggable = true
-Instance.new("UICorner", SmoothReverseFloatBtn).CornerRadius = UDim.new(1, 0)
-local SmoothReverseStroke = Instance.new("UIStroke", SmoothReverseFloatBtn)
-SmoothReverseStroke.Color = Color3.fromRGB(255, 150, 0)
-SmoothReverseStroke.Thickness = 2.5
-
-local FastSteerFloatBtn = Instance.new("TextButton", ScreenGui)
-FastSteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-FastSteerFloatBtn.Position = UDim2.new(1, -180, 1, -345)
-FastSteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-FastSteerFloatBtn.BackgroundTransparency = 0.4
-FastSteerFloatBtn.Text = "⚡"
-FastSteerFloatBtn.TextSize = 20
-FastSteerFloatBtn.Visible = false
-FastSteerFloatBtn.Active = true
-FastSteerFloatBtn.Draggable = true
-Instance.new("UICorner", FastSteerFloatBtn).CornerRadius = UDim.new(1, 0)
-local FastSteerStroke = Instance.new("UIStroke", FastSteerFloatBtn)
-FastSteerStroke.Color = Color3.fromRGB(255, 200, 0)
-FastSteerStroke.Thickness = 2.5
-
-local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
-SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SteerFloatBtn.Position = UDim2.new(1, -125, 1, -345)
-SteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-SteerFloatBtn.BackgroundTransparency = 0.4
-SteerFloatBtn.Text = "↔️"
-SteerFloatBtn.TextSize = 20
-SteerFloatBtn.Visible = false
-SteerFloatBtn.Active = true
-SteerFloatBtn.Draggable = true
-Instance.new("UICorner", SteerFloatBtn).CornerRadius = UDim.new(1, 0)
-local SteerStroke = Instance.new("UIStroke", SteerFloatBtn)
-SteerStroke.Color = Color3.fromRGB(0, 200, 255)
-SteerStroke.Thickness = 2.5
-
-local isFeaturesActive = true
-local isLocked = false
-local isSmoothBoosting = false
-local isSmoothReversing = false
-local isFastSteer = false
-local isBetterSteer = false
-
-local boundRightButton = nil
-local boundLeftButton = nil
-local settingTarget = nil
-local isRightPressed = false
-local isLeftPressed = false
-
-MenuShortcut.MouseButton1Click:Connect(function() 
-    MainFrame.Visible = not MainFrame.Visible 
-end)
-
-ActiveFeaturesBtn.MouseButton1Click:Connect(function()
-    isFeaturesActive = not isFeaturesActive
-    ActiveFeaturesBtn.Text = isFeaturesActive and "ON" or "OFF"
-    ActiveFeaturesBtn.BackgroundColor3 = isFeaturesActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
-    if not isFeaturesActive then
-        isSmoothBoosting = false
-        isSmoothReversing = false
-        isFastSteer = false
-        isBetterSteer = false
-        FastSteerToggleBtn.Text = "OFF"
-        FastSteerToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        SteerToggleBtn.Text = "OFF"
-        SteerToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        FastSteerFloatBtn.Text = "⚡"
-        SteerFloatBtn.Text = "↔️"
-    end
-end)
-
-FastToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not FastFloatBtn.Visible
-    FastFloatBtn.Visible = newState
-    FastToggleBtn.Text = newState and "ON" or "OFF"
-    FastToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-end)
-
-SmoothToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not SmoothFloatBtn.Visible
-    SmoothFloatBtn.Visible = newState
-    SmoothToggleBtn.Text = newState and "ON" or "OFF"
-    SmoothToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
-    if not newState then
-        isSmoothBoosting = false
-        SmoothFloatBtn.Text = "⚡"
-    end
-end)
-
-SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not SmoothReverseFloatBtn.Visible
-    SmoothReverseFloatBtn.Visible = newState
-    SmoothReverseToggleBtn.Text = newState and "ON" or "OFF"
-    SmoothReverseToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
-    if not newState then
-        isSmoothReversing = false
-        SmoothReverseFloatBtn.Text = "🛑"
-    end
-end)
-
-FastSteerToggleBtn.MouseButton1Click:Connect(function()
-    isFastSteer = not isFastSteer
-    FastSteerToggleBtn.Text = isFastSteer and "ON" or "OFF"
-    FastSteerToggleBtn.BackgroundColor3 = isFastSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    FastSteerFloatBtn.Text = isFastSteer and "💨" or "⚡"
-end)
-
-FastSteerFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isFastSteer = not isFastSteer
-    FastSteerToggleBtn.Text = isFastSteer and "ON" or "OFF"
-    FastSteerToggleBtn.BackgroundColor3 = isFastSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    FastSteerFloatBtn.Text = isFastSteer and "💨" or "⚡"
-end)
-
-SteerToggleBtn.MouseButton1Click:Connect(function()
-    isBetterSteer = not isBetterSteer
-    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
-end)
-
-SteerFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isBetterSteer = not isBetterSteer
-    SteerToggleBtn.Text = isBetterSteer and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = isBetterSteer and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
-end)
-
-LockToggleBtn.MouseButton1Click:Connect(function()
-    isLocked = not isLocked
-    LockToggleBtn.Text = isLocked and "ON" or "OFF"
-    LockToggleBtn.BackgroundColor3 = isLocked and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    FastFloatBtn.Draggable = not isLocked
-    SmoothFloatBtn.Draggable = not isLocked
-    SmoothReverseFloatBtn.Draggable = not isLocked
-    FastSteerFloatBtn.Draggable = not isLocked
-    SteerFloatBtn.Draggable = not isLocked
-end)
-
-RightSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Right"
-    RightSetBtn.Text = "Setting..."
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-RightResetBtn.MouseButton1Click:Connect(function()
-    RightResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundRightButton = nil
-    isRightPressed = false
-    RightSetBtn.Text = "Set Trigger"
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    RightResetBtn.Text = "Reset"
-end)
-
-LeftSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Left"
-    LeftSetBtn.Text = "Setting..."
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-LeftResetBtn.MouseButton1Click:Connect(function()
-    LeftResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundLeftButton = nil
-    isLeftPressed = false
-    LeftSetBtn.Text = "Set Trigger"
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    LeftResetBtn.Text = "Reset"
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if not isFeaturesActive then return end
+local function createVisualBlock(pos)
+    local block = Instance.new("Part")
+    block.Size = Vector3.new(4, 10, 4)
+    block.Position = pos
+    block.Anchored = true
+    block.CanCollide = false
+    block.Transparency = 0.5
+    block.Material = Enum.Material.SmoothPlastic
+    block.Color = Color3.fromRGB(255, 255, 255)
     
-    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
-        isRightPressed = true
-    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
-        isLeftPressed = true
-    end
-
-    if not settingTarget then return end
+    local texture = Instance.new("Texture")
+    texture.Face = Enum.NormalId.Top
+    texture.Texture = "rbxassetid://620583021"
+    texture.Parent = block
     
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local mousePos = UserInputService:GetMouseLocation()
-        local guiObjects = LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
-        
-        for _, gui in ipairs(guiObjects) do
-            if (gui:IsA("TextButton") or gui:IsA("ImageButton")) and gui ~= RightSetBtn and gui ~= LeftSetBtn and gui ~= SteerToggleBtn and gui ~= FastSteerToggleBtn and gui ~= MenuShortcut and gui ~= SteerFloatBtn and gui ~= FastSteerFloatBtn then
-                
-                gui.MouseButton1Down:Connect(function()
-                    if settingTarget == nil then
-                        if gui == boundRightButton then isRightPressed = true end
-                        if gui == boundLeftButton then isLeftPressed = true end
-                    end
-                end)
-                
-                gui.MouseButton1Up:Connect(function()
-                    if gui == boundRightButton then isRightPressed = false end
-                    if gui == boundLeftButton then isLeftPressed = false end
-                end)
+    block.Parent = workspace
+    table.insert(spawnedBlocks, block)
+end
 
-                if settingTarget == "Right" then
-                    boundRightButton = gui
-                    RightSetBtn.Text = "Saved!"
-                    RightSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                elseif settingTarget == "Left" then
-                    boundLeftButton = gui
-                    LeftSetBtn.Text = "Saved!"
-                    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                end
-                
-                settingTarget = nil
-                break
-            end
-        end
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
-        isRightPressed = false
-    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
-        isLeftPressed = false
-    end
-end)
-
-FastFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
+local function spawnBlockAtPlayer()
     local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local seat = hum and hum.SeatPart
-    if seat then
-        seat.AssemblyLinearVelocity = seat.CFrame.LookVector * (seat.AssemblyLinearVelocity.Magnitude + 100)
-    end
-end)
-
-SmoothFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isSmoothBoosting = not isSmoothBoosting
-    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
-
-    if isSmoothBoosting then
-        task.spawn(function()
-            while isSmoothBoosting and isFeaturesActive do
-                local char = LocalPlayer.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local seat = hum and hum.SeatPart
-
-                if seat and seat:IsA("BasePart") then
-                    seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity + (seat.CFrame.LookVector * 3.5)
-                else
-                    isSmoothBoosting = false
-                    SmoothFloatBtn.Text = "⚡"
-                    break
-                end
-                task.wait(0.03)
-            end
-        end)
-    end
-end)
-
-SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isSmoothReversing = not isSmoothReversing
-    SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-
-    if isSmoothReversing then
-        task.spawn(function()
-            while isSmoothReversing and isFeaturesActive do
-                local char = LocalPlayer.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local seat = hum and hum.SeatPart
-
-                if seat and seat:IsA("BasePart") then
-                    local currentVel = seat.AssemblyLinearVelocity
-                    local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
-
-                    if forwardSpeed > 0 then
-                        local newVel = currentVel - (seat.CFrame.LookVector * 4)
-                        if newVel:Dot(seat.CFrame.LookVector) < 0 then
-                            seat.AssemblyLinearVelocity = Vector3.zero
-                        else
-                            seat.AssemblyLinearVelocity = newVel
-                        end
-                    elseif forwardSpeed > -1 then
-                        seat.AssemblyLinearVelocity = Vector3.zero
-                    end
-                else
-                    isSmoothReversing = false
-                    SmoothReverseFloatBtn.Text = "🛑"
-                    break
-                end
-                task.wait(0.0225)
-            end
-        end)
-    end
-end)
-
-GiveBtn.MouseButton1Click:Connect(function()
-    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
-    t.Name = "Teleport Tool"
-    t.RequiresHandle = false
-    t.Activated:Connect(function()
-        (function()
-            if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
-            end
-        end)()
-    end)
-end)
-
-FlyBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
-end)
-
-RunService.Stepped:Connect(function()
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    local interface = playerGui and playerGui:FindFirstChild("Interface")
-    local valuesFolder = interface and interface:FindFirstChild("Values")
+    if not char then return end
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local targetPart = (humanoid and humanoid.SeatPart) or rootPart
     
-    local steerC = valuesFolder and valuesFolder:FindFirstChild("SteerC")
-    local steerT = valuesFolder and valuesFolder:FindFirstChild("SteerT")
+    if targetPart then
+        local pos = targetPart.Position
+        createVisualBlock(pos)
+    end
+end
 
-    if not isFeaturesActive then
-        if steerC and steerC:IsA("ValueBase") then steerC.Value = 1 end
-        if steerT and steerT:IsA("ValueBase") then steerT.Value = 1 end
+SpawnBtn.MouseButton1Click:Connect(function()
+    spawnBlockAtPlayer()
+end)
+
+StartBtn.MouseButton1Click:Connect(function()
+    if #spawnedBlocks == 0 then return end
+    isRunning = not isRunning
+    StartBtn.Text = isRunning and "Pause" or "Start"
+    currentIndex = 1
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    isRunning = false
+    StartBtn.Text = "Start"
+    currentIndex = 1
+    for _, block in ipairs(spawnedBlocks) do
+        if block then block:Destroy() end
+    end
+    spawnedBlocks = {}
+    StatusLabel.Text = "Reseted!"
+end)
+
+SaveConfigBtn.MouseButton1Click:Connect(function()
+    if #spawnedBlocks == 0 then
+        StatusLabel.Text = "Spawn blocks first!"
         return
     end
-
-    if steerC and steerC:IsA("ValueBase") then
-        steerC.Value = isFastSteer and 2.5 or 1.0
+    
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local randomCode = "C_"
+    math.randomseed(tick())
+    for i = 1, 13 do
+        local randIndex = math.random(1, #chars)
+        randomCode = randomCode .. chars:sub(randIndex, randIndex)
     end
+    
+    local dataToSave = {}
+    for _, block in ipairs(spawnedBlocks) do
+        local p = block.Position
+        table.insert(dataToSave, {p.X, p.Y, p.Z})
+    end
+    
+    if writefile then
+        local encodedData = game:GetService("HttpService"):JSONEncode(dataToSave)
+        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+    end
+    
+    if setclipboard then
+        setclipboard(randomCode)
+        StatusLabel.Text = "Saved & Copied!"
+    else
+        StatusLabel.Text = "Saved Code: " .. randomCode
+    end
+end)
 
-    if steerT and steerT:IsA("ValueBase") then
-        steerT.Value = isBetterSteer and 2.0 or 1.0
+LoadConfigBtn.MouseButton1Click:Connect(function()
+    local codeToLoad = LoadBox.Text:gsub("%s+", "")
+    if codeToLoad == "" then
+        StatusLabel.Text = "Enter code first!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
+    if readfile and pcall(readfile, fileName) then
+        for _, block in ipairs(spawnedBlocks) do
+            if block then block:Destroy() end
+        end
+        spawnedBlocks = {}
+        isRunning = false
+        StartBtn.Text = "Start"
+        
+        local rawData = readfile(fileName)
+        local decodedData = game:GetService("HttpService"):JSONDecode(rawData)
+        
+        for _, posData in ipairs(decodedData) do
+            local pos = Vector3.new(posData[1], posData[2], posData[3])
+            createVisualBlock(pos)
+        end
+        
+        StatusLabel.Text = "Loaded Successfully!"
+    else
+        StatusLabel.Text = "Code not found!"
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not isRunning or #spawnedBlocks == 0 then return end
+    
+    local speedVal = tonumber(SpeedBox.Text) or 0
+    if speedVal <= 0 then return end
+    
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local targetPart = (humanoid and humanoid.SeatPart) or rootPart
+    
+    if targetPart then
+        local targetBlock = spawnedBlocks[currentIndex]
+        if targetBlock then
+            local targetCFrame = targetBlock.CFrame
+            local distance = (targetPart.Position - targetCFrame.Position).Magnitude
+            
+            if distance < 3 then
+                currentIndex = currentIndex + 1
+                if currentIndex > #spawnedBlocks then
+                    currentIndex = 1
+                    targetPart.CFrame = spawnedBlocks[1].CFrame
+                end
+            else
+                targetPart.CFrame = targetPart.CFrame:Lerp(targetCFrame, math.clamp(speedVal * 0.1, 0.01, 1))
+            end
+        end
     end
 end)
