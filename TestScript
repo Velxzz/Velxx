@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- Safe GUI Container (Mencegah GUI Diblokir Game/Eksekutor)
+-- Safe GUI Container (Mencegah GUI Diblokir Game)
 local parentContainer
 if gethui then
     parentContainer = gethui()
@@ -13,7 +13,7 @@ else
     parentContainer = (success and core) or LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Clean Up GUI Lama
+-- Clean Up & Folder
 local oldGui = parentContainer:FindFirstChild("ModifierGui")
 if oldGui then oldGui:Destroy() end
 
@@ -26,18 +26,16 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999999
-ScreenGui.Enabled = true
 ScreenGui.Parent = parentContainer
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 300)
-MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = true
 
 local UICornerMain = Instance.new("UICorner", MainFrame)
 UICornerMain.CornerRadius = UDim.new(0, 10)
@@ -551,7 +549,7 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE CONFIG
+-- Logika Save Config
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
@@ -585,7 +583,122 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA LOAD CONFIG
+-- Logika Load Config
+LoadConfigBtn.MouseButton1Click:Connect(function()
+    local codeToLoad = LoadBox.Text:gsub("%s+", "")
+    if codeToLoad == "" then
+        StatusLabel.Text = "Enter code first!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
+    if readfile and pcall(readfile, fileName) then
+        for _, block in ipairs(spawnedBlocks) do
+            if block then block:Destroy() end
+        end
+        spawnedBlocks = {}
+        isRunning = false
+        StartToggleBtn.Text = "OFF"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        if FloatStart then FloatStart.Text = "Pause" end
+        startingCFrame = nil
+        currentTransitionTime = 0
+    else
+        StartToggleBtn.Text = "OFF"
+        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if FloatStart then FloatStart.Text = "Start" end
+    end
+end
+
+-- Logika Reset
+local function resetAll()
+    if not activeFeatures then return end
+    isRunning = false
+    StartToggleBtn.Text = "OFF"
+    StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    if FloatStart then FloatStart.Text = "Start" end
+    currentIndex = 1
+    lastPos = nil
+    startingCFrame = nil
+    currentTransitionTime = 0
+    for _, block in ipairs(spawnedBlocks) do
+        if block then block:Destroy() end
+    end
+    spawnedBlocks = {}
+    StatusLabel.Text = "Reseted!"
+end
+
+-- Posisi Float Buttons
+FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
+local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
+FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
+
+-- Event UI
+StartToggleBtn.MouseButton1Click:Connect(toggleStart)
+SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
+UndoBtn.MouseButton1Click:Connect(undoLastBlock)
+ResetBtn.MouseButton1Click:Connect(resetAll)
+
+ActiveFeaturesBtn.MouseButton1Click:Connect(function()
+    activeFeatures = not activeFeatures
+    if activeFeatures then
+        ActiveFeaturesBtn.Text = "ON"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        ActiveFeaturesBtn.Text = "OFF"
+        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if isRunning then toggleStart() end
+    end
+end)
+
+LockButtonToggle.MouseButton1Click:Connect(function()
+    isLocked = not isLocked
+    if isLocked then
+        LockButtonToggle.Text = "ON"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        LockButtonToggle.Text = "OFF"
+        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end
+end)
+
+-- Logika Save Config
+SaveConfigBtn.MouseButton1Click:Connect(function()
+    if #spawnedBlocks == 0 then
+        StatusLabel.Text = "Spawn blocks first!"
+        return
+    end
+    
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local randomCode = "C_"
+    math.randomseed(os.time() + math.floor(tick() * 1000))
+    for i = 1, 13 do
+        local randIndex = math.random(1, #chars)
+        randomCode = randomCode .. chars:sub(randIndex, randIndex)
+    end
+    
+    local dataToSave = {}
+    for _, block in ipairs(spawnedBlocks) do
+        local cf = block.CFrame
+        table.insert(dataToSave, {cf:GetComponents()})
+    end
+    
+    if writefile then
+        local encodedData = HttpService:JSONEncode(dataToSave)
+        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+    end
+    
+    if setclipboard then
+        setclipboard(randomCode)
+        StatusLabel.Text = "Saved & Copied!"
+    else
+        StatusLabel.Text = "Saved Code: " .. randomCode
+    end
+end)
+
+-- Logika Load Config
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
@@ -631,54 +744,78 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Helper Fungsi untuk memindahkan Player / Motor secara menyeluruh tanpa merusak Roda
+local function moveEntityTo(targetCFrame)
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local seatPart = humanoid and humanoid.SeatPart
+    
+    if seatPart then
+        -- Cari Model Utama Motor
+        local vehicleModel = seatPart:FindFirstAncestorOfClass("Model")
+        if vehicleModel then
+            -- Reset kecepatan fisika pada SELURUH part motor agar roda tidak mental/tertinggal
+            for _, part in ipairs(vehicleModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.AssemblyLinearVelocity = Vector3.zero
+                    part.AssemblyAngularVelocity = Vector3.zero
+                end
+            end
+            -- Pindahkan seluruh struktur motor dan rodanya sekaligus
+            vehicleModel:PivotTo(targetCFrame)
+            return
+        end
+    end
+    
+    -- Jika tidak naik motor, pindahkan karakter secara normal
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    if rootPart then
+        rootPart.AssemblyLinearVelocity = Vector3.zero
+        rootPart.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(targetCFrame)
+    end
+end
+
 -- Loop Heartbeat Teleport
 RunService.Heartbeat:Connect(function(dt)
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
     
     local speedVal = getSpeedValue()
-    local char = LocalPlayer.Character
-    if not char then return end
+    local targetBlock = spawnedBlocks[currentIndex]
     
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local targetPart = (humanoid and humanoid.SeatPart) or rootPart
-    
-    if targetPart then
-        if targetPart:IsA("BasePart") then
-            targetPart.AssemblyLinearVelocity = Vector3.zero
-            targetPart.AssemblyAngularVelocity = Vector3.zero
-        end
+    if targetBlock then
+        local targetCFrame = targetBlock.CFrame
         
-        local targetBlock = spawnedBlocks[currentIndex]
-        if targetBlock then
-            local targetCFrame = targetBlock.CFrame
+        if speedVal == 0 then
+            moveEntityTo(targetCFrame)
+            currentIndex = currentIndex + 1
+            if currentIndex > #spawnedBlocks then
+                currentIndex = 1
+            end
+            startingCFrame = nil
+        else
+            if not startingCFrame then
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                startingCFrame = root and root.CFrame or targetCFrame
+                currentTransitionTime = 0
+            end
             
-            if speedVal == 0 then
-                targetPart.CFrame = targetCFrame
+            currentTransitionTime = currentTransitionTime + dt
+            local alpha = currentTransitionTime / speedVal
+            
+            if alpha >= 1 then
+                moveEntityTo(targetCFrame)
                 currentIndex = currentIndex + 1
                 if currentIndex > #spawnedBlocks then
                     currentIndex = 1
                 end
                 startingCFrame = nil
             else
-                if not startingCFrame then
-                    startingCFrame = targetPart.CFrame
-                    currentTransitionTime = 0
-                end
-                
-                currentTransitionTime = currentTransitionTime + dt
-                local alpha = currentTransitionTime / speedVal
-                
-                if alpha >= 1 then
-                    targetPart.CFrame = targetCFrame
-                    currentIndex = currentIndex + 1
-                    if currentIndex > #spawnedBlocks then
-                        currentIndex = 1
-                    end
-                    startingCFrame = nil
-                else
-                    targetPart.CFrame = startingCFrame:Lerp(targetCFrame, alpha)
-                end
+                local lerpedCFrame = startingCFrame:Lerp(targetCFrame, alpha)
+                moveEntityTo(lerpedCFrame)
             end
         end
     end
