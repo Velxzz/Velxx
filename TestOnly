@@ -1,4 +1,3 @@
--- Modifier Gui v2.1
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,7 +9,7 @@ local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("ModifierGui
 if oldGui then oldGui:Destroy() end
 
 if writefile and not isfolder("ModifierConfigs") then
-    makefolder("ModifierConfigs")
+    pcall(function() makefolder("ModifierConfigs") end)
 end
 
 -- ScreenGui Utama
@@ -21,7 +20,7 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 300)
+MainFrame.Size = UDim2.new(0, 240, 0, 360) -- Diperlebar agar memuat menu Safe Void
 MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 MainFrame.BorderSizePixel = 0
@@ -57,7 +56,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 480)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -100,6 +99,9 @@ local activeFeatures = true
 local isRunning = false
 local floatFunctionActive = true
 local isLocked = false
+local isSafeVoidActive = false
+local safeVoidHeight = -100
+local safeVoidPart = nil
 
 -- Toggle Active Features
 local _, ActiveFeaturesBtn = createToggleRow(ContentScroll, "Active Features", 1)
@@ -216,11 +218,39 @@ Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 -- Toggle Lock Button
 local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
 
+-- TOGGLE SAFE VOID & HEIGHT TEXTBOX
+local _, SafeVoidToggleBtn = createToggleRow(ContentScroll, "Safe Void", 8)
+
+local safeVoidHeightRow = Instance.new("Frame", ContentScroll)
+safeVoidHeightRow.Size = UDim2.new(1, -6, 0, 28)
+safeVoidHeightRow.BackgroundTransparency = 1
+safeVoidHeightRow.LayoutOrder = 9
+
+local safeVoidLabel = Instance.new("TextLabel", safeVoidHeightRow)
+safeVoidLabel.Size = UDim2.new(0.6, 0, 1, 0)
+safeVoidLabel.Text = "Void Height (Y) :"
+safeVoidLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+safeVoidLabel.Font = Enum.Font.GothamBold
+safeVoidLabel.TextSize = 10
+safeVoidLabel.TextXAlignment = Enum.TextXAlignment.Left
+safeVoidLabel.BackgroundTransparency = 1
+
+local SafeVoidBox = Instance.new("TextBox", safeVoidHeightRow)
+SafeVoidBox.Size = UDim2.new(0, 75, 0, 22)
+SafeVoidBox.Position = UDim2.new(1, -75, 0.5, -11)
+SafeVoidBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+SafeVoidBox.BorderSizePixel = 0
+SafeVoidBox.Text = tostring(safeVoidHeight)
+SafeVoidBox.TextColor3 = Color3.fromRGB(30, 30, 30)
+SafeVoidBox.Font = Enum.Font.GothamBold
+SafeVoidBox.TextSize = 10
+Instance.new("UICorner", SafeVoidBox).CornerRadius = UDim.new(0, 4)
+
 -- UI Config (Save & Load)
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
-configRow.LayoutOrder = 8
+configRow.LayoutOrder = 10
 
 local SaveConfigBtn = Instance.new("TextButton", configRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
@@ -247,7 +277,7 @@ Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 local loadBoxRow = Instance.new("Frame", ContentScroll)
 loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
 loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 9
+loadBoxRow.LayoutOrder = 11
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
@@ -264,7 +294,7 @@ Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 10
+statusRow.LayoutOrder = 12
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -369,6 +399,53 @@ local function getSpeedValue()
 end
 
 local FastSteerFloatBtn
+
+-- LOGIKA SAFE VOID (PLATFORM TERRAIN SANGAT LEBAR)
+local function updateSafeVoid()
+    if isSafeVoidActive then
+        if not safeVoidPart or not safeVoidPart.Parent then
+            safeVoidPart = Instance.new("Part")
+            safeVoidPart.Name = "ClientSafeVoidPlatform"
+            safeVoidPart.Size = Vector3.new(10000, 5, 10000) -- Ukuran Sangat Lebar
+            safeVoidPart.Anchored = true
+            safeVoidPart.CanCollide = true
+            safeVoidPart.Material = Enum.Material.SmoothPlastic
+            safeVoidPart.Color = Color3.fromRGB(255, 255, 255) -- Warna Putih
+            safeVoidPart.Transparency = 0.5 -- Transparansi 50%
+            safeVoidPart.Parent = workspace
+        end
+        safeVoidPart.CFrame = CFrame.new(0, safeVoidHeight, 0)
+    else
+        if safeVoidPart then
+            safeVoidPart:Destroy()
+            safeVoidPart = nil
+        end
+    end
+end
+
+SafeVoidToggleBtn.MouseButton1Click:Connect(function()
+    isSafeVoidActive = not isSafeVoidActive
+    if isSafeVoidActive then
+        SafeVoidToggleBtn.Text = "ON"
+        SafeVoidToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        SafeVoidToggleBtn.Text = "OFF"
+        SafeVoidToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end
+    updateSafeVoid()
+end)
+
+SafeVoidBox.FocusLost:Connect(function()
+    local newHeight = tonumber(SafeVoidBox.Text)
+    if newHeight then
+        safeVoidHeight = newHeight
+        updateSafeVoid()
+        StatusLabel.Text = "Void Height Set: " .. tostring(safeVoidHeight)
+    else
+        SafeVoidBox.Text = tostring(safeVoidHeight)
+        StatusLabel.Text = "Invalid Height Number!"
+    end
+end)
 
 -- Logika Speed
 local function updateSpeedUI()
@@ -540,7 +617,7 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE CONFIG (Murni Menyimpan Matriks Koordinat World Space)
+-- Logika Save Config
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
@@ -558,13 +635,14 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
         local cf = block.CFrame
-        -- Menyimpan seluruh komponen CFrame (posisi X,Y,Z dan matriks rotasi)
         table.insert(dataToSave, {cf:GetComponents()})
     end
     
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
-        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+        pcall(function()
+            writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+        end)
     end
     
     if setclipboard then
@@ -575,7 +653,7 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA LOAD CONFIG (Murni Memunculkan Balok di Koordinat Persis Tanpa Pandang Sesi/Game)
+-- Logika Load Config
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
@@ -585,108 +663,6 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     
     local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
     if readfile and pcall(readfile, fileName) then
-        -- Bersihkan Balok Lama
-        for _, block in ipairs(spawnedBlocks) do
-            if block then block:Destroy() end
-        end
-        spawnedBlocks = {}
-        isRunning = false
-        StartToggleBtn.Text = "OFF"
-        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatStart then FloatStart.Text = "Start" end
-    currentIndex = 1
-    lastPos = nil
-    startingCFrame = nil
-    currentTransitionTime = 0
-    for _, block in ipairs(spawnedBlocks) do
-        if block then block:Destroy() end
-    end
-    spawnedBlocks = {}
-    StatusLabel.Text = "Reseted!"
-end
-
--- Posisi Float Buttons
-FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
-local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
-local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
-FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
-
--- Event UI
-StartToggleBtn.MouseButton1Click:Connect(toggleStart)
-SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
-UndoBtn.MouseButton1Click:Connect(undoLastBlock)
-ResetBtn.MouseButton1Click:Connect(resetAll)
-
-ActiveFeaturesBtn.MouseButton1Click:Connect(function()
-    activeFeatures = not activeFeatures
-    if activeFeatures then
-        ActiveFeaturesBtn.Text = "ON"
-        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        ActiveFeaturesBtn.Text = "OFF"
-        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if isRunning then toggleStart() end
-    end
-end)
-
-LockButtonToggle.MouseButton1Click:Connect(function()
-    isLocked = not isLocked
-    if isLocked then
-        LockButtonToggle.Text = "ON"
-        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        LockButtonToggle.Text = "OFF"
-        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    end
-end)
-
--- LOGIKA SAVE CONFIG (Murni Menyimpan Matriks Koordinat World Space)
-SaveConfigBtn.MouseButton1Click:Connect(function()
-    if #spawnedBlocks == 0 then
-        StatusLabel.Text = "Spawn blocks first!"
-        return
-    end
-    
-    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local randomCode = "C_"
-    math.randomseed(os.time() + math.floor(tick() * 1000))
-    for i = 1, 13 do
-        local randIndex = math.random(1, #chars)
-        randomCode = randomCode .. chars:sub(randIndex, randIndex)
-    end
-    
-    local dataToSave = {}
-    for _, block in ipairs(spawnedBlocks) do
-        local cf = block.CFrame
-        -- Menyimpan seluruh komponen CFrame (posisi X,Y,Z dan matriks rotasi)
-        table.insert(dataToSave, {cf:GetComponents()})
-    end
-    
-    if writefile then
-        local encodedData = HttpService:JSONEncode(dataToSave)
-        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
-    end
-    
-    if setclipboard then
-        setclipboard(randomCode)
-        StatusLabel.Text = "Saved & Copied!"
-    else
-        StatusLabel.Text = "Saved Code: " .. randomCode
-    end
-end)
-
--- LOGIKA LOAD CONFIG (Murni Memunculkan Balok di Koordinat Persis Tanpa Pandang Sesi/Game)
-LoadConfigBtn.MouseButton1Click:Connect(function()
-    local codeToLoad = LoadBox.Text:gsub("%s+", "")
-    if codeToLoad == "" then
-        StatusLabel.Text = "Enter code first!"
-        return
-    end
-    
-    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
-    if readfile and pcall(readfile, fileName) then
-        -- Bersihkan Balok Lama
         for _, block in ipairs(spawnedBlocks) do
             if block then block:Destroy() end
         end
@@ -707,7 +683,6 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         
         if success and type(decodedData) == "table" then
             for _, comps in ipairs(decodedData) do
-                -- Buat CFrame tepat sesuai matriks koordinat tersimpan
                 local cf = CFrame.new(table.unpack(comps))
                 createVisualBlock(cf)
             end
@@ -724,54 +699,83 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Helper Pemindahan Karakter/Motor (Mempertahankan Rotasi Bawaan)
+local function moveEntityTo(targetCFrame)
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local seatPart = humanoid and humanoid.SeatPart
+    local targetPos = targetCFrame.Position
+    
+    if seatPart then
+        local vehicleModel = seatPart:FindFirstAncestorOfClass("Model")
+        if vehicleModel then
+            local currentCF = vehicleModel:GetPivot()
+            local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
+            
+            for _, part in ipairs(vehicleModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.AssemblyLinearVelocity = Vector3.zero
+                    part.AssemblyAngularVelocity = Vector3.zero
+                end
+            end
+            vehicleModel:PivotTo(newCF)
+            return
+        end
+    end
+    
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    if rootPart then
+        local currentCF = rootPart.CFrame
+        local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
+        rootPart.AssemblyLinearVelocity = Vector3.zero
+        rootPart.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(newCF)
+    end
+end
+
 -- Loop Heartbeat Teleport
 RunService.Heartbeat:Connect(function(dt)
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
     
     local speedVal = getSpeedValue()
-    local char = LocalPlayer.Character
-    if not char then return end
+    local targetBlock = spawnedBlocks[currentIndex]
     
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local targetPart = (humanoid and humanoid.SeatPart) or rootPart
-    
-    if targetPart then
-        if targetPart:IsA("BasePart") then
-            targetPart.AssemblyLinearVelocity = Vector3.zero
-            targetPart.AssemblyAngularVelocity = Vector3.zero
-        end
+    if targetBlock then
+        local targetCFrame = targetBlock.CFrame
         
-        local targetBlock = spawnedBlocks[currentIndex]
-        if targetBlock then
-            local targetCFrame = targetBlock.CFrame
+        if speedVal == 0 then
+            moveEntityTo(targetCFrame)
+            currentIndex = currentIndex + 1
+            if currentIndex > #spawnedBlocks then
+                currentIndex = 1
+            end
+            startingCFrame = nil
+        else
+            local char = LocalPlayer.Character
+            local root = char and (char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart or char:FindFirstChild("HumanoidRootPart"))
             
-            if speedVal == 0 then
-                targetPart.CFrame = targetCFrame
+            if not startingCFrame and root then
+                startingCFrame = root.CFrame
+                currentTransitionTime = 0
+            end
+            
+            currentTransitionTime = currentTransitionTime + dt
+            local alpha = math.clamp(currentTransitionTime / speedVal, 0, 1)
+            
+            if startingCFrame then
+                local lerpedPos = startingCFrame.Position:Lerp(targetCFrame.Position, alpha)
+                moveEntityTo(CFrame.new(lerpedPos))
+            end
+            
+            if alpha >= 1 then
                 currentIndex = currentIndex + 1
                 if currentIndex > #spawnedBlocks then
                     currentIndex = 1
                 end
                 startingCFrame = nil
-            else
-                if not startingCFrame then
-                    startingCFrame = targetPart.CFrame
-                    currentTransitionTime = 0
-                end
-                
-                currentTransitionTime = currentTransitionTime + dt
-                local alpha = currentTransitionTime / speedVal
-                
-                if alpha >= 1 then
-                    targetPart.CFrame = targetCFrame
-                    currentIndex = currentIndex + 1
-                    if currentIndex > #spawnedBlocks then
-                        currentIndex = 1
-                    end
-                    startingCFrame = nil
-                else
-                    targetPart.CFrame = startingCFrame:Lerp(targetCFrame, alpha)
-                end
+                currentTransitionTime = 0
             end
         end
     end
