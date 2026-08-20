@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- Safe GUI Container (Mencegah Eksekusi Gagal)
+-- Safe GUI Container
 local parentContainer = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Clean Up & Folder
@@ -624,33 +624,39 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Helper Pemindahan Karakter/Motor (Serentak Tanpa Roda Tertinggal)
+-- Helper Pemindahan Karakter/Motor (Mempertahankan Rotasi Bawaan)
 local function moveEntityTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char then return end
     
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     local seatPart = humanoid and humanoid.SeatPart
+    local targetPos = targetCFrame.Position
     
     if seatPart then
         local vehicleModel = seatPart:FindFirstAncestorOfClass("Model")
         if vehicleModel then
+            local currentCF = vehicleModel:GetPivot()
+            local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
+            
             for _, part in ipairs(vehicleModel:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.AssemblyLinearVelocity = Vector3.zero
                     part.AssemblyAngularVelocity = Vector3.zero
                 end
             end
-            vehicleModel:PivotTo(targetCFrame)
+            vehicleModel:PivotTo(newCF)
             return
         end
     end
     
     local rootPart = char:FindFirstChild("HumanoidRootPart")
     if rootPart then
+        local currentCF = rootPart.CFrame
+        local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
         rootPart.AssemblyLinearVelocity = Vector3.zero
         rootPart.AssemblyAngularVelocity = Vector3.zero
-        char:PivotTo(targetCFrame)
+        char:PivotTo(newCF)
     end
 end
 
@@ -672,26 +678,29 @@ RunService.Heartbeat:Connect(function(dt)
             end
             startingCFrame = nil
         else
-            if not startingCFrame then
-                local char = LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                startingCFrame = root and root.CFrame or targetCFrame
+            local char = LocalPlayer.Character
+            local root = char and (char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart or char:FindFirstChild("HumanoidRootPart"))
+            
+            if not startingCFrame and root then
+                startingCFrame = root.CFrame
                 currentTransitionTime = 0
             end
             
             currentTransitionTime = currentTransitionTime + dt
-            local alpha = currentTransitionTime / speedVal
+            local alpha = math.clamp(currentTransitionTime / speedVal, 0, 1)
+            
+            if startingCFrame then
+                local lerpedPos = startingCFrame.Position:Lerp(targetCFrame.Position, alpha)
+                moveEntityTo(CFrame.new(lerpedPos))
+            end
             
             if alpha >= 1 then
-                moveEntityTo(targetCFrame)
                 currentIndex = currentIndex + 1
                 if currentIndex > #spawnedBlocks then
                     currentIndex = 1
                 end
                 startingCFrame = nil
-            else
-                local lerpedCFrame = startingCFrame:Lerp(targetCFrame, alpha)
-                moveEntityTo(lerpedCFrame)
+                currentTransitionTime = 0
             end
         end
     end
