@@ -551,20 +551,16 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE CONFIG
+-- LOGIKA SAVE CONFIG (TELAH DIPERBAIKI)
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
         return
     end
     
-    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local randomCode = "C_"
-    math.randomseed(os.time() + math.floor(tick() * 1000))
-    for i = 1, 13 do
-        local randIndex = math.random(1, #chars)
-        randomCode = randomCode .. chars:sub(randIndex, randIndex)
-    end
+    -- Membuat ID Unik agar kode selalu beda tiap sirkuit
+    local uniqueID = string.format("%X", math.floor((os.clock() * 1000000) + tick()))
+    local randomCode = "C_" .. uniqueID
     
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
@@ -572,16 +568,27 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
         table.insert(dataToSave, {cf:GetComponents()})
     end
     
+    -- Menyimpan file dengan proteksi pcall
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
-        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+        pcall(function()
+            writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
+        end)
     end
     
-    if setclipboard then
-        setclipboard(randomCode)
-        StatusLabel.Text = "Saved & Copied!"
+    -- Penanganan sistem clipboard dan auto-fill TextBox
+    local successCopy = pcall(function()
+        if setclipboard then
+            setclipboard(randomCode)
+        end
+    end)
+    
+    LoadBox.Text = randomCode -- Memastikan kode unik selalu muncul di text box
+    
+    if successCopy and setclipboard then
+        StatusLabel.Text = "Saved & Copied: " .. randomCode
     else
-        StatusLabel.Text = "Saved Code: " .. randomCode
+        StatusLabel.Text = "Saved! Code: " .. randomCode
     end
 end)
 
@@ -589,6 +596,11 @@ end)
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
+        StatusLabel.Text = "Enter code first!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToLoad == "" then
         StatusLabel.Text = "Enter code first!"
         return
     end
