@@ -1,315 +1,202 @@
--- Radar & ESP Hub V3.0 (Include ESP Hologram 3D)
--- Salin dan jalankan script ini lewat Executor
+-- Service Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 
-if CoreGui:FindFirstChild("RadarMenuGui") then
-    CoreGui.RadarMenuGui:Destroy()
-end
+_G.RadarData = {
+    radarEnabled = true, radarSizeVal = 120, radarRadiusVal = 60,
+    maxDistanceVal = 200, arrowSizeVal = 16, radarShape = "Bulat",
+    outlineMode = "RGB", customPosition = UDim2.new(1, -125, 0, 10),
+    espBoxEnabled = false, espLineEnabled = false,
+    espHighlightEnabled = false, espHologramEnabled = true,
+    myArrowImage = "rbxassetid://83978146105606",
+    otherArrowImage = "rbxassetid://98960754572491"
+}
 
--- VARIABEL PENGATURAN
-local radarEnabled = true
-local radarSizeVal = 120
-local radarRadiusVal = 60
-local maxDistanceVal = 200
-local arrowSizeVal = 16
-local radarShape = "Bulat"
-local outlineMode = "RGB"
-local customPosition = UDim2.new(1, -125, 0, 10)
+-- BERSIHKAN GUI LAMA
+if CoreGui:FindFirstChild("RadarMenuGui") then CoreGui.RadarMenuGui:Destroy() end
+if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("RadarMenuGui") then LocalPlayer.PlayerGui.RadarMenuGui:Destroy() end
 
--- Variabel Fitur ESP
-local espBoxEnabled = false
-local espLineEnabled = false
-local espHighlightEnabled = false
-local espHologramEnabled = false
-
--- Texture ID
-local myArrowImage = "rbxassetid://83978146105606"
-local otherArrowImage = "rbxassetid://98960754572491"
-
--- GUI UTAMA
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarMenuGui"
-local success = pcall(function() ScreenGui.Parent = CoreGui end)
-if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- PENTING: Mencegah offset TopBar Roblox
+local ok = pcall(function() ScreenGui.Parent = CoreGui end)
+if not ok or not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local EspContainer = Instance.new("Folder")
-EspContainer.Name = "ESPContainer"
-EspContainer.Parent = ScreenGui
+_G.EspContainer = Instance.new("Folder")
+_G.EspContainer.Name = "ESPContainer"
+_G.EspContainer.Parent = ScreenGui
 
--- 1. TOMBOL SHORTCUT
-local ShortcutButton = Instance.new("TextButton")
-ShortcutButton.Size = UDim2.new(0, 42, 0, 42)
-ShortcutButton.Position = UDim2.new(1, -55, 0.4, 0)
-ShortcutButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ShortcutButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ShortcutButton.Text = "⚙️"
-ShortcutButton.TextSize = 20
-ShortcutButton.BorderSizePixel = 2
-ShortcutButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
-ShortcutButton.Parent = ScreenGui
+-- SHORTCUT BUTTON
+local ShortcutBtn = Instance.new("TextButton")
+ShortcutBtn.Size = UDim2.new(0, 90, 0, 35)
+ShortcutBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+ShortcutBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ShortcutBtn.TextColor3 = Color3.fromRGB(0, 255, 200)
+ShortcutBtn.Text = "OPEN HUB"
+ShortcutBtn.TextSize = 13
+ShortcutBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
+ShortcutBtn.Parent = ScreenGui
 
-local ShortCorner = Instance.new("UICorner")
-ShortCorner.CornerRadius = UDim.new(0, 8)
-ShortCorner.Parent = ShortcutButton
+local ShortCorner = Instance.new("UICorner") ShortCorner.CornerRadius = UDim.new(0, 8) ShortCorner.Parent = ShortcutBtn
+local ShortStroke = Instance.new("UIStroke") ShortStroke.Color = Color3.fromRGB(0, 255, 200) ShortStroke.Thickness = 1.5 ShortStroke.Parent = ShortcutBtn
 
-local dragging, dragStart, startPos
-ShortcutButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = ShortcutButton.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        ShortcutButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- 2. FRAME RADAR
+-- RADAR UI
 local RadarFrame = Instance.new("Frame")
-RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
-RadarFrame.Position = customPosition
+RadarFrame.Size = UDim2.new(0, 120, 0, 120)
+RadarFrame.Position = _G.RadarData.customPosition
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
 RadarFrame.ClipsDescendants = true
 RadarFrame.BorderSizePixel = 0
 RadarFrame.Parent = ScreenGui
 
-local RadarCorner = Instance.new("UICorner")
-RadarCorner.CornerRadius = UDim.new(1, 0)
-RadarCorner.Parent = RadarFrame
+local RadarCorner = Instance.new("UICorner") RadarCorner.CornerRadius = UDim.new(1, 0) RadarCorner.Parent = RadarFrame
+local RadarStroke = Instance.new("UIStroke") RadarStroke.Thickness = 3 RadarStroke.Color = Color3.fromRGB(255, 255, 255) RadarStroke.Parent = RadarFrame
+_G.RadarStroke = RadarStroke
+_G.RadarFrame = RadarFrame
+_G.RadarCorner = RadarCorner
 
-local RadarStroke = Instance.new("UIStroke")
-RadarStroke.Thickness = 3
-RadarStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-RadarStroke.Color = Color3.fromRGB(255, 255, 255)
-RadarStroke.Parent = RadarFrame
-
--- GRID 10x10 STUDS
 local GridContainer = Instance.new("Frame")
 GridContainer.Size = UDim2.new(1, 0, 1, 0)
 GridContainer.BackgroundTransparency = 1
-GridContainer.ZIndex = 0
 GridContainer.Parent = RadarFrame
 
 local function updateGrid()
     GridContainer:ClearAllChildren()
-    local scaleFactor = radarSizeVal / (maxDistanceVal * 2)
-    local center = radarSizeVal / 2
-    local gridStuds = 10
-    
-    for offsetStuds = -maxDistanceVal, maxDistanceVal, gridStuds do
+    local scaleFactor = _G.RadarData.radarSizeVal / (_G.RadarData.maxDistanceVal * 2)
+    local center = _G.RadarData.radarSizeVal / 2
+    for offsetStuds = -_G.RadarData.maxDistanceVal, _G.RadarData.maxDistanceVal, 10 do
         local posPx = center + (offsetStuds * scaleFactor)
-        if posPx >= 0 and posPx <= radarSizeVal then
-            local vLine = Instance.new("Frame")
-            vLine.Size = UDim2.new(0, 1, 1, 0)
-            vLine.Position = UDim2.new(0, posPx, 0, 0)
-            vLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            vLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
-            vLine.BorderSizePixel = 0
-            vLine.Parent = GridContainer
-            
-            local hLine = Instance.new("Frame")
-            hLine.Size = UDim2.new(1, 0, 0, 1)
-            hLine.Position = UDim2.new(0, 0, 0, posPx)
-            hLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            hLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
-            hLine.BorderSizePixel = 0
-            hLine.Parent = GridContainer
+        if posPx >= 0 and posPx <= _G.RadarData.radarSizeVal then
+            local vLine = Instance.new("Frame") vLine.Size = UDim2.new(0, 1, 1, 0) vLine.Position = UDim2.new(0, posPx, 0, 0)
+            vLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255) vLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88 vLine.BorderSizePixel = 0 vLine.Parent = GridContainer
+            local hLine = Instance.new("Frame") hLine.Size = UDim2.new(1, 0, 0, 1) hLine.Position = UDim2.new(0, 0, 0, posPx)
+            hLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255) hLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88 hLine.BorderSizePixel = 0 hLine.Parent = GridContainer
         end
     end
 end
 updateGrid()
 
--- 3. MENU SETTINGS (DIPERBESAR SIKIT UNTUK HOLOGRAM)
+-- MENU UI
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 260, 0, 535)
-MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -265)
+MenuFrame.Size = UDim2.new(0, 260, 0, 480)
+MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -240)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MenuFrame.BackgroundTransparency = 0.1
-MenuFrame.BorderSizePixel = 2
-MenuFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-MenuFrame.Visible = false
+MenuFrame.BorderSizePixel = 0
+MenuFrame.Visible = true
 MenuFrame.Parent = ScreenGui
 
-local MenuCorner = Instance.new("UICorner")
-MenuCorner.CornerRadius = UDim.new(0, 12)
-MenuCorner.Parent = MenuFrame
+local MenuCorner = Instance.new("UICorner") MenuCorner.CornerRadius = UDim.new(0, 12) MenuCorner.Parent = MenuFrame
+local MenuStroke = Instance.new("UIStroke") MenuStroke.Color = Color3.fromRGB(0, 255, 200) MenuStroke.Thickness = 2 MenuStroke.Parent = MenuFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "RADAR & ESP HUB"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 15
-TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
-TitleLabel.Parent = MenuFrame
+TitleLabel.Size = UDim2.new(1, 0, 0, 40) TitleLabel.BackgroundTransparency = 1 TitleLabel.Text = "HUB v3.2 - FIXED ESP"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) TitleLabel.TextSize = 14 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold) TitleLabel.Parent = MenuFrame
 
-local function createButtonOption(name, yPos, defaultText, callback)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0, 120, 0, 30)
-    lbl.Position = UDim2.new(0, 15, 0, yPos)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.TextSize = 13
-    lbl.Parent = MenuFrame
-    
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 28)
-    btn.Position = UDim2.new(1, -115, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = defaultText
-    btn.TextSize = 12
-    btn.Parent = MenuFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    
+local function createOption(name, yPos, defaultText, callback)
+    local lbl = Instance.new("TextLabel") lbl.Size = UDim2.new(0, 120, 0, 28) lbl.Position = UDim2.new(0, 15, 0, yPos)
+    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.TextColor3 = Color3.fromRGB(220, 220, 220) lbl.TextXAlignment = Enum.TextXAlignment.Left lbl.TextSize = 12 lbl.Parent = MenuFrame
+    local btn = Instance.new("TextButton") btn.Size = UDim2.new(0, 100, 0, 26) btn.Position = UDim2.new(1, -115, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40) btn.TextColor3 = Color3.fromRGB(255, 255, 255) btn.Text = defaultText btn.TextSize = 12 btn.Parent = MenuFrame
+    local corner = Instance.new("UICorner") corner.CornerRadius = UDim.new(0, 6) corner.Parent = btn
     btn.MouseButton1Click:Connect(function() callback(btn) end)
 end
 
-createButtonOption("Radar UI", 45, "ON", function(btn)
-    radarEnabled = not radarEnabled
-    btn.Text = radarEnabled and "ON" or "OFF"
-    btn.TextColor3 = radarEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 100, 100)
-    RadarFrame.Visible = radarEnabled
-end)
-
-createButtonOption("Ukuran Radar", 80, "120px", function(btn)
-    if radarSizeVal == 120 then radarSizeVal = 160 radarRadiusVal = 80 btn.Text = "160px"
-    elseif radarSizeVal == 160 then radarSizeVal = 90 radarRadiusVal = 45 btn.Text = "90px"
-    else radarSizeVal = 120 radarRadiusVal = 60 btn.Text = "120px" end
-    RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
-    updateGrid()
-end)
-
-createButtonOption("Bentuk Radar", 115, "Bulat", function(btn)
-    if radarShape == "Bulat" then radarShape = "Kotak" RadarCorner.CornerRadius = UDim.new(0, 0) btn.Text = "Kotak"
-    elseif radarShape == "Kotak" then radarShape = "Squircle" RadarCorner.CornerRadius = UDim.new(0, 25) btn.Text = "Squircle"
-    else radarShape = "Bulat" RadarCorner.CornerRadius = UDim.new(1, 0) btn.Text = "Bulat" end
-end)
-
-createButtonOption("Outline Radar", 150, "RGB", function(btn)
-    if outlineMode == "RGB" then outlineMode = "Hitam" RadarStroke.Color = Color3.fromRGB(0, 0, 0) btn.Text = "Hitam"
-    else outlineMode = "RGB" btn.Text = "RGB" end
-end)
-
-createButtonOption("Ukuran Arrow", 185, "16px", function(btn)
-    if arrowSizeVal == 16 then arrowSizeVal = 22 btn.Text = "22px"
-    elseif arrowSizeVal == 22 then arrowSizeVal = 12 btn.Text = "12px"
-    else arrowSizeVal = 16 btn.Text = "16px" end
-end)
-
-createButtonOption("Jarak Render", 220, "200 Studs", function(btn)
-    if maxDistanceVal == 200 then maxDistanceVal = 400 btn.Text = "400 Studs"
-    elseif maxDistanceVal == 400 then maxDistanceVal = 100 btn.Text = "100 Studs"
-    else maxDistanceVal = 200 btn.Text = "200 Studs" end
-    updateGrid()
-end)
-
-createButtonOption("Letak Radar", 255, "Kanan Atas", function(btn)
-    if customPosition == UDim2.new(1, -125, 0, 10) then customPosition = UDim2.new(0, 10, 0, 10) btn.Text = "Kiri Atas"
-    elseif customPosition == UDim2.new(0, 10, 0, 10) then customPosition = UDim2.new(1, -125, 1, -125) btn.Text = "Kanan Bawah"
-    else customPosition = UDim2.new(1, -125, 0, 10) btn.Text = "Kanan Atas" end
-    RadarFrame.Position = customPosition
-end)
-
-createButtonOption("ESP Box", 300, "OFF", function(btn)
-    espBoxEnabled = not espBoxEnabled
-    btn.Text = espBoxEnabled and "ON" or "OFF"
-    btn.TextColor3 = espBoxEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
-end)
-
-createButtonOption("ESP Line", 335, "OFF", function(btn)
-    espLineEnabled = not espLineEnabled
-    btn.Text = espLineEnabled and "ON" or "OFF"
-    btn.TextColor3 = espLineEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
-end)
-
-createButtonOption("ESP Highlight", 370, "OFF", function(btn)
-    espHighlightEnabled = not espHighlightEnabled
-    btn.Text = espHighlightEnabled and "ON" or "OFF"
-    btn.TextColor3 = espHighlightEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
-end)
-
--- OPSI ESP HOLOGRAM (3D CHAMS)
-createButtonOption("ESP Hologram", 405, "OFF", function(btn)
-    espHologramEnabled = not espHologramEnabled
-    btn.Text = espHologramEnabled and "ON" or "OFF"
-    btn.TextColor3 = espHologramEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
-end)
+createOption("Radar UI", 45, "ON", function(b) _G.RadarData.radarEnabled = not _G.RadarData.radarEnabled b.Text = _G.RadarData.radarEnabled and "ON" or "OFF" RadarFrame.Visible = _G.RadarData.radarEnabled end)
+createOption("ESP 3D Hologram", 80, "ON", function(b) _G.RadarData.espHologramEnabled = not _G.RadarData.espHologramEnabled b.Text = _G.RadarData.espHologramEnabled and "ON" or "OFF" b.TextColor3 = _G.RadarData.espHologramEnabled and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100) end)
+createOption("ESP Box", 115, "OFF", function(b) _G.RadarData.espBoxEnabled = not _G.RadarData.espBoxEnabled b.Text = _G.RadarData.espBoxEnabled and "ON" or "OFF" end)
+createOption("ESP Line", 150, "OFF", function(b) _G.RadarData.espLineEnabled = not _G.RadarData.espLineEnabled b.Text = _G.RadarData.espLineEnabled and "ON" or "OFF" end)
+createOption("ESP Highlight", 185, "OFF", function(b) _G.RadarData.espHighlightEnabled = not _G.RadarData.espHighlightEnabled b.Text = _G.RadarData.espHighlightEnabled and "ON" or "OFF" end)
+createOption("Ukuran Radar", 220, "120px", function(b) if _G.RadarData.radarSizeVal == 120 then _G.RadarData.radarSizeVal = 160 _G.RadarData.radarRadiusVal = 80 b.Text = "160px" elseif _G.RadarData.radarSizeVal == 160 then _G.RadarData.radarSizeVal = 90 _G.RadarData.radarRadiusVal = 45 b.Text = "90px" else _G.RadarData.radarSizeVal = 120 _G.RadarData.radarRadiusVal = 60 b.Text = "120px" end RadarFrame.Size = UDim2.new(0, _G.RadarData.radarSizeVal, 0, _G.RadarData.radarSizeVal) updateGrid() end)
+createOption("Bentuk Radar", 255, "Bulat", function(b) if _G.RadarData.radarShape == "Bulat" then _G.RadarData.radarShape = "Kotak" RadarCorner.CornerRadius = UDim.new(0, 0) b.Text = "Kotak" else _G.RadarData.radarShape = "Bulat" RadarCorner.CornerRadius = UDim.new(1, 0) b.Text = "Bulat" end end)
+createOption("Outline Radar", 290, "RGB", function(b) if _G.RadarData.outlineMode == "RGB" then _G.RadarData.outlineMode = "Hitam" RadarStroke.Color = Color3.fromRGB(0, 0, 0) b.Text = "Hitam" else _G.RadarData.outlineMode = "RGB" b.Text = "RGB" end end)
+createOption("Jarak Render", 325, "200 Studs", function(b) if _G.RadarData.maxDistanceVal == 200 then _G.RadarData.maxDistanceVal = 400 b.Text = "400 Studs" else _G.RadarData.maxDistanceVal = 200 b.Text = "200 Studs" end updateGrid() end)
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 230, 0, 30)
-CloseBtn.Position = UDim2.new(0.5, -115, 1, -40)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Text = "Tutup Menu"
-CloseBtn.TextSize = 13
-CloseBtn.Parent = MenuFrame
+CloseBtn.Size = UDim2.new(0, 230, 0, 32) CloseBtn.Position = UDim2.new(0.5, -115, 1, -42)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40) CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "Sembunyikan Menu" CloseBtn.TextSize = 12 CloseBtn.Parent = MenuFrame
+local CloseCorner = Instance.new("UICorner") CloseCorner.CornerRadius = UDim.new(0, 6) CloseCorner.Parent = CloseBtn
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
-CloseCorner.Parent = CloseBtn
-
-local clickCheck = 0
-ShortcutButton.MouseButton1Down:Connect(function() clickCheck = tick() end)
-ShortcutButton.MouseButton1Up:Connect(function()
-    if tick() - clickCheck < 0.2 then MenuFrame.Visible = not MenuFrame.Visible end
-end)
+ShortcutBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = not MenuFrame.Visible end)
 CloseBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = false end)
 
--- CENTER ARROW RADAR
+-- LOGIKA RENDER & ESP PRESIFIKASI
 local CenterArrow = Instance.new("ImageLabel")
-CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
-CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
-CenterArrow.BackgroundTransparency = 1
-CenterArrow.Image = myArrowImage
-CenterArrow.ZIndex = 2
-CenterArrow.Parent = RadarFrame
+CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5) CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
+CenterArrow.BackgroundTransparency = 1 CenterArrow.Image = _G.RadarData.myArrowImage CenterArrow.ZIndex = 2 CenterArrow.Parent = RadarFrame
 
-local BlipsContainer = Instance.new("Folder")
-BlipsContainer.Name = "Blips"
-BlipsContainer.Parent = RadarFrame
+local BlipsContainer = Instance.new("Folder") BlipsContainer.Name = "Blips" BlipsContainer.Parent = RadarFrame
 
 local playerBlips = {}
 local espElements = {}
+local hologramClones = {}
 
--- KALKULASI BOUNDING BOX
-local function getPreciseBoundingBox(character, camera)
+local HologramFolder = Workspace:FindFirstChild("3DHologramFolder") or Instance.new("Folder", Workspace)
+HologramFolder.Name = "3DHologramFolder"
+
+local function create3DHologram(player)
+    if hologramClones[player] then return hologramClones[player] end
+    local char = player.Character
+    if not char then return nil end
+    
+    char.Archivable = true
+    local clone = char:Clone()
+    char.Archivable = false
+    
+    for _, item in ipairs(clone:GetDescendants()) do
+        if item:IsA("Script") or item:IsA("LocalScript") or item:IsA("Animator") or item:IsA("Humanoid") then
+            item:Destroy()
+        elseif item:IsA("BasePart") then
+            item.CanCollide = false
+            item.Anchored = true
+            item.CastShadow = false
+            item.Material = Enum.Material.ForceField
+            item.Color = Color3.fromRGB(0, 200, 255)
+            item.Transparency = 0.35
+        end
+    end
+    
+    clone.Name = "Holo_" .. player.Name
+    clone.Parent = HologramFolder
+    hologramClones[player] = clone
+    return clone
+end
+
+local function remove3DHologram(player)
+    if hologramClones[player] then
+        hologramClones[player]:Destroy()
+        hologramClones[player] = nil
+    end
+end
+
+-- PERHITUNGAN BOX PRESIF TANPA SHIFT/OFFSET
+local function getAccurateBoundingBox(character, camera)
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false, 0, 0, 0, 0 end
+    
     local cframe, size = character:GetBoundingBox()
-    local halfSize = size / 2
-
+    local extents = size / 2
+    
     local corners = {
-        cframe * Vector3.new(-halfSize.X, -halfSize.Y, -halfSize.Z),
-        cframe * Vector3.new(-halfSize.X, -halfSize.Y,  halfSize.Z),
-        cframe * Vector3.new(-halfSize.X,  halfSize.Y, -halfSize.Z),
-        cframe * Vector3.new(-halfSize.X,  halfSize.Y,  halfSize.Z),
-        cframe * Vector3.new( halfSize.X, -halfSize.Y, -halfSize.Z),
-        cframe * Vector3.new( halfSize.X, -halfSize.Y,  halfSize.Z),
-        cframe * Vector3.new( halfSize.X,  halfSize.Y, -halfSize.Z),
-        cframe * Vector3.new( halfSize.X,  halfSize.Y,  halfSize.Z),
+        cframe * Vector3.new(-extents.X,  extents.Y, -extents.Z),
+        cframe * Vector3.new( extents.X,  extents.Y, -extents.Z),
+        cframe * Vector3.new(-extents.X, -extents.Y, -extents.Z),
+        cframe * Vector3.new( extents.X, -extents.Y, -extents.Z),
+        cframe * Vector3.new(-extents.X,  extents.Y,  extents.Z),
+        cframe * Vector3.new( extents.X,  extents.Y,  extents.Z),
+        cframe * Vector3.new(-extents.X, -extents.Y,  extents.Z),
+        cframe * Vector3.new( extents.X, -extents.Y,  extents.Z)
     }
-
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
+    
+    local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
     local anyOnScreen = false
-
+    
     for _, corner in ipairs(corners) do
         local screenPos, onScreen = camera:WorldToViewportPoint(corner)
         if onScreen then anyOnScreen = true end
@@ -318,20 +205,17 @@ local function getPreciseBoundingBox(character, camera)
         maxX = math.max(maxX, screenPos.X)
         maxY = math.max(maxY, screenPos.Y)
     end
-
-    return anyOnScreen, minX, minY, maxX - minX, maxY - minY
+    
+    return anyOnScreen, minX, minY, (maxX - minX), (maxY - minY)
 end
 
--- RENDER LOOP
 RunService.RenderStepped:Connect(function()
-    if outlineMode == "RGB" and radarEnabled then
-        local hue = (tick() % 4) / 4
-        RadarStroke.Color = Color3.fromHSV(hue, 1, 1)
+    if _G.RadarData.outlineMode == "RGB" and _G.RadarData.radarEnabled then
+        _G.RadarStroke.Color = Color3.fromHSV((tick() % 4) / 4, 1, 1)
     end
     
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    
     local camera = Workspace.CurrentCamera
     if not camera then return end
     
@@ -341,8 +225,8 @@ RunService.RenderStepped:Connect(function()
     local camLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
     local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
     
-    if radarEnabled then
-        CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
+    if _G.RadarData.radarEnabled then
+        CenterArrow.Size = UDim2.new(0, _G.RadarData.arrowSizeVal, 0, _G.RadarData.arrowSizeVal)
         local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
         CenterArrow.Rotation = math.deg(math.atan2(myLook:Dot(camRight), myLook:Dot(camLook)))
     end
@@ -354,149 +238,113 @@ RunService.RenderStepped:Connect(function()
             local targetChar = player.Character
             local targetHRP = targetChar.HumanoidRootPart
             local targetHead = targetChar:FindFirstChild("Head") or targetHRP
-            local targetPos = targetHRP.Position
-            local offset = targetPos - myPos
+            local offset = targetHRP.Position - myPos
             local distance = offset.Magnitude
             
-            -- RADAR BLIP
-            if radarEnabled then
+            -- RADAR
+            if _G.RadarData.radarEnabled then
                 local blip = playerBlips[player]
                 if not blip then
-                    blip = Instance.new("ImageLabel")
-                    blip.AnchorPoint = Vector2.new(0.5, 0.5)
-                    blip.BackgroundTransparency = 1
-                    blip.Image = otherArrowImage
-                    blip.ZIndex = 1
-                    blip.Parent = BlipsContainer
+                    blip = Instance.new("ImageLabel") blip.AnchorPoint = Vector2.new(0.5, 0.5) blip.BackgroundTransparency = 1
+                    blip.Image = _G.RadarData.otherArrowImage blip.ZIndex = 1 blip.Parent = BlipsContainer
                     playerBlips[player] = blip
                 end
-                
-                blip.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
-                if distance <= maxDistanceVal then
+                blip.Size = UDim2.new(0, _G.RadarData.arrowSizeVal, 0, _G.RadarData.arrowSizeVal)
+                if distance <= _G.RadarData.maxDistanceVal then
                     blip.Visible = true
                     local screenRel = Vector2.new(offset:Dot(camRight), -offset:Dot(camLook))
-                    if screenRel.Magnitude > 0 then
-                        screenRel = screenRel.Unit * (math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal)
-                    end
+                    if screenRel.Magnitude > 0 then screenRel = screenRel.Unit * (math.clamp(distance / _G.RadarData.maxDistanceVal, 0, 1) * _G.RadarData.radarRadiusVal) end
                     blip.Position = UDim2.new(0.5, screenRel.X, 0.5, screenRel.Y)
-                    
                     local targetLook = Vector3.new(targetHRP.CFrame.LookVector.X, 0, targetHRP.CFrame.LookVector.Z).Unit
                     blip.Rotation = math.deg(math.atan2(targetLook:Dot(camRight), targetLook:Dot(camLook)))
-                else
-                    blip.Visible = false
-                end
-            elseif playerBlips[player] then
-                playerBlips[player].Visible = false
-            end
+                else blip.Visible = false end
+            elseif playerBlips[player] then playerBlips[player].Visible = false end
             
-            -- ESP SETUP
+            -- ESP CONTAINER CREATION
             local esp = espElements[player]
             if not esp then
                 esp = {}
-                local box = Instance.new("Frame")
-                box.BackgroundTransparency = 1
-                box.BorderSizePixel = 0
-                box.Parent = EspContainer
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.Thickness = 1.5
-                boxStroke.Color = Color3.fromRGB(255, 50, 50)
-                boxStroke.Parent = box
+                local box = Instance.new("Frame") box.BackgroundTransparency = 1 box.BorderSizePixel = 0 box.Parent = _G.EspContainer
+                local boxStroke = Instance.new("UIStroke") boxStroke.Thickness = 1.5 boxStroke.Color = Color3.fromRGB(255, 50, 50) boxStroke.Parent = box
                 esp.Box = box
                 
-                local line = Instance.new("Frame")
-                line.AnchorPoint = Vector2.new(0.5, 0.5)
-                line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                line.BorderSizePixel = 0
-                line.Parent = EspContainer
+                local line = Instance.new("Frame") 
+                line.AnchorPoint = Vector2.new(0.5, 0.5) 
+                line.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
+                line.BorderSizePixel = 0 
+                line.Parent = _G.EspContainer
                 esp.Line = line
                 
-                local hl = Instance.new("Highlight")
-                hl.FillColor = Color3.fromRGB(255, 0, 0)
-                hl.FillTransparency = 0.5
-                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                hl.OutlineTransparency = 0
-                esp.Highlight = hl
-                
-                -- ESP Hologram Object
-                local holoHL = Instance.new("Highlight")
-                holoHL.Name = "HologramChams"
-                holoHL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                holoHL.FillColor = Color3.fromRGB(0, 200, 255) -- Warna Biru Cyan ala Hologram
-                holoHL.FillTransparency = 0.3
-                holoHL.OutlineColor = Color3.fromRGB(255, 255, 255)
-                holoHL.OutlineTransparency = 0
-                esp.Hologram = holoHL
-                
+                local hl = Instance.new("Highlight") hl.FillColor = Color3.fromRGB(255, 0, 0) hl.FillTransparency = 0.5 hl.OutlineColor = Color3.fromRGB(255, 255, 255) esp.Highlight = hl
                 espElements[player] = esp
             end
             
-            -- ESP HIGHLIGHT ORDINARY
-            if espHighlightEnabled then
-                esp.Highlight.Parent = targetChar
-                esp.Highlight.Enabled = true
+            if _G.RadarData.espHighlightEnabled then esp.Highlight.Parent = targetChar esp.Highlight.Enabled = true else esp.Highlight.Enabled = false end
+            
+            -- REAL 3D HOLOGRAM
+            if _G.RadarData.espHologramEnabled then
+                local holoClone = create3DHologram(player)
+                if holoClone then
+                    for _, pPart in ipairs(targetChar:GetChildren()) do
+                        if pPart:IsA("BasePart") then
+                            local cPart = holoClone:FindFirstChild(pPart.Name)
+                            if cPart then cPart.CFrame = pPart.CFrame end
+                        end
+                    end
+                end
             else
-                esp.Highlight.Enabled = false
+                remove3DHologram(player)
             end
             
-            -- ESP HOLOGRAM (3D CHAMS TEMBUS TEMBOK)
-            if espHologramEnabled then
-                esp.Hologram.Parent = targetChar
-                esp.Hologram.Enabled = true
-            else
-                esp.Hologram.Enabled = false
+            -- ESP BOX PRESIF
+            if _G.RadarData.espBoxEnabled then
+                local onScreen, x, y, w, h = getAccurateBoundingBox(targetChar, camera)
+                if onScreen then 
+                    esp.Box.Size = UDim2.new(0, w, 0, h) 
+                    esp.Box.Position = UDim2.new(0, x, 0, y) 
+                    esp.Box.Visible = true 
+                else 
+                    esp.Box.Visible = false 
+                end
+            else 
+                esp.Box.Visible = false 
             end
             
-            -- ESP BOX PRESISI
-            if espBoxEnabled then
-                local onScreen, x, y, width, height = getPreciseBoundingBox(targetChar, camera)
+            -- ESP LINE PRESIF
+            if _G.RadarData.espLineEnabled then
+                local targetPos, onScreen = camera:WorldToViewportPoint(targetHRP.Position)
                 if onScreen then
-                    esp.Box.Size = UDim2.new(0, width, 0, height)
-                    esp.Box.Position = UDim2.new(0, x, 0, y)
-                    esp.Box.Visible = true
-                else
-                    esp.Box.Visible = false
-                end
-            else
-                esp.Box.Visible = false
-            end
-            
-            -- ESP LINE (KEPALA)
-            if espLineEnabled then
-                local headPos, headOnScreen = camera:WorldToViewportPoint(targetHead.Position)
-                if headOnScreen then
-                    local viewportSize = camera.ViewportSize
-                    local startPos = Vector2.new(viewportSize.X / 2, viewportSize.Y)
-                    local targetVec = Vector2.new(headPos.X, headPos.Y)
-                    local distancePx = (targetVec - startPos).Magnitude
-                    local angle = math.atan2(targetVec.Y - startPos.Y, targetVec.X - startPos.X)
+                    local vp = camera.ViewportSize
+                    local startPos = Vector2.new(vp.X / 2, vp.Y)
+                    local endPos = Vector2.new(targetPos.X, targetPos.Y)
                     
-                    esp.Line.Size = UDim2.new(0, distancePx, 0, 1.5)
-                    esp.Line.Position = UDim2.new(0, (startPos.X + targetVec.X) / 2, 0, (startPos.Y + targetVec.Y) / 2)
-                    esp.Line.Rotation = math.deg(angle)
+                    local distanceVector = endPos - startPos
+                    local length = distanceVector.Magnitude
+                    local angle = math.deg(math.atan2(distanceVector.Y, distanceVector.X))
+                    
+                    esp.Line.Size = UDim2.new(0, length, 0, 1.5)
+                    esp.Line.Position = UDim2.new(0, (startPos.X + endPos.X) / 2, 0, (startPos.Y + endPos.Y) / 2)
+                    esp.Line.Rotation = angle
                     esp.Line.Visible = true
-                else
-                    esp.Line.Visible = false
+                else 
+                    esp.Line.Visible = false 
                 end
-            else
-                esp.Line.Visible = false
+            else 
+                esp.Line.Visible = false 
             end
         end
     end
     
-    -- CLEANUP
-    for player, blip in pairs(playerBlips) do
-        if not activePlayers[player] then
-            blip:Destroy()
-            playerBlips[player] = nil
+    -- CLEANUP MEMORI
+    for p, b in pairs(playerBlips) do if not activePlayers[p] then b:Destroy() playerBlips[p] = nil end end
+    for p, e in pairs(espElements) do
+        if not activePlayers[p] then
+            if e.Box then e.Box:Destroy() end if e.Line then e.Line:Destroy() end
+            if e.Highlight then e.Highlight:Destroy() end
+            espElements[p] = nil
         end
     end
-    for player, esp in pairs(espElements) do
-        if not activePlayers[player] then
-            if esp.Box then esp.Box:Destroy() end
-            if esp.Line then esp.Line:Destroy() end
-            if esp.Highlight then esp.Highlight:Destroy() end
-            if esp.Hologram then esp.Hologram:Destroy() end
-            espElements[player] = nil
-        end
+    for p, _ in pairs(hologramClones) do
+        if not activePlayers[p] then remove3DHologram(p) end
     end
 end)
