@@ -1,4 +1,4 @@
--- Radar UI V2.0
+-- Radar & ESP Hub V3.0 (Include ESP Hologram 3D)
 -- Salin dan jalankan script ini lewat Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -7,46 +7,41 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- Hapus GUI lama jika ada
 if CoreGui:FindFirstChild("RadarMenuGui") then
     CoreGui.RadarMenuGui:Destroy()
 end
 
--- VARIABEL PENGATURAN UTAMA (DEFAULT)
+-- VARIABEL PENGATURAN
 local radarEnabled = true
 local radarSizeVal = 120
 local radarRadiusVal = 60
 local maxDistanceVal = 200
 local arrowSizeVal = 16
-local radarShape = "Bulat" -- "Kotak", "Bulat", "Squircle"
-local outlineMode = "RGB" -- "Hitam", "RGB"
+local radarShape = "Bulat"
+local outlineMode = "RGB"
 local customPosition = UDim2.new(1, -125, 0, 10)
 
 -- Variabel Fitur ESP
 local espBoxEnabled = false
 local espLineEnabled = false
 local espHighlightEnabled = false
+local espHologramEnabled = false
 
--- Texture ID Kustom Radar
+-- Texture ID
 local myArrowImage = "rbxassetid://83978146105606"
 local otherArrowImage = "rbxassetid://98960754572491"
 
--- MEMBUAT GUI UTAMA
+-- GUI UTAMA
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarMenuGui"
-local success = pcall(function()
-    ScreenGui.Parent = CoreGui
-end)
-if not success then
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+local success = pcall(function() ScreenGui.Parent = CoreGui end)
+if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- CONTAINER KHUSUS ESP
 local EspContainer = Instance.new("Folder")
 EspContainer.Name = "ESPContainer"
 EspContainer.Parent = ScreenGui
 
--- 1. TOMBOL SHORTCUT (BISA DI-DRAG)
+-- 1. TOMBOL SHORTCUT
 local ShortcutButton = Instance.new("TextButton")
 ShortcutButton.Size = UDim2.new(0, 42, 0, 42)
 ShortcutButton.Position = UDim2.new(1, -55, 0.4, 0)
@@ -81,7 +76,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- 2. FRAME UTAMA RADAR
+-- 2. FRAME RADAR
 local RadarFrame = Instance.new("Frame")
 RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
 RadarFrame.Position = customPosition
@@ -137,10 +132,10 @@ local function updateGrid()
 end
 updateGrid()
 
--- 3. MENU PENGATURAN (DIPERBESAR UNTUK FITUR ESP)
+-- 3. MENU SETTINGS (DIPERBESAR SIKIT UNTUK HOLOGRAM)
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 260, 0, 500)
-MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -250)
+MenuFrame.Size = UDim2.new(0, 260, 0, 535)
+MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -265)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuFrame.BackgroundTransparency = 0.1
 MenuFrame.BorderSizePixel = 2
@@ -155,7 +150,7 @@ MenuCorner.Parent = MenuFrame
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "RADAR & ESP SETTINGS"
+TitleLabel.Text = "RADAR & ESP HUB"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 15
 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
@@ -188,7 +183,6 @@ local function createButtonOption(name, yPos, defaultText, callback)
     btn.MouseButton1Click:Connect(function() callback(btn) end)
 end
 
--- FITUR MENU RADAR
 createButtonOption("Radar UI", 45, "ON", function(btn)
     radarEnabled = not radarEnabled
     btn.Text = radarEnabled and "ON" or "OFF"
@@ -235,7 +229,6 @@ createButtonOption("Letak Radar", 255, "Kanan Atas", function(btn)
     RadarFrame.Position = customPosition
 end)
 
--- FITUR MENU ESP (BARU)
 createButtonOption("ESP Box", 300, "OFF", function(btn)
     espBoxEnabled = not espBoxEnabled
     btn.Text = espBoxEnabled and "ON" or "OFF"
@@ -252,6 +245,13 @@ createButtonOption("ESP Highlight", 370, "OFF", function(btn)
     espHighlightEnabled = not espHighlightEnabled
     btn.Text = espHighlightEnabled and "ON" or "OFF"
     btn.TextColor3 = espHighlightEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
+end)
+
+-- OPSI ESP HOLOGRAM (3D CHAMS)
+createButtonOption("ESP Hologram", 405, "OFF", function(btn)
+    espHologramEnabled = not espHologramEnabled
+    btn.Text = espHologramEnabled and "ON" or "OFF"
+    btn.TextColor3 = espHologramEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
 end)
 
 local CloseBtn = Instance.new("TextButton")
@@ -274,7 +274,7 @@ ShortcutButton.MouseButton1Up:Connect(function()
 end)
 CloseBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = false end)
 
--- ELEMEN RADAR UTAMA
+-- CENTER ARROW RADAR
 local CenterArrow = Instance.new("ImageLabel")
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -290,9 +290,40 @@ BlipsContainer.Parent = RadarFrame
 local playerBlips = {}
 local espElements = {}
 
--- LOGIKA RENDER STEPPED (RADAR + ESP)
+-- KALKULASI BOUNDING BOX
+local function getPreciseBoundingBox(character, camera)
+    local cframe, size = character:GetBoundingBox()
+    local halfSize = size / 2
+
+    local corners = {
+        cframe * Vector3.new(-halfSize.X, -halfSize.Y, -halfSize.Z),
+        cframe * Vector3.new(-halfSize.X, -halfSize.Y,  halfSize.Z),
+        cframe * Vector3.new(-halfSize.X,  halfSize.Y, -halfSize.Z),
+        cframe * Vector3.new(-halfSize.X,  halfSize.Y,  halfSize.Z),
+        cframe * Vector3.new( halfSize.X, -halfSize.Y, -halfSize.Z),
+        cframe * Vector3.new( halfSize.X, -halfSize.Y,  halfSize.Z),
+        cframe * Vector3.new( halfSize.X,  halfSize.Y, -halfSize.Z),
+        cframe * Vector3.new( halfSize.X,  halfSize.Y,  halfSize.Z),
+    }
+
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    local anyOnScreen = false
+
+    for _, corner in ipairs(corners) do
+        local screenPos, onScreen = camera:WorldToViewportPoint(corner)
+        if onScreen then anyOnScreen = true end
+        minX = math.min(minX, screenPos.X)
+        minY = math.min(minY, screenPos.Y)
+        maxX = math.max(maxX, screenPos.X)
+        maxY = math.max(maxY, screenPos.Y)
+    end
+
+    return anyOnScreen, minX, minY, maxX - minX, maxY - minY
+end
+
+-- RENDER LOOP
 RunService.RenderStepped:Connect(function()
-    -- Effect RGB
     if outlineMode == "RGB" and radarEnabled then
         local hue = (tick() % 4) / 4
         RadarStroke.Color = Color3.fromHSV(hue, 1, 1)
@@ -306,12 +337,10 @@ RunService.RenderStepped:Connect(function()
     
     local myHRP = character.HumanoidRootPart
     local myPos = myHRP.Position
-    
     local camCF = camera.CFrame
     local camLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
     local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
     
-    -- Radar Player Arrow Rotation
     if radarEnabled then
         CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
         local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
@@ -324,11 +353,12 @@ RunService.RenderStepped:Connect(function()
             activePlayers[player] = true
             local targetChar = player.Character
             local targetHRP = targetChar.HumanoidRootPart
+            local targetHead = targetChar:FindFirstChild("Head") or targetHRP
             local targetPos = targetHRP.Position
             local offset = targetPos - myPos
             local distance = offset.Magnitude
             
-            -- 1. PROSES RADAR BLIP
+            -- RADAR BLIP
             if radarEnabled then
                 local blip = playerBlips[player]
                 if not blip then
@@ -359,11 +389,10 @@ RunService.RenderStepped:Connect(function()
                 playerBlips[player].Visible = false
             end
             
-            -- 2. PROSES FITUR ESP (BOX, LINE, HIGHLIGHT)
+            -- ESP SETUP
             local esp = espElements[player]
             if not esp then
                 esp = {}
-                -- ESP Box
                 local box = Instance.new("Frame")
                 box.BackgroundTransparency = 1
                 box.BorderSizePixel = 0
@@ -374,7 +403,6 @@ RunService.RenderStepped:Connect(function()
                 boxStroke.Parent = box
                 esp.Box = box
                 
-                -- ESP Line (Tracer)
                 local line = Instance.new("Frame")
                 line.AnchorPoint = Vector2.new(0.5, 0.5)
                 line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -382,7 +410,6 @@ RunService.RenderStepped:Connect(function()
                 line.Parent = EspContainer
                 esp.Line = line
                 
-                -- ESP Highlight
                 local hl = Instance.new("Highlight")
                 hl.FillColor = Color3.fromRGB(255, 0, 0)
                 hl.FillTransparency = 0.5
@@ -390,10 +417,20 @@ RunService.RenderStepped:Connect(function()
                 hl.OutlineTransparency = 0
                 esp.Highlight = hl
                 
+                -- ESP Hologram Object
+                local holoHL = Instance.new("Highlight")
+                holoHL.Name = "HologramChams"
+                holoHL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                holoHL.FillColor = Color3.fromRGB(0, 200, 255) -- Warna Biru Cyan ala Hologram
+                holoHL.FillTransparency = 0.3
+                holoHL.OutlineColor = Color3.fromRGB(255, 255, 255)
+                holoHL.OutlineTransparency = 0
+                esp.Hologram = holoHL
+                
                 espElements[player] = esp
             end
             
-            -- Update Highlight
+            -- ESP HIGHLIGHT ORDINARY
             if espHighlightEnabled then
                 esp.Highlight.Parent = targetChar
                 esp.Highlight.Enabled = true
@@ -401,28 +438,35 @@ RunService.RenderStepped:Connect(function()
                 esp.Highlight.Enabled = false
             end
             
-            -- Update Box & Line berdasarkan WorldToViewportPoint
-            local screenPos, onScreen = camera:WorldToViewportPoint(targetPos)
-            if onScreen then
-                -- ESP Box
-                if espBoxEnabled then
-                    local headPos = camera:WorldToViewportPoint(targetPos + Vector3.new(0, 3, 0))
-                    local legPos = camera:WorldToViewportPoint(targetPos - Vector3.new(0, 3.5, 0))
-                    local boxHeight = math.abs(headPos.Y - legPos.Y)
-                    local boxWidth = boxHeight * 0.65
-                    
-                    esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
-                    esp.Box.Position = UDim2.new(0, screenPos.X - (boxWidth / 2), 0, headPos.Y)
+            -- ESP HOLOGRAM (3D CHAMS TEMBUS TEMBOK)
+            if espHologramEnabled then
+                esp.Hologram.Parent = targetChar
+                esp.Hologram.Enabled = true
+            else
+                esp.Hologram.Enabled = false
+            end
+            
+            -- ESP BOX PRESISI
+            if espBoxEnabled then
+                local onScreen, x, y, width, height = getPreciseBoundingBox(targetChar, camera)
+                if onScreen then
+                    esp.Box.Size = UDim2.new(0, width, 0, height)
+                    esp.Box.Position = UDim2.new(0, x, 0, y)
                     esp.Box.Visible = true
                 else
                     esp.Box.Visible = false
                 end
-                
-                -- ESP Line
-                if espLineEnabled then
+            else
+                esp.Box.Visible = false
+            end
+            
+            -- ESP LINE (KEPALA)
+            if espLineEnabled then
+                local headPos, headOnScreen = camera:WorldToViewportPoint(targetHead.Position)
+                if headOnScreen then
                     local viewportSize = camera.ViewportSize
                     local startPos = Vector2.new(viewportSize.X / 2, viewportSize.Y)
-                    local targetVec = Vector2.new(screenPos.X, screenPos.Y)
+                    local targetVec = Vector2.new(headPos.X, headPos.Y)
                     local distancePx = (targetVec - startPos).Magnitude
                     local angle = math.atan2(targetVec.Y - startPos.Y, targetVec.X - startPos.X)
                     
@@ -434,13 +478,12 @@ RunService.RenderStepped:Connect(function()
                     esp.Line.Visible = false
                 end
             else
-                esp.Box.Visible = false
                 esp.Line.Visible = false
             end
         end
     end
     
-    -- Cleanup jika player keluar server
+    -- CLEANUP
     for player, blip in pairs(playerBlips) do
         if not activePlayers[player] then
             blip:Destroy()
@@ -451,8 +494,4 @@ RunService.RenderStepped:Connect(function()
         if not activePlayers[player] then
             if esp.Box then esp.Box:Destroy() end
             if esp.Line then esp.Line:Destroy() end
-            if esp.Highlight then esp.Highlight:Destroy() end
-            espElements[player] = nil
-        end
-    end
-end)
+            if esp.Highlight then esp.
