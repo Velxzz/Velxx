@@ -494,4 +494,9 @@ RunService.RenderStepped:Connect(function()
         if not activePlayers[player] then
             if esp.Box then esp.Box:Destroy() end
             if esp.Line then esp.Line:Destroy() end
-            if esp.Highlight then esp.
+            if esp.Highlight then esp..Highlight:Destroy() end
+            if esp.Hologram then esp.Hologram:Destroy() end
+            espElements[player] = nil
+        end
+    end
+end)
