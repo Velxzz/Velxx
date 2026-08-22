@@ -1,782 +1,231 @@
 -- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local Players = service_or_get_local_players_placeholder or game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- Clean Up & Folder
-local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("ModifierGui")
-if oldGui then oldGui:Destroy() end
-
-if writefile and not isfolder("ModifierConfigs") then
-    pcall(function() makefolder("ModifierConfigs") end)
+-- Safe UI Container
+local parentContainer
+if gethui then
+    parentContainer = gethui()
+else
+    local success, core = pcall(function() return CoreGui end)
+    parentContainer = (success and core) or LocalPlayer:WaitForChild("PlayerGui")
 end
+
+-- Clean up GUI lama jika ada
+local oldGui = parentContainer:FindFirstChild("SourceViewerGui")
+if oldGui then oldGui:Destroy() end
 
 -- ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ModifierGui"
+ScreenGui.Name = "SourceViewerGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.DisplayOrder = 999999999
+ScreenGui.Enabled = true
+ScreenGui.Parent = parentContainer
 
--- Frame Utama
+-- Main Frame (Jendela Utama)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 360) -- Diperlebar agar memuat menu Safe Void
-MainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+MainFrame.Size = UDim2.new(0, 420, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 
-local UICornerMain = Instance.new("UICorner", MainFrame)
-UICornerMain.CornerRadius = UDim.new(0, 10)
+local UICorner = Instance.new("UICorner", MainFrame)
+UICorner.CornerRadius = UDim.new(0, 8)
 
--- Header UI
-local HeaderBar = Instance.new("Frame", MainFrame)
-HeaderBar.Size = UDim2.new(1, 0, 0, 35)
-HeaderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-HeaderBar.BorderSizePixel = 0
+-- Header Bar
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 35)
+Header.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Header.BorderSizePixel = 0
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
-local HeaderCorner = Instance.new("UICorner", HeaderBar)
-HeaderCorner.CornerRadius = UDim.new(0, 10)
-
-local Title = Instance.new("TextLabel", HeaderBar)
-Title.Size = UDim2.new(1, -10, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "MODIFIER V1.0 PRO"
-Title.TextColor3 = Color3.fromRGB(0, 102, 204)
+local Title = Instance.new("TextLabel", Header)
+Title.Size = UDim2.new(1, -120, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.Text = "LUA SOURCE VIEWER & INSPECTOR"
+Title.TextColor3 = Color3.fromRGB(0, 170, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
--- Scroll Content
-local ContentScroll = Instance.new("ScrollingFrame", MainFrame)
-ContentScroll.Size = UDim2.new(1, -10, 1, -45)
-ContentScroll.Position = UDim2.new(0, 5, 0, 40)
-ContentScroll.BackgroundTransparency = 1
-ContentScroll.BorderSizePixel = 0
-ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 480)
+-- Tombol Minimize (-)
+local MinimizeBtn = Instance.new("TextButton", Header)
+MinimizeBtn.Size = UDim2.new(0, 30, 0, 24)
+MinimizeBtn.Position = UDim2.new(1, -95, 0.5, -12)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 14
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 4)
 
-local UIListLayout = Instance.new("UIListLayout", ContentScroll)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 6)
+-- Tombol Close / Destroy (X)
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 30, 0, 24)
+CloseBtn.Position = UDim2.new(1, -35, 0.5, -12)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 11
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- Helper Toggle Row
-local function createToggleRow(parent, labelText, order)
-    local row = Instance.new("Frame", parent)
-    row.Size = UDim2.new(1, -6, 0, 28)
-    row.BackgroundTransparency = 1
-    row.LayoutOrder = order
-    
-    local label = Instance.new("TextLabel", row)
-    label.Size = UDim2.new(0.6, 0, 1, 0)
-    label.Text = labelText .. " :"
-    label.TextColor3 = Color3.fromRGB(40, 40, 40)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 10
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-    
-    local btn = Instance.new("TextButton", row)
-    btn.Size = UDim2.new(0, 75, 0, 22)
-    btn.Position = UDim2.new(1, -75, 0.5, -11)
-    btn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    btn.BorderSizePixel = 0
-    btn.Text = "OFF"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 10
-    
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0, 4)
-    
-    return row, btn
-end
+-- Tombol Copy 
+local CopyBtn = Instance.new("TextButton", Header)
+CopyBtn.Size = UDim2.new(0, 50, 0, 24)
+CopyBtn.Position = UDim2.new(1, -150, 0.5, -12)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 200)
+CopyBtn.Text = "Copy"
+CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyBtn.Font = Enum.Font.GothamBold
+CopyBtn.TextSize = 10
+Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 4)
 
--- Variables
-local activeFeatures = true
-local isRunning = false
-local floatFunctionActive = true
-local isLocked = false
-local isSafeVoidActive = false
-local safeVoidHeight = -100
-local safeVoidPart = nil
+-- Container Isi
+local Container = Instance.new("Frame", MainFrame)
+Container.Size = UDim2.new(1, -20, 1, -50)
+Container.Position = UDim2.new(0, 10, 0, 42)
+Container.BackgroundTransparency = 1
 
--- Toggle Active Features
-local _, ActiveFeaturesBtn = createToggleRow(ContentScroll, "Active Features", 1)
-ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-ActiveFeaturesBtn.Text = "ON"
+-- TextBox Tujuan Skrip / Path Objek
+local TargetBox = Instance.new("TextBox", Container)
+TargetBox.Size = UDim2.new(1, 0, 0, 30)
+TargetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+TargetBox.BorderSizePixel = 0
+TargetBox.PlaceholderText = "Ketik path target (Contoh: game.Workspace.Part atau LocalScript)"
+TargetBox.Text = ""
+TargetBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+TargetBox.Font = Enum.Font.Code
+TargetBox.TextSize = 10
+TargetBox.ClearTextOnFocus = false
+Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 6)
 
--- Toggle Start
-local _, StartToggleBtn = createToggleRow(ContentScroll, "Start Modifier", 2)
+-- ScrollingFrame untuk Menampilkan Kode Sumber
+local CodeScroll = Instance.new("ScrollingFrame", Container)
+CodeScroll.Size = UDim2.new(1, 0, 1, -40)
+CodeScroll.Position = UDim2.new(0, 0, 0, 36)
+CodeScroll.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+CodeScroll.BorderSizePixel = 0
+CodeScroll.ScrollBarThickness = 6
+CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 6)
 
--- UI Speed
-local speedRow = Instance.new("Frame", ContentScroll)
-speedRow.Size = UDim2.new(1, -6, 0, 28)
-speedRow.BackgroundTransparency = 1
-speedRow.LayoutOrder = 3
+-- TextBox Penampil Kode Sumber
+local CodeViewer = Instance.new("TextBox", CodeScroll)
+CodeViewer.Size = UDim2.new(1, 0, 1, 0)
+CodeViewer.BackgroundTransparency = 1
+CodeViewer.MultiLine = true
+CodeViewer.ClearTextOnFocus = false
+CodeViewer.TextEditable = false -- Hanya untuk melihat (read-only)
+CodeViewer.Text = "-- Masukkan path target di atas, lalu tekan Enter atau klik Target untuk melihat kode sumbernya."
+CodeViewer.TextColor3 = Color3.fromRGB(150, 230, 150)
+CodeViewer.Font = Enum.Font.Code
+CodeViewer.TextSize = 11
+CodeViewer.TextXAlignment = Enum.TextXAlignment.Left
+CodeViewer.TextYAlignment = Enum.TextYAlignment.Top
 
-local speedLabel = Instance.new("TextLabel", speedRow)
-speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
-speedLabel.Text = "Modifier Speed :"
-speedLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-speedLabel.Font = Enum.Font.GothamBold
-speedLabel.TextSize = 10
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.BackgroundTransparency = 1
+-- Status Label kecil di pojok bawah
+local StatusNote = Instance.new("TextLabel", MainFrame)
+StatusNote.Size = UDim2.new(1, -20, 0, 15)
+StatusNote.Position = UDim2.new(0, 10, 1, -18)
+StatusNote.Text = "Status: Ready"
+StatusNote.TextColor3 = Color3.fromRGB(120, 120, 120)
+StatusNote.Font = Enum.Font.Gotham
+StatusNote.TextSize = 9
+StatusNote.TextXAlignment = Enum.TextXAlignment.Left
+StatusNote.BackgroundTransparency = 1
 
-local SpeedBtn = Instance.new("TextButton", speedRow)
-SpeedBtn.Size = UDim2.new(0, 75, 0, 22)
-SpeedBtn.Position = UDim2.new(1, -75, 0.5, -11)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-SpeedBtn.BorderSizePixel = 0
-SpeedBtn.Text = "1"
-SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.TextSize = 10
-Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 4)
+-- Tombol Mengambang (Float Button) untuk memunculkan kembali saat diminimize
+local FloatOpenBtn = Instance.new("TextButton", ScreenGui)
+FloatOpenBtn.Size = UDim2.new(0, 40, 0, 40)
+FloatOpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+FloatOpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+FloatOpenBtn.Text = "SRC"
+FloatOpenBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
+FloatOpenBtn.Font = Enum.Font.GothamBold
+FloatOpenBtn.TextSize = 12
+FloatOpenBtn.Visible = false
+FloatOpenBtn.Active = true
+FloatOpenBtn.Draggable = true
+Instance.new("UICorner", FloatOpenBtn).CornerRadius = UDim.new(1, 0)
 
--- UI Spawn
-local spawnRow = Instance.new("Frame", ContentScroll)
-spawnRow.Size = UDim2.new(1, -6, 0, 28)
-spawnRow.BackgroundTransparency = 1
-spawnRow.LayoutOrder = 4
-
-local spawnLabel = Instance.new("TextLabel", spawnRow)
-spawnLabel.Size = UDim2.new(0.6, 0, 1, 0)
-spawnLabel.Text = "Spawn Block :"
-spawnLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-spawnLabel.Font = Enum.Font.GothamBold
-spawnLabel.TextSize = 10
-spawnLabel.TextXAlignment = Enum.TextXAlignment.Left
-spawnLabel.BackgroundTransparency = 1
-
-local SpawnBtn = Instance.new("TextButton", spawnRow)
-SpawnBtn.Size = UDim2.new(0, 75, 0, 22)
-SpawnBtn.Position = UDim2.new(1, -75, 0.5, -11)
-SpawnBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-SpawnBtn.BorderSizePixel = 0
-SpawnBtn.Text = "SPAWN"
-SpawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpawnBtn.Font = Enum.Font.GothamBold
-SpawnBtn.TextSize = 9
-Instance.new("UICorner", SpawnBtn).CornerRadius = UDim.new(0, 4)
-
--- UI Undo
-local undoRow = Instance.new("Frame", ContentScroll)
-undoRow.Size = UDim2.new(1, -6, 0, 28)
-undoRow.BackgroundTransparency = 1
-undoRow.LayoutOrder = 5
-
-local undoLabel = Instance.new("TextLabel", undoRow)
-undoLabel.Size = UDim2.new(0.6, 0, 1, 0)
-undoLabel.Text = "Undo Last Block :"
-undoLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-undoLabel.Font = Enum.Font.GothamBold
-undoLabel.TextSize = 10
-undoLabel.TextXAlignment = Enum.TextXAlignment.Left
-undoLabel.BackgroundTransparency = 1
-
-local UndoBtn = Instance.new("TextButton", undoRow)
-UndoBtn.Size = UDim2.new(0, 75, 0, 22)
-UndoBtn.Position = UDim2.new(1, -75, 0.5, -11)
-UndoBtn.BackgroundColor3 = Color3.fromRGB(230, 140, 0)
-UndoBtn.BorderSizePixel = 0
-UndoBtn.Text = "UNDO"
-UndoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-UndoBtn.Font = Enum.Font.GothamBold
-UndoBtn.TextSize = 9
-Instance.new("UICorner", UndoBtn).CornerRadius = UDim.new(0, 4)
-
--- UI Reset
-local resetRow = Instance.new("Frame", ContentScroll)
-resetRow.Size = UDim2.new(1, -6, 0, 28)
-resetRow.BackgroundTransparency = 1
-resetRow.LayoutOrder = 6
-
-local resetLabel = Instance.new("TextLabel", resetRow)
-resetLabel.Size = UDim2.new(0.6, 0, 1, 0)
-resetLabel.Text = "Reset Modifier :"
-resetLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-resetLabel.Font = Enum.Font.GothamBold
-resetLabel.TextSize = 10
-resetLabel.TextXAlignment = Enum.TextXAlignment.Left
-resetLabel.BackgroundTransparency = 1
-
-local ResetBtn = Instance.new("TextButton", resetRow)
-ResetBtn.Size = UDim2.new(0, 75, 0, 22)
-ResetBtn.Position = UDim2.new(1, -75, 0.5, -11)
-ResetBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-ResetBtn.BorderSizePixel = 0
-ResetBtn.Text = "RESET"
-ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ResetBtn.Font = Enum.Font.GothamBold
-ResetBtn.TextSize = 9
-Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
-
--- Toggle Lock Button
-local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
-
--- TOGGLE SAFE VOID & HEIGHT TEXTBOX
-local _, SafeVoidToggleBtn = createToggleRow(ContentScroll, "Safe Void", 8)
-
-local safeVoidHeightRow = Instance.new("Frame", ContentScroll)
-safeVoidHeightRow.Size = UDim2.new(1, -6, 0, 28)
-safeVoidHeightRow.BackgroundTransparency = 1
-safeVoidHeightRow.LayoutOrder = 9
-
-local safeVoidLabel = Instance.new("TextLabel", safeVoidHeightRow)
-safeVoidLabel.Size = UDim2.new(0.6, 0, 1, 0)
-safeVoidLabel.Text = "Void Height (Y) :"
-safeVoidLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-safeVoidLabel.Font = Enum.Font.GothamBold
-safeVoidLabel.TextSize = 10
-safeVoidLabel.TextXAlignment = Enum.TextXAlignment.Left
-safeVoidLabel.BackgroundTransparency = 1
-
-local SafeVoidBox = Instance.new("TextBox", safeVoidHeightRow)
-SafeVoidBox.Size = UDim2.new(0, 75, 0, 22)
-SafeVoidBox.Position = UDim2.new(1, -75, 0.5, -11)
-SafeVoidBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-SafeVoidBox.BorderSizePixel = 0
-SafeVoidBox.Text = tostring(safeVoidHeight)
-SafeVoidBox.TextColor3 = Color3.fromRGB(30, 30, 30)
-SafeVoidBox.Font = Enum.Font.GothamBold
-SafeVoidBox.TextSize = 10
-Instance.new("UICorner", SafeVoidBox).CornerRadius = UDim.new(0, 4)
-
--- UI Config (Save & Load)
-local configRow = Instance.new("Frame", ContentScroll)
-configRow.Size = UDim2.new(1, -6, 0, 32)
-configRow.BackgroundTransparency = 1
-configRow.LayoutOrder = 10
-
-local SaveConfigBtn = Instance.new("TextButton", configRow)
-SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
-SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-SaveConfigBtn.BorderSizePixel = 0
-SaveConfigBtn.Text = "Save Config"
-SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SaveConfigBtn.Font = Enum.Font.GothamBold
-SaveConfigBtn.TextSize = 10
-Instance.new("UICorner", SaveConfigBtn).CornerRadius = UDim.new(0, 4)
-
-local LoadConfigBtn = Instance.new("TextButton", configRow)
-LoadConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
-LoadConfigBtn.Position = UDim2.new(0.52, 0, 0, 0)
-LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-LoadConfigBtn.BorderSizePixel = 0
-LoadConfigBtn.Text = "Load Config"
-LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadConfigBtn.Font = Enum.Font.GothamBold
-LoadConfigBtn.TextSize = 10
-Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
-
--- UI Code Box
-local loadBoxRow = Instance.new("Frame", ContentScroll)
-loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
-loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 11
-
-local LoadBox = Instance.new("TextBox", loadBoxRow)
-LoadBox.Size = UDim2.new(1, 0, 1, 0)
-LoadBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-LoadBox.BorderSizePixel = 0
-LoadBox.PlaceholderText = "Paste Code Config Here..."
-LoadBox.Text = ""
-LoadBox.TextColor3 = Color3.fromRGB(30, 30, 30)
-LoadBox.Font = Enum.Font.Gotham
-LoadBox.TextSize = 10
-Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
-
--- Status Text
-local statusRow = Instance.new("Frame", ContentScroll)
-statusRow.Size = UDim2.new(1, -6, 0, 20)
-statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 12
-
-local StatusLabel = Instance.new("TextLabel", statusRow)
-StatusLabel.Size = UDim2.new(1, 0, 1, 0)
-StatusLabel.Text = ""
-StatusLabel.TextColor3 = Color3.fromRGB(0, 150, 0)
-StatusLabel.Font = Enum.Font.GothamSemibold
-StatusLabel.TextSize = 10
-StatusLabel.BackgroundTransparency = 1
-
--- Float Logo Menu
-local MainFloatBtn = Instance.new("TextButton", ScreenGui)
-MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
-MainFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFloatBtn.BackgroundTransparency = 0.2
-MainFloatBtn.Text = "M"
-MainFloatBtn.TextColor3 = Color3.fromRGB(0, 150, 255)
-MainFloatBtn.Font = Enum.Font.GothamBold
-MainFloatBtn.TextSize = 18
-MainFloatBtn.BorderSizePixel = 0
-MainFloatBtn.Active = true
-MainFloatBtn.Draggable = true
-
-local UICornerMainFloat = Instance.new("UICorner", MainFloatBtn)
-UICornerMainFloat.CornerRadius = UDim.new(1, 0)
-
-MainFloatBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+-- Logika Minimize
+local isMinimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    MainFrame.Visible = not isMinimized
+    FloatOpenBtn.Visible = isMinimized
 end)
 
--- Helper Float Button
-local function createCircularFloat(name, text, customPos, callback)
-    local btn = Instance.new("TextButton", ScreenGui)
-    btn.Size = UDim2.new(0, 50, 0, 50)
-    btn.Position = customPos
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.BackgroundTransparency = 0.4
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = name == "Speed" and 12 or 10
-    btn.BorderSizePixel = 0
-    btn.Active = true
-    
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(1, 0)
-    
-    btn.MouseButton1Click:Connect(function()
-        if activeFeatures and floatFunctionActive then
-            callback()
-        end
-    end)
-    
-    local dragging = false
-    local dragInput, dragStart, startPos
-    
-    btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = btn.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    btn.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-    
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == dragInput and dragging and not isLocked then
-            local delta = input.Position - dragStart
-            btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    
-    return btn
-end
-
--- Variables Logic
-local spawnedBlocks = {}
-local currentIndex = 1
-local currentSpeedIndex = 11
-local lastPos = nil
-local startingCFrame = nil
-local currentTransitionTime = 0
-
-local speedValues = {
-    0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-}
-
-local function getSpeedValue()
-    return speedValues[currentSpeedIndex]
-end
-
-local FastSteerFloatBtn
-
--- LOGIKA SAFE VOID (PLATFORM TERRAIN SANGAT LEBAR)
-local function updateSafeVoid()
-    if isSafeVoidActive then
-        if not safeVoidPart or not safeVoidPart.Parent then
-            safeVoidPart = Instance.new("Part")
-            safeVoidPart.Name = "ClientSafeVoidPlatform"
-            safeVoidPart.Size = Vector3.new(10000, 5, 10000) -- Ukuran Sangat Lebar
-            safeVoidPart.Anchored = true
-            safeVoidPart.CanCollide = true
-            safeVoidPart.Material = Enum.Material.SmoothPlastic
-            safeVoidPart.Color = Color3.fromRGB(255, 255, 255) -- Warna Putih
-            safeVoidPart.Transparency = 0.5 -- Transparansi 50%
-            safeVoidPart.Parent = workspace
-        end
-        safeVoidPart.CFrame = CFrame.new(0, safeVoidHeight, 0)
-    else
-        if safeVoidPart then
-            safeVoidPart:Destroy()
-            safeVoidPart = nil
-        end
-    end
-end
-
-SafeVoidToggleBtn.MouseButton1Click:Connect(function()
-    isSafeVoidActive = not isSafeVoidActive
-    if isSafeVoidActive then
-        SafeVoidToggleBtn.Text = "ON"
-        SafeVoidToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        SafeVoidToggleBtn.Text = "OFF"
-        SafeVoidToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    end
-    updateSafeVoid()
+FloatOpenBtn.MouseButton1Click:Connect(function()
+    isMinimized = false
+    MainFrame.Visible = true
+    FloatOpenBtn.Visible = false
 end)
 
-SafeVoidBox.FocusLost:Connect(function()
-    local newHeight = tonumber(SafeVoidBox.Text)
-    if newHeight then
-        safeVoidHeight = newHeight
-        updateSafeVoid()
-        StatusLabel.Text = "Void Height Set: " .. tostring(safeVoidHeight)
-    else
-        SafeVoidBox.Text = tostring(safeVoidHeight)
-        StatusLabel.Text = "Invalid Height Number!"
-    end
+-- Logika Destroy / Tutup Total GUI
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
 end)
 
--- Logika Speed
-local function updateSpeedUI()
-    local val = getSpeedValue()
-    SpeedBtn.Text = tostring(val)
-    if FastSteerFloatBtn then
-        FastSteerFloatBtn.Text = tostring(val)
-    end
-end
-
-local function cycleSpeed()
-    currentSpeedIndex = currentSpeedIndex - 1
-    if currentSpeedIndex < 1 then
-        currentSpeedIndex = #speedValues
-    end
-    updateSpeedUI()
-end
-
-SpeedBtn.MouseButton1Click:Connect(cycleSpeed)
-
--- Logika Block
-local function createVisualBlock(cf)
-    local block = Instance.new("Part")
-    block.Size = Vector3.new(1, 10, 1)
-    block.CFrame = cf
-    block.Anchored = true
-    block.CanCollide = false
-    block.Transparency = 0.5
-    block.Material = Enum.Material.SmoothPlastic
-    block.Color = Color3.fromRGB(255, 255, 255)
-    
-    local texture = Instance.new("Texture")
-    texture.Face = Enum.NormalId.Top
-    texture.Texture = "rbxassetid://620583021"
-    texture.Parent = block
-    
-    block.Parent = workspace
-    table.insert(spawnedBlocks, block)
-    return block
-end
-
--- Logika Spawn
-local function spawnBlockAtPlayer()
-    if not activeFeatures then return end
-    local char = LocalPlayer.Character
-    if not char then return end
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local targetPart = (humanoid and humanoid.SeatPart) or rootPart
-    
-    if targetPart then
-        local currentPos = targetPart.Position
-        local finalCFrame
-        
-        if lastPos then
-            local moveDir = currentPos - lastPos
-            if moveDir.Magnitude > 0.01 then
-                local forwardVector = moveDir.Unit
-                local upVector = targetPart.CFrame.UpVector
-                local rightVector = forwardVector:Cross(upVector).Unit
-                
-                upVector = rightVector:Cross(forwardVector).Unit
-                finalCFrame = CFrame.fromMatrix(currentPos, rightVector, upVector, -forwardVector)
-            else
-                finalCFrame = targetPart.CFrame
-            end
-        else
-            finalCFrame = targetPart.CFrame
-        end
-        
-        lastPos = currentPos
-        createVisualBlock(finalCFrame)
-        StatusLabel.Text = "Block Spawned!"
-    end
-end
-
--- Logika Undo
-local function undoLastBlock()
-    if not activeFeatures then return end
-    if #spawnedBlocks > 0 then
-        local lastBlock = table.remove(spawnedBlocks, #spawnedBlocks)
-        if lastBlock then
-            lastBlock:Destroy()
-        end
-        if currentIndex > #spawnedBlocks then
-            currentIndex = math.max(1, #spawnedBlocks)
-        end
-        if #spawnedBlocks > 0 then
-            lastPos = spawnedBlocks[#spawnedBlocks].Position
-        else
-            lastPos = nil
-        end
-        StatusLabel.Text = "Last Block Removed!"
-    else
-        StatusLabel.Text = "No blocks to undo!"
-    end
-end
-
-local FloatStart
-
--- Logika Start/Pause
-local function toggleStart()
-    if not activeFeatures or #spawnedBlocks == 0 then return end
-    isRunning = not isRunning
-    if isRunning then
-        StartToggleBtn.Text = "ON"
-        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        if FloatStart then FloatStart.Text = "Pause" end
-        startingCFrame = nil
-        currentTransitionTime = 0
-    else
-        StartToggleBtn.Text = "OFF"
-        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatStart then FloatStart.Text = "Start" end
-    end
-end
-
--- Logika Reset
-local function resetAll()
-    if not activeFeatures then return end
-    isRunning = false
-    StartToggleBtn.Text = "OFF"
-    StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    if FloatStart then FloatStart.Text = "Start" end
-    currentIndex = 1
-    lastPos = nil
-    startingCFrame = nil
-    currentTransitionTime = 0
-    for _, block in ipairs(spawnedBlocks) do
-        if block then block:Destroy() end
-    end
-    spawnedBlocks = {}
-    StatusLabel.Text = "Reseted!"
-end
-
--- Posisi Float Buttons
-FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
-local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
-local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
-FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
-
--- Event UI
-StartToggleBtn.MouseButton1Click:Connect(toggleStart)
-SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
-UndoBtn.MouseButton1Click:Connect(undoLastBlock)
-ResetBtn.MouseButton1Click:Connect(resetAll)
-
-ActiveFeaturesBtn.MouseButton1Click:Connect(function()
-    activeFeatures = not activeFeatures
-    if activeFeatures then
-        ActiveFeaturesBtn.Text = "ON"
-        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        ActiveFeaturesBtn.Text = "OFF"
-        ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if isRunning then toggleStart() end
-    end
-end)
-
-LockButtonToggle.MouseButton1Click:Connect(function()
-    isLocked = not isLocked
-    if isLocked then
-        LockButtonToggle.Text = "ON"
-        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        LockButtonToggle.Text = "OFF"
-        LockButtonToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    end
-end)
-
--- Logika Save Config
-SaveConfigBtn.MouseButton1Click:Connect(function()
-    if #spawnedBlocks == 0 then
-        StatusLabel.Text = "Spawn blocks first!"
-        return
-    end
-    
-    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local randomCode = "C_"
-    math.randomseed(os.time() + math.floor(tick() * 1000))
-    for i = 1, 13 do
-        local randIndex = math.random(1, #chars)
-        randomCode = randomCode .. chars:sub(randIndex, randIndex)
-    end
-    
-    local dataToSave = {}
-    for _, block in ipairs(spawnedBlocks) do
-        local cf = block.CFrame
-        table.insert(dataToSave, {cf:GetComponents()})
-    end
-    
-    if writefile then
-        local encodedData = HttpService:JSONEncode(dataToSave)
-        pcall(function()
-            writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
-        end)
-    end
-    
+-- Logika Copy to Clipboard
+CopyBtn.MouseButton1Click:Connect(function()
     if setclipboard then
-        setclipboard(randomCode)
-        StatusLabel.Text = "Saved & Copied!"
+        setclipboard(CodeViewer.Text)
+        StatusNote.Text = "Status: Kode berhasil disalin ke Clipboard!"
+        StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
     else
-        StatusLabel.Text = "Saved Code: " .. randomCode
+        StatusNote.Text = "Status: Executor tidak mendukung setclipboard!"
+        StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
     end
 end)
 
--- Logika Load Config
-LoadConfigBtn.MouseButton1Click:Connect(function()
-    local codeToLoad = LoadBox.Text:gsub("%s+", "")
-    if codeToLoad == "" then
-        StatusLabel.Text = "Enter code first!"
-        return
-    end
+-- Fungsi Mendapatkan & Menampilkan Kode Sumber Target
+TargetBox.FocusLost:Connect(function(enterPressed)
+    if not enterPressed then return end
+    local query = TargetBox.Text
+    if query == "" then return end
     
-    local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
-    if readfile and pcall(readfile, fileName) then
-        for _, block in ipairs(spawnedBlocks) do
-            if block then block:Destroy() end
+    StatusNote.Text = "Status: Mencari objek..."
+    StatusNote.TextColor3 = Color3.fromRGB(255, 170, 0)
+    
+    -- Mencoba mencari objek berdasarkan path string sederhana
+    local success, targetObj = pcall(function()
+        -- Eksekusi string aman pakai loadstring atau pencarian hierarki dasar
+        local env = {game = game, workspace = workspace, script = script}
+        local fn, err = loadstring("return " .. query)
+        if fn then
+            setfenv(fn, env)
+            return fn()
         end
-        spawnedBlocks = {}
-        isRunning = false
-        StartToggleBtn.Text = "OFF"
-        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatStart then FloatStart.Text = "Start" end
-        currentIndex = 1
-        lastPos = nil
-        startingCFrame = nil
-        currentTransitionTime = 0
-        
-        local rawData = readfile(fileName)
-        local success, decodedData = pcall(function()
-            return HttpService:JSONDecode(rawData)
-        end)
-        
-        if success and type(decodedData) == "table" then
-            for _, comps in ipairs(decodedData) do
-                local cf = CFrame.new(table.unpack(comps))
-                createVisualBlock(cf)
-            end
-            
-            if #spawnedBlocks > 0 then
-                lastPos = spawnedBlocks[#spawnedBlocks].Position
-            end
-            StatusLabel.Text = "Loaded Successfully!"
+        return nil
+    end)
+    
+    if success and targetObj then
+        -- Cek apakah objek punya fungsi decompile (biasanya didukung executor tingkat lanjut)
+        if decompile and (targetObj:IsA("LocalScript") or targetObj:IsA("ModuleScript")) then
+            local sourceCode = decompile(targetObj)
+            CodeViewer.Text = sourceCode
+            StatusNote.Text = "Status: Berhasil decompile skrip!"
+            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
+        elseif targetObj:IsA("StringValue") then
+            CodeViewer.Text = targetObj.Value
+            StatusNote.Text = "Status: Berhasil memuat StringValue!"
+            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
         else
-            StatusLabel.Text = "Invalid Config Format!"
+            CodeViewer.Text = "-- Objek ditemukan, tapi bukan LocalScript/ModuleScript atau fungsi decompile tidak didukung executor ini.\n-- Nama Tipe: " .. targetObj.ClassName
+            StatusNote.Text = "Status: Objek valid, tapi tidak bisa dibaca kodenya."
+            StatusNote.TextColor3 = Color3.fromRGB(220, 150, 0)
         end
     else
-        StatusLabel.Text = "Code not found!"
-    end
-end)
-
--- Helper Pemindahan Karakter/Motor (Mempertahankan Rotasi Bawaan)
-local function moveEntityTo(targetCFrame)
-    local char = LocalPlayer.Character
-    if not char then return end
-    
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local seatPart = humanoid and humanoid.SeatPart
-    local targetPos = targetCFrame.Position
-    
-    if seatPart then
-        local vehicleModel = seatPart:FindFirstAncestorOfClass("Model")
-        if vehicleModel then
-            local currentCF = vehicleModel:GetPivot()
-            local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
-            
-            for _, part in ipairs(vehicleModel:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.AssemblyLinearVelocity = Vector3.zero
-                    part.AssemblyAngularVelocity = Vector3.zero
-                end
-            end
-            vehicleModel:PivotTo(newCF)
-            return
-        end
-    end
-    
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
-    if rootPart then
-        local currentCF = rootPart.CFrame
-        local newCF = CFrame.new(targetPos) * (currentCF - currentCF.Position)
-        rootPart.AssemblyLinearVelocity = Vector3.zero
-        rootPart.AssemblyAngularVelocity = Vector3.zero
-        char:PivotTo(newCF)
-    end
-end
-
--- Loop Heartbeat Teleport
-RunService.Heartbeat:Connect(function(dt)
-    if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
-    
-    local speedVal = getSpeedValue()
-    local targetBlock = spawnedBlocks[currentIndex]
-    
-    if targetBlock then
-        local targetCFrame = targetBlock.CFrame
-        
-        if speedVal == 0 then
-            moveEntityTo(targetCFrame)
-            currentIndex = currentIndex + 1
-            if currentIndex > #spawnedBlocks then
-                currentIndex = 1
-            end
-            startingCFrame = nil
-        else
-            local char = LocalPlayer.Character
-            local root = char and (char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart or char:FindFirstChild("HumanoidRootPart"))
-            
-            if not startingCFrame and root then
-                startingCFrame = root.CFrame
-                currentTransitionTime = 0
-            end
-            
-            currentTransitionTime = currentTransitionTime + dt
-            local alpha = math.clamp(currentTransitionTime / speedVal, 0, 1)
-            
-            if startingCFrame then
-                local lerpedPos = startingCFrame.Position:Lerp(targetCFrame.Position, alpha)
-                moveEntityTo(CFrame.new(lerpedPos))
-            end
-            
-            if alpha >= 1 then
-                currentIndex = currentIndex + 1
-                if currentIndex > #spawnedBlocks then
-                    currentIndex = 1
-                end
-                startingCFrame = nil
-                currentTransitionTime = 0
-            end
-        end
+        CodeViewer.Text = "-- ERROR: Objek atau Path tidak ditemukan di dalam game!\n-- Pastikan penulisan path benar (contoh: game.Players.LocalPlayer.PlayerScripts...)"
+        StatusNote.Text = "Status: Target tidak ditemukan!"
+        StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
     end
 end)
