@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- Safe GUI Container (Mencegah GUI Diblokir Game/Eksekutor)
+-- Safe GUI Container
 local parentContainer
 if gethui then
     parentContainer = gethui()
@@ -551,15 +551,15 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE CONFIG (TELAH DIPERBAIKI)
+-- LOGIKA SAVE CONFIG (AMAN & ANTI-CRASH)
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
         return
     end
     
-    -- Membuat ID Unik agar kode selalu beda tiap sirkuit
-    local uniqueID = string.format("%X", math.floor((os.clock() * 1000000) + tick()))
+    -- Generator ID aman berbasis sisa waktu + random tambahan
+    local uniqueID = string.format("%X", math.floor(tick() % 86400 * 100)) .. "_" .. math.random(100, 999)
     local randomCode = "C_" .. uniqueID
     
     local dataToSave = {}
@@ -568,7 +568,6 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
         table.insert(dataToSave, {cf:GetComponents()})
     end
     
-    -- Menyimpan file dengan proteksi pcall
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
         pcall(function()
@@ -576,31 +575,20 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
         end)
     end
     
-    -- Penanganan sistem clipboard dan auto-fill TextBox
-    local successCopy = pcall(function()
+    pcall(function()
         if setclipboard then
             setclipboard(randomCode)
         end
     end)
     
-    LoadBox.Text = randomCode -- Memastikan kode unik selalu muncul di text box
-    
-    if successCopy and setclipboard then
-        StatusLabel.Text = "Saved & Copied: " .. randomCode
-    else
-        StatusLabel.Text = "Saved! Code: " .. randomCode
-    end
+    LoadBox.Text = randomCode
+    StatusLabel.Text = "Saved! Code: " .. randomCode
 end)
 
 -- LOGIKA LOAD CONFIG
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
-        StatusLabel.Text = "Enter code first!"
-        return
-    end
-    
-    local fileName = "ModifierConfigs/" .. codeToLoad == "" then
         StatusLabel.Text = "Enter code first!"
         return
     end
@@ -622,7 +610,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         
         local rawData = readfile(fileName)
         local success, decodedData = pcall(function()
-            return HttpService:JSONDecode(rawData)
+            return HttpService:JSONEncode(rawData)
         end)
         
         if success and type(decodedData) == "table" then
