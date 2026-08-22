@@ -1,4 +1,4 @@
--- Radar UI V1.4
+-- Radar UI V2.0
 -- Salin dan jalankan script ini lewat Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,7 +22,12 @@ local radarShape = "Bulat" -- "Kotak", "Bulat", "Squircle"
 local outlineMode = "RGB" -- "Hitam", "RGB"
 local customPosition = UDim2.new(1, -125, 0, 10)
 
--- Texture ID Kustom
+-- Variabel Fitur ESP
+local espBoxEnabled = false
+local espLineEnabled = false
+local espHighlightEnabled = false
+
+-- Texture ID Kustom Radar
 local myArrowImage = "rbxassetid://83978146105606"
 local otherArrowImage = "rbxassetid://98960754572491"
 
@@ -36,7 +41,12 @@ if not success then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- 1. TOMBOL SHORTCUT (BISA DI-DRAG / DIGESER)
+-- CONTAINER KHUSUS ESP
+local EspContainer = Instance.new("Folder")
+EspContainer.Name = "ESPContainer"
+EspContainer.Parent = ScreenGui
+
+-- 1. TOMBOL SHORTCUT (BISA DI-DRAG)
 local ShortcutButton = Instance.new("TextButton")
 ShortcutButton.Size = UDim2.new(0, 42, 0, 42)
 ShortcutButton.Position = UDim2.new(1, -55, 0.4, 0)
@@ -52,19 +62,14 @@ local ShortCorner = Instance.new("UICorner")
 ShortCorner.CornerRadius = UDim.new(0, 8)
 ShortCorner.Parent = ShortcutButton
 
--- Logika Dragging untuk Tombol Shortcut
 local dragging, dragStart, startPos
-
 ShortcutButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = ShortcutButton.Position
-        
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
         end)
     end
 end)
@@ -72,12 +77,7 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
-        ShortcutButton.Position = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X, 
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
+        ShortcutButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
@@ -95,14 +95,13 @@ local RadarCorner = Instance.new("UICorner")
 RadarCorner.CornerRadius = UDim.new(1, 0)
 RadarCorner.Parent = RadarFrame
 
--- UIStroke untuk Efek Outline RGB yang Bekerja dengan UICorner
 local RadarStroke = Instance.new("UIStroke")
 RadarStroke.Thickness = 3
 RadarStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 RadarStroke.Color = Color3.fromRGB(255, 255, 255)
 RadarStroke.Parent = RadarFrame
 
--- CONTAINER GRID 10x10 STUDS
+-- GRID 10x10 STUDS
 local GridContainer = Instance.new("Frame")
 GridContainer.Size = UDim2.new(1, 0, 1, 0)
 GridContainer.BackgroundTransparency = 1
@@ -117,37 +116,31 @@ local function updateGrid()
     
     for offsetStuds = -maxDistanceVal, maxDistanceVal, gridStuds do
         local posPx = center + (offsetStuds * scaleFactor)
-        
         if posPx >= 0 and posPx <= radarSizeVal then
-            -- Garis Vertikal
             local vLine = Instance.new("Frame")
             vLine.Size = UDim2.new(0, 1, 1, 0)
             vLine.Position = UDim2.new(0, posPx, 0, 0)
             vLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             vLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
             vLine.BorderSizePixel = 0
-            vLine.ZIndex = 0
             vLine.Parent = GridContainer
             
-            -- Garis Horizontal
             local hLine = Instance.new("Frame")
             hLine.Size = UDim2.new(1, 0, 0, 1)
             hLine.Position = UDim2.new(0, 0, 0, posPx)
             hLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             hLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
             hLine.BorderSizePixel = 0
-            hLine.ZIndex = 0
             hLine.Parent = GridContainer
         end
     end
 end
-
 updateGrid()
 
--- 3. MENU PENGATURAN (UI PANEL)
+-- 3. MENU PENGATURAN (DIPERBESAR UNTUK FITUR ESP)
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 260, 0, 380)
-MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
+MenuFrame.Size = UDim2.new(0, 260, 0, 500)
+MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -250)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuFrame.BackgroundTransparency = 0.1
 MenuFrame.BorderSizePixel = 2
@@ -162,9 +155,9 @@ MenuCorner.Parent = MenuFrame
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "RADAR SETTINGS V1.4"
+TitleLabel.Text = "RADAR & ESP SETTINGS"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 15
 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
 TitleLabel.Parent = MenuFrame
 
@@ -192,103 +185,73 @@ local function createButtonOption(name, yPos, defaultText, callback)
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = btn
     
-    btn.MouseButton1Click:Connect(function()
-        callback(btn)
-    end)
+    btn.MouseButton1Click:Connect(function() callback(btn) end)
 end
 
--- FITUR-FITUR MENU
-createButtonOption("Radar UI", 50, "ON", function(btn)
+-- FITUR MENU RADAR
+createButtonOption("Radar UI", 45, "ON", function(btn)
     radarEnabled = not radarEnabled
     btn.Text = radarEnabled and "ON" or "OFF"
     btn.TextColor3 = radarEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 100, 100)
     RadarFrame.Visible = radarEnabled
 end)
 
-createButtonOption("Ukuran Radar", 90, "120px", function(btn)
-    if radarSizeVal == 120 then
-        radarSizeVal = 160
-        radarRadiusVal = 80
-        btn.Text = "160px"
-    elseif radarSizeVal == 160 then
-        radarSizeVal = 90
-        radarRadiusVal = 45
-        btn.Text = "90px"
-    else
-        radarSizeVal = 120
-        radarRadiusVal = 60
-        btn.Text = "120px"
-    end
+createButtonOption("Ukuran Radar", 80, "120px", function(btn)
+    if radarSizeVal == 120 then radarSizeVal = 160 radarRadiusVal = 80 btn.Text = "160px"
+    elseif radarSizeVal == 160 then radarSizeVal = 90 radarRadiusVal = 45 btn.Text = "90px"
+    else radarSizeVal = 120 radarRadiusVal = 60 btn.Text = "120px" end
     RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
     updateGrid()
 end)
 
-createButtonOption("Bentuk Radar", 130, "Bulat", function(btn)
-    if radarShape == "Bulat" then
-        radarShape = "Kotak"
-        RadarCorner.CornerRadius = UDim.new(0, 0)
-        btn.Text = "Kotak"
-    elseif radarShape == "Kotak" then
-        radarShape = "Squircle"
-        RadarCorner.CornerRadius = UDim.new(0, 25)
-        btn.Text = "Squircle"
-    else
-        radarShape = "Bulat"
-        RadarCorner.CornerRadius = UDim.new(1, 0)
-        btn.Text = "Bulat"
-    end
+createButtonOption("Bentuk Radar", 115, "Bulat", function(btn)
+    if radarShape == "Bulat" then radarShape = "Kotak" RadarCorner.CornerRadius = UDim.new(0, 0) btn.Text = "Kotak"
+    elseif radarShape == "Kotak" then radarShape = "Squircle" RadarCorner.CornerRadius = UDim.new(0, 25) btn.Text = "Squircle"
+    else radarShape = "Bulat" RadarCorner.CornerRadius = UDim.new(1, 0) btn.Text = "Bulat" end
 end)
 
-createButtonOption("Outline Radar", 170, "RGB", function(btn)
-    if outlineMode == "RGB" then
-        outlineMode = "Hitam"
-        RadarStroke.Color = Color3.fromRGB(0, 0, 0)
-        btn.Text = "Hitam"
-    else
-        outlineMode = "RGB"
-        btn.Text = "RGB"
-    end
+createButtonOption("Outline Radar", 150, "RGB", function(btn)
+    if outlineMode == "RGB" then outlineMode = "Hitam" RadarStroke.Color = Color3.fromRGB(0, 0, 0) btn.Text = "Hitam"
+    else outlineMode = "RGB" btn.Text = "RGB" end
 end)
 
-createButtonOption("Ukuran Arrow", 210, "16px", function(btn)
-    if arrowSizeVal == 16 then
-        arrowSizeVal = 22
-        btn.Text = "22px"
-    elseif arrowSizeVal == 22 then
-        arrowSizeVal = 12
-        btn.Text = "12px"
-    else
-        arrowSizeVal = 16
-        btn.Text = "16px"
-    end
+createButtonOption("Ukuran Arrow", 185, "16px", function(btn)
+    if arrowSizeVal == 16 then arrowSizeVal = 22 btn.Text = "22px"
+    elseif arrowSizeVal == 22 then arrowSizeVal = 12 btn.Text = "12px"
+    else arrowSizeVal = 16 btn.Text = "16px" end
 end)
 
-createButtonOption("Jarak Render", 250, "200 Studs", function(btn)
-    if maxDistanceVal == 200 then
-        maxDistanceVal = 400
-        btn.Text = "400 Studs"
-    elseif maxDistanceVal == 400 then
-        maxDistanceVal = 100
-        btn.Text = "100 Studs"
-    else
-        maxDistanceVal = 200
-        btn.Text = "200 Studs"
-    end
+createButtonOption("Jarak Render", 220, "200 Studs", function(btn)
+    if maxDistanceVal == 200 then maxDistanceVal = 400 btn.Text = "400 Studs"
+    elseif maxDistanceVal == 400 then maxDistanceVal = 100 btn.Text = "100 Studs"
+    else maxDistanceVal = 200 btn.Text = "200 Studs" end
     updateGrid()
 end)
 
-createButtonOption("Letak Radar", 290, "Kanan Atas", function(btn)
-    if customPosition == UDim2.new(1, -125, 0, 10) then
-        customPosition = UDim2.new(0, 10, 0, 10)
-        btn.Text = "Kiri Atas"
-    elseif customPosition == UDim2.new(0, 10, 0, 10) then
-        customPosition = UDim2.new(1, -125, 1, -125)
-        btn.Text = "Kanan Bawah"
-    else
-        customPosition = UDim2.new(1, -125, 0, 10)
-        btn.Text = "Kanan Atas"
-    end
+createButtonOption("Letak Radar", 255, "Kanan Atas", function(btn)
+    if customPosition == UDim2.new(1, -125, 0, 10) then customPosition = UDim2.new(0, 10, 0, 10) btn.Text = "Kiri Atas"
+    elseif customPosition == UDim2.new(0, 10, 0, 10) then customPosition = UDim2.new(1, -125, 1, -125) btn.Text = "Kanan Bawah"
+    else customPosition = UDim2.new(1, -125, 0, 10) btn.Text = "Kanan Atas" end
     RadarFrame.Position = customPosition
+end)
+
+-- FITUR MENU ESP (BARU)
+createButtonOption("ESP Box", 300, "OFF", function(btn)
+    espBoxEnabled = not espBoxEnabled
+    btn.Text = espBoxEnabled and "ON" or "OFF"
+    btn.TextColor3 = espBoxEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
+end)
+
+createButtonOption("ESP Line", 335, "OFF", function(btn)
+    espLineEnabled = not espLineEnabled
+    btn.Text = espLineEnabled and "ON" or "OFF"
+    btn.TextColor3 = espLineEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
+end)
+
+createButtonOption("ESP Highlight", 370, "OFF", function(btn)
+    espHighlightEnabled = not espHighlightEnabled
+    btn.Text = espHighlightEnabled and "ON" or "OFF"
+    btn.TextColor3 = espHighlightEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 255, 255)
 end)
 
 local CloseBtn = Instance.new("TextButton")
@@ -304,23 +267,14 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
--- Logika Klik Shortcut
 local clickCheck = 0
-ShortcutButton.MouseButton1Down:Connect(function()
-    clickCheck = tick()
-end)
-
+ShortcutButton.MouseButton1Down:Connect(function() clickCheck = tick() end)
 ShortcutButton.MouseButton1Up:Connect(function()
-    if tick() - clickCheck < 0.2 then
-        MenuFrame.Visible = not MenuFrame.Visible
-    end
+    if tick() - clickCheck < 0.2 then MenuFrame.Visible = not MenuFrame.Visible end
 end)
+CloseBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = false end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    MenuFrame.Visible = false
-end)
-
--- ELEMEN RADAR
+-- ELEMEN RADAR UTAMA
 local CenterArrow = Instance.new("ImageLabel")
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -334,17 +288,16 @@ BlipsContainer.Name = "Blips"
 BlipsContainer.Parent = RadarFrame
 
 local playerBlips = {}
+local espElements = {}
 
+-- LOGIKA RENDER STEPPED (RADAR + ESP)
 RunService.RenderStepped:Connect(function()
+    -- Effect RGB
     if outlineMode == "RGB" and radarEnabled then
         local hue = (tick() % 4) / 4
         RadarStroke.Color = Color3.fromHSV(hue, 1, 1)
     end
     
-    if not radarEnabled then return end
-    
-    CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
-
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     
@@ -358,63 +311,148 @@ RunService.RenderStepped:Connect(function()
     local camLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
     local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
     
-    local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
-    local myForwardDot = myLook:Dot(camLook)
-    local myRightDot = myLook:Dot(camRight)
-    CenterArrow.Rotation = math.deg(math.atan2(myRightDot, myForwardDot))
+    -- Radar Player Arrow Rotation
+    if radarEnabled then
+        CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
+        local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
+        CenterArrow.Rotation = math.deg(math.atan2(myLook:Dot(camRight), myLook:Dot(camLook)))
+    end
 
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             activePlayers[player] = true
-            local targetHRP = player.Character.HumanoidRootPart
+            local targetChar = player.Character
+            local targetHRP = targetChar.HumanoidRootPart
             local targetPos = targetHRP.Position
-            
             local offset = targetPos - myPos
             local distance = offset.Magnitude
             
-            local blip = playerBlips[player]
-            if not blip then
-                blip = Instance.new("ImageLabel")
-                blip.AnchorPoint = Vector2.new(0.5, 0.5)
-                blip.BackgroundTransparency = 1
-                blip.Image = otherArrowImage
-                blip.ZIndex = 1
-                blip.Parent = BlipsContainer
-                
-                playerBlips[player] = blip
-            end
-            
-            blip.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
-            
-            if distance <= maxDistanceVal then
-                blip.Visible = true
-                
-                local relX = offset:Dot(camRight)
-                local relY = -offset:Dot(camLook)
-                
-                local screenRel = Vector2.new(relX, relY)
-                if screenRel.Magnitude > 0 then
-                    local clampedDist = math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal
-                    screenRel = screenRel.Unit * clampedDist
+            -- 1. PROSES RADAR BLIP
+            if radarEnabled then
+                local blip = playerBlips[player]
+                if not blip then
+                    blip = Instance.new("ImageLabel")
+                    blip.AnchorPoint = Vector2.new(0.5, 0.5)
+                    blip.BackgroundTransparency = 1
+                    blip.Image = otherArrowImage
+                    blip.ZIndex = 1
+                    blip.Parent = BlipsContainer
+                    playerBlips[player] = blip
                 end
                 
-                blip.Position = UDim2.new(0.5, screenRel.X, 0.5, screenRel.Y)
+                blip.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
+                if distance <= maxDistanceVal then
+                    blip.Visible = true
+                    local screenRel = Vector2.new(offset:Dot(camRight), -offset:Dot(camLook))
+                    if screenRel.Magnitude > 0 then
+                        screenRel = screenRel.Unit * (math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal)
+                    end
+                    blip.Position = UDim2.new(0.5, screenRel.X, 0.5, screenRel.Y)
+                    
+                    local targetLook = Vector3.new(targetHRP.CFrame.LookVector.X, 0, targetHRP.CFrame.LookVector.Z).Unit
+                    blip.Rotation = math.deg(math.atan2(targetLook:Dot(camRight), targetLook:Dot(camLook)))
+                else
+                    blip.Visible = false
+                end
+            elseif playerBlips[player] then
+                playerBlips[player].Visible = false
+            end
+            
+            -- 2. PROSES FITUR ESP (BOX, LINE, HIGHLIGHT)
+            local esp = espElements[player]
+            if not esp then
+                esp = {}
+                -- ESP Box
+                local box = Instance.new("Frame")
+                box.BackgroundTransparency = 1
+                box.BorderSizePixel = 0
+                box.Parent = EspContainer
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.Thickness = 1.5
+                boxStroke.Color = Color3.fromRGB(255, 50, 50)
+                boxStroke.Parent = box
+                esp.Box = box
                 
-                local targetLook = Vector3.new(targetHRP.CFrame.LookVector.X, 0, targetHRP.CFrame.LookVector.Z).Unit
-                local tForwardDot = targetLook:Dot(camLook)
-                local tRightDot = targetLook:Dot(camRight)
-                blip.Rotation = math.deg(math.atan2(tRightDot, tForwardDot))
+                -- ESP Line (Tracer)
+                local line = Instance.new("Frame")
+                line.AnchorPoint = Vector2.new(0.5, 0.5)
+                line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                line.BorderSizePixel = 0
+                line.Parent = EspContainer
+                esp.Line = line
+                
+                -- ESP Highlight
+                local hl = Instance.new("Highlight")
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+                hl.FillTransparency = 0.5
+                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                hl.OutlineTransparency = 0
+                esp.Highlight = hl
+                
+                espElements[player] = esp
+            end
+            
+            -- Update Highlight
+            if espHighlightEnabled then
+                esp.Highlight.Parent = targetChar
+                esp.Highlight.Enabled = true
             else
-                blip.Visible = false
+                esp.Highlight.Enabled = false
+            end
+            
+            -- Update Box & Line berdasarkan WorldToViewportPoint
+            local screenPos, onScreen = camera:WorldToViewportPoint(targetPos)
+            if onScreen then
+                -- ESP Box
+                if espBoxEnabled then
+                    local headPos = camera:WorldToViewportPoint(targetPos + Vector3.new(0, 3, 0))
+                    local legPos = camera:WorldToViewportPoint(targetPos - Vector3.new(0, 3.5, 0))
+                    local boxHeight = math.abs(headPos.Y - legPos.Y)
+                    local boxWidth = boxHeight * 0.65
+                    
+                    esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
+                    esp.Box.Position = UDim2.new(0, screenPos.X - (boxWidth / 2), 0, headPos.Y)
+                    esp.Box.Visible = true
+                else
+                    esp.Box.Visible = false
+                end
+                
+                -- ESP Line
+                if espLineEnabled then
+                    local viewportSize = camera.ViewportSize
+                    local startPos = Vector2.new(viewportSize.X / 2, viewportSize.Y)
+                    local targetVec = Vector2.new(screenPos.X, screenPos.Y)
+                    local distancePx = (targetVec - startPos).Magnitude
+                    local angle = math.atan2(targetVec.Y - startPos.Y, targetVec.X - startPos.X)
+                    
+                    esp.Line.Size = UDim2.new(0, distancePx, 0, 1.5)
+                    esp.Line.Position = UDim2.new(0, (startPos.X + targetVec.X) / 2, 0, (startPos.Y + targetVec.Y) / 2)
+                    esp.Line.Rotation = math.deg(angle)
+                    esp.Line.Visible = true
+                else
+                    esp.Line.Visible = false
+                end
+            else
+                esp.Box.Visible = false
+                esp.Line.Visible = false
             end
         end
     end
     
+    -- Cleanup jika player keluar server
     for player, blip in pairs(playerBlips) do
         if not activePlayers[player] then
             blip:Destroy()
             playerBlips[player] = nil
+        end
+    end
+    for player, esp in pairs(espElements) do
+        if not activePlayers[player] then
+            if esp.Box then esp.Box:Destroy() end
+            if esp.Line then esp.Line:Destroy() end
+            if esp.Highlight then esp.Highlight:Destroy() end
+            espElements[player] = nil
         end
     end
 end)
