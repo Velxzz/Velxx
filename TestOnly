@@ -2,24 +2,32 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Hapus GUI lama jika ada
-if CoreGui:FindFirstChild("RadarGui") then
-    CoreGui.RadarGui:Destroy()
+if CoreGui:FindFirstChild("RadarMenuGui") then
+    CoreGui.RadarMenuGui:Destroy()
 end
 
--- Konfigurasi Radar
-local radarSize = 120
-local radarRadius = 60
-local maxDistance = 200
+-- VARIABEL PENGATURAN UTAMA (DEFAULT)
+local radarEnabled = true
+local radarSizeVal = 120
+local radarRadiusVal = 60
+local maxDistanceVal = 200
+local arrowSizeVal = 16
+local radarShape = "Bulat" -- Pilihan: "Kotak", "Bulat", "Squircle"
+local outlineMode = "RGB" -- Pilihan: "Hitam", "RGB"
+local customPosition = UDim2.new(1, -140, 0, 20) -- Default pojok kanan atas
 
--- Texture ID kustom kamu
-local myArrowImage = "rbxassetid://83978146105606"   -- Gambar panah untuk Kita (di tengah)
-local otherArrowImage = "rbxassetid://98960754572491" -- Gambar panah untuk Orang Lain
+-- Texture ID Kustom
+local myArrowImage = "rbxassetid://83978146105606"
+local otherArrowImage = "rbxassetid://98960754572491"
 
+-- MEMBUAT GUI UTAMA
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RadarGui"
+ScreenGui.Name = "RadarMenuGui"
 local success = pcall(function()
     ScreenGui.Parent = CoreGui
 end)
@@ -27,22 +35,213 @@ if not success then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
+-- 1. TOMBOL SHORTCUT (UNTUK BUKA/TUTUP MENU)
+local ShortcutButton = Instance.new("TextButton")
+ShortcutButton.Size = UDim2.new(0, 45, 0, 45)
+ShortcutButton.Position = UDim2.new(1, -60, 0.4, 0)
+ShortcutButton.AnchorPoint = Vector2.new(0, 0.5)
+ShortcutButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ShortcutButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+ShortcutButton.Text = "⚙️"
+ShortcutButton.TextSize = 22
+ShortcutButton.BorderSizePixel = 2
+ShortcutButton.BorderColor3 = Color3.fromRGB(0, 255, 0)
+ShortcutButton.Parent = ScreenGui
+
+local ShortCorner = Instance.new("UICorner")
+ShortCorner.CornerRadius = UDim.new(0, 10)
+ShortCorner.Parent = ShortcutButton
+
+-- 2. FRAME UTAMA RADAR
 local RadarFrame = Instance.new("Frame")
-RadarFrame.Size = UDim2.new(0, radarSize, 0, radarSize)
-RadarFrame.Position = UDim2.new(1, -140, 0, 20)
+RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
+RadarFrame.Position = customPosition
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
 RadarFrame.BorderSizePixel = 2
-RadarFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
 RadarFrame.Parent = ScreenGui
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = RadarFrame
+local RadarCorner = Instance.new("UICorner")
+RadarCorner.CornerRadius = UDim.new(1, 0) -- Default bulat
+RadarCorner.Parent = RadarFrame
 
--- Titik tengah (Karakter kita menggunakan Texture ID kustom)
+-- 3. MENU PENGATURAN (UI PANEL)
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Size = UDim2.new(0, 260, 0, 380)
+MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MenuFrame.BackgroundTransparency = 0.1
+MenuFrame.BorderSizePixel = 2
+MenuFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+MenuFrame.Visible = false -- Awalnya tersembunyi
+MenuFrame.Parent = ScreenGui
+
+local MenuCorner = Instance.new("UICorner")
+MenuCorner.CornerRadius = UDim.new(0, 12)
+MenuCorner.Parent = MenuFrame
+
+-- Judul Menu
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "RADAR SETTINGS"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+TitleLabel.TextSize = 16
+TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
+TitleLabel.Parent = MenuFrame
+
+-- Fungsi pembuat tombol pilihan di Menu
+local function createButtonOption(name, yPos, defaultText, callback)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 120, 0, 30)
+    lbl.Position = UDim2.new(0, 15, 0, yPos)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextSize = 13
+    lbl.Parent = MenuFrame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 100, 0, 28)
+    btn.Position = UDim2.new(1, -115, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.TextColor3 = Color3.fromRGB(0, 255, 0)
+    btn.Text = defaultText
+    btn.TextSize = 12
+    btn.Parent = MenuFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        callback(btn)
+    end)
+end
+
+-- FITUR 1: Radar On/Off
+createButtonOption("Radar UI", 50, "ON", function(btn)
+    radarEnabled = not radarEnabled
+    btn.Text = radarEnabled and "ON" or "OFF"
+    btn.TextColor3 = radarEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    RadarFrame.Visible = radarEnabled
+end)
+
+-- FITUR 2: Ukuran Radar
+createButtonOption("Ukuran Radar", 90, "120px", function(btn)
+    if radarSizeVal == 120 then
+        radarSizeVal = 160
+        radarRadiusVal = 80
+        btn.Text = "160px"
+    elseif radarSizeVal == 160 then
+        radarSizeVal = 90
+        radarRadiusVal = 45
+        btn.Text = "90px"
+    else
+        radarSizeVal = 120
+        radarRadiusVal = 60
+        btn.Text = "120px"
+    end
+    RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
+end)
+
+-- FITUR 3: Bentuk Radar (Kotak, Bulat, Squircle)
+createButtonOption("Bentuk Radar", 130, "Bulat", function(btn)
+    if radarShape == "Bulat" then
+        radarShape = "Kotak"
+        RadarCorner.CornerRadius = UDim.new(0, 0)
+        btn.Text = "Kotak"
+    elseif radarShape == "Kotak" then
+        radarShape = "Squircle"
+        RadarCorner.CornerRadius = UDim.new(0, 25)
+        btn.Text = "Squircle"
+    else
+        radarShape = "Bulat"
+        RadarCorner.CornerRadius = UDim.new(1, 0)
+        btn.Text = "Bulat"
+    end
+end)
+
+-- FITUR 4: Outline Mode (Hitam / RGB)
+createButtonOption("Outline Radar", 170, "RGB", function(btn)
+    if outlineMode == "RGB" then
+        outlineMode = "Hitam"
+        RadarFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        btn.Text = "Hitam"
+    else
+        outlineMode = "RGB"
+        btn.Text = "RGB"
+    end
+end)
+
+-- FITUR 5: Ukuran Arrow / Panah
+createButtonOption("Ukuran Arrow", 210, "16px", function(btn)
+    if arrowSizeVal == 16 then
+        arrowSizeVal = 22
+        btn.Text = "22px"
+    elseif arrowSizeVal == 22 then
+        arrowSizeVal = 12
+        btn.Text = "12px"
+    else
+        arrowSizeVal = 16
+        btn.Text = "16px"
+    end
+end)
+
+-- FITUR 6: Jarak Render Maksimal (Render Distance)
+createButtonOption("Jarak Render", 250, "200 Studs", function(btn)
+    if maxDistanceVal == 200 then
+        maxDistanceVal = 400
+        btn.Text = "400 Studs"
+    elseif maxDistanceVal == 400 then
+        maxDistanceVal = 100
+        btn.Text = "100 Studs"
+    else
+        maxDistanceVal = 200
+        btn.Text = "200 Studs"
+    end
+end)
+
+-- FITUR 7: Letak Radar (Preset posisi cepat)
+createButtonOption("Letak Radar", 290, "Kanan Atas", function(btn)
+    if customPosition == UDim2.new(1, -140, 0, 20) then
+        customPosition = UDim2.new(0, 20, 0, 20) -- Kiri Atas
+        btn.Text = "Kiri Atas"
+    elseif customPosition == UDim2.new(0, 20, 0, 20) then
+        customPosition = UDim2.new(1, -140, 1, -140) -- Kanan Bawah
+        btn.Text = "Kanan Bawah"
+    else
+        customPosition = UDim2.new(1, -140, 0, 20) -- Kembali Kanan Atas
+        btn.Text = "Kanan Atas"
+    end
+    RadarFrame.Position = customPosition
+end)
+
+-- Tombol Tutup Menu
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 230, 0, 30)
+CloseBtn.Position = UDim2.new(0.5, -115, 1, -40)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "Tutup Menu"
+CloseBtn.TextSize = 13
+CloseBtn.Parent = MenuFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+-- Logika Shortcut Toggle Menu
+ShortcutButton.MouseButton1Click:Connect(function()
+    MenuFrame.Visible = not MenuFrame.Visible
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+    MenuFrame.Visible = false
+end)
+
+-- ELEMEN RADAR DI DALAM FRAME
 local CenterArrow = Instance.new("ImageLabel")
-CenterArrow.Size = UDim2.new(0, 16, 0, 16)
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
 CenterArrow.BackgroundTransparency = 1
@@ -55,14 +254,32 @@ BlipsContainer.Parent = RadarFrame
 
 local playerBlips = {}
 
+-- LOOP UTAMA RADAR & EFEK RGB
 RunService.RenderStepped:Connect(function()
+    -- Efek Outline RGB otomatis jika diaktifkan
+    if outlineMode == "RGB" and radarEnabled then
+        local hue = tick() % 5 / 5
+        RadarFrame.BorderColor3 = Color3.fromHSV(hue, 1, 1)
+    end
+    
+    if not radarEnabled then return end
+    
+    -- Update ukuran panah sesuai pengaturan menu
+    CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
+
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    local myHRP = character.HumanoidRootPart
-    local myPos = myHRP.Position
-    local myLookVector = myHRP.CFrame.LookVector
     
-    local myAngle = math.atan2(myLookVector.X, myLookVector.Z)
+    local myPos = character.HumanoidRootPart.Position
+    local camera = Workspace.CurrentCamera
+    if not camera then return end
+    
+    local camLookVector = camera.CFrame.LookVector
+    local camAngle = math.atan2(camLookVector.X, camLookVector.Z)
+    
+    local myHRP = character.HumanoidRootPart
+    local myHeading = math.atan2(myHRP.CFrame.LookVector.X, myHRP.CFrame.LookVector.Z)
+    CenterArrow.Rotation = math.deg(myHeading - camAngle)
 
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
@@ -76,9 +293,7 @@ RunService.RenderStepped:Connect(function()
             
             local blip = playerBlips[player]
             if not blip then
-                -- Menggunakan Texture ID untuk player lain
                 blip = Instance.new("ImageLabel")
-                blip.Size = UDim2.new(0, 16, 0, 16)
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
                 blip.BackgroundTransparency = 1
                 blip.Image = otherArrowImage
@@ -87,23 +302,24 @@ RunService.RenderStepped:Connect(function()
                 playerBlips[player] = blip
             end
             
-            if distance <= maxDistance then
+            -- Update ukuran blip player lain sesuai pengaturan menu
+            blip.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
+            
+            if distance <= maxDistanceVal then
                 blip.Visible = true
                 
                 local targetAngle = math.atan2(offset.X, offset.Z)
-                local relativeAngle = targetAngle - myAngle
+                local relativeAngle = targetAngle - camAngle
                 
-                local clampedDist = math.clamp(distance / maxDistance, 0, 1) * radarRadius
+                local clampedDist = math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal
                 
                 local blipX = math.sin(relativeAngle) * clampedDist
                 local blipY = -math.cos(relativeAngle) * clampedDist
                 
                 blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
                 
-                -- Rotasi gambar panah player lain mengikuti arah hadap mereka
-                local targetLook = targetHRP.CFrame.LookVector
-                local targetHeading = math.atan2(targetLook.X, targetLook.Z)
-                local relativeHeading = targetHeading - myAngle
+                local targetHeading = math.atan2(targetHRP.CFrame.LookVector.X, targetHRP.CFrame.LookVector.Z)
+                local relativeHeading = targetHeading - camAngle
                 blip.Rotation = math.deg(relativeHeading)
             else
                 blip.Visible = false
