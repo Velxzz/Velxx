@@ -1,4 +1,4 @@
--- Radar UI V1.3
+-- Radar UI V1.4
 -- Salin dan jalankan script ini lewat Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -23,8 +23,8 @@ local outlineMode = "RGB" -- "Hitam", "RGB"
 local customPosition = UDim2.new(1, -125, 0, 10)
 
 -- Texture ID Kustom
-local myArrowImage = "rbxassetid://72519815983572"
-local otherArrowImage = "rbxassetid://108029451048494"
+local myArrowImage = "rbxassetid://83978146105606"
+local otherArrowImage = "rbxassetid://98960754572491"
 
 -- MEMBUAT GUI UTAMA
 local ScreenGui = Instance.new("ScreenGui")
@@ -53,7 +53,7 @@ ShortCorner.CornerRadius = UDim.new(0, 8)
 ShortCorner.Parent = ShortcutButton
 
 -- Logika Dragging untuk Tombol Shortcut
-local dragging, dragInput, dragStart, startPos
+local dragging, dragStart, startPos
 
 ShortcutButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -87,12 +87,62 @@ RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
 RadarFrame.Position = customPosition
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
-RadarFrame.BorderSizePixel = 3
+RadarFrame.ClipsDescendants = true
+RadarFrame.BorderSizePixel = 0
 RadarFrame.Parent = ScreenGui
 
 local RadarCorner = Instance.new("UICorner")
 RadarCorner.CornerRadius = UDim.new(1, 0)
 RadarCorner.Parent = RadarFrame
+
+-- UIStroke untuk Efek Outline RGB yang Bekerja dengan UICorner
+local RadarStroke = Instance.new("UIStroke")
+RadarStroke.Thickness = 3
+RadarStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+RadarStroke.Color = Color3.fromRGB(255, 255, 255)
+RadarStroke.Parent = RadarFrame
+
+-- CONTAINER GRID 10x10 STUDS
+local GridContainer = Instance.new("Frame")
+GridContainer.Size = UDim2.new(1, 0, 1, 0)
+GridContainer.BackgroundTransparency = 1
+GridContainer.ZIndex = 0
+GridContainer.Parent = RadarFrame
+
+local function updateGrid()
+    GridContainer:ClearAllChildren()
+    local scaleFactor = radarSizeVal / (maxDistanceVal * 2)
+    local center = radarSizeVal / 2
+    local gridStuds = 10
+    
+    for offsetStuds = -maxDistanceVal, maxDistanceVal, gridStuds do
+        local posPx = center + (offsetStuds * scaleFactor)
+        
+        if posPx >= 0 and posPx <= radarSizeVal then
+            -- Garis Vertikal
+            local vLine = Instance.new("Frame")
+            vLine.Size = UDim2.new(0, 1, 1, 0)
+            vLine.Position = UDim2.new(0, posPx, 0, 0)
+            vLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            vLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
+            vLine.BorderSizePixel = 0
+            vLine.ZIndex = 0
+            vLine.Parent = GridContainer
+            
+            -- Garis Horizontal
+            local hLine = Instance.new("Frame")
+            hLine.Size = UDim2.new(1, 0, 0, 1)
+            hLine.Position = UDim2.new(0, 0, 0, posPx)
+            hLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            hLine.BackgroundTransparency = (offsetStuds == 0) and 0.5 or 0.88
+            hLine.BorderSizePixel = 0
+            hLine.ZIndex = 0
+            hLine.Parent = GridContainer
+        end
+    end
+end
+
+updateGrid()
 
 -- 3. MENU PENGATURAN (UI PANEL)
 local MenuFrame = Instance.new("Frame")
@@ -109,7 +159,6 @@ local MenuCorner = Instance.new("UICorner")
 MenuCorner.CornerRadius = UDim.new(0, 12)
 MenuCorner.Parent = MenuFrame
 
--- Judul Menu (Putih)
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
 TitleLabel.BackgroundTransparency = 1
@@ -119,7 +168,6 @@ TitleLabel.TextSize = 16
 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
 TitleLabel.Parent = MenuFrame
 
--- Fungsi pembuat tombol pilihan di Menu
 local function createButtonOption(name, yPos, defaultText, callback)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0, 120, 0, 30)
@@ -172,6 +220,7 @@ createButtonOption("Ukuran Radar", 90, "120px", function(btn)
         btn.Text = "120px"
     end
     RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
+    updateGrid()
 end)
 
 createButtonOption("Bentuk Radar", 130, "Bulat", function(btn)
@@ -193,7 +242,7 @@ end)
 createButtonOption("Outline Radar", 170, "RGB", function(btn)
     if outlineMode == "RGB" then
         outlineMode = "Hitam"
-        RadarFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        RadarStroke.Color = Color3.fromRGB(0, 0, 0)
         btn.Text = "Hitam"
     else
         outlineMode = "RGB"
@@ -225,6 +274,7 @@ createButtonOption("Jarak Render", 250, "200 Studs", function(btn)
         maxDistanceVal = 200
         btn.Text = "200 Studs"
     end
+    updateGrid()
 end)
 
 createButtonOption("Letak Radar", 290, "Kanan Atas", function(btn)
@@ -254,7 +304,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
--- Logika Klik Shortcut (Buka/Tutup Menu)
+-- Logika Klik Shortcut
 local clickCheck = 0
 ShortcutButton.MouseButton1Down:Connect(function()
     clickCheck = tick()
@@ -286,10 +336,9 @@ BlipsContainer.Parent = RadarFrame
 local playerBlips = {}
 
 RunService.RenderStepped:Connect(function()
-    -- Efek Outline RGB Aktif
     if outlineMode == "RGB" and radarEnabled then
         local hue = (tick() % 4) / 4
-        RadarFrame.BorderColor3 = Color3.fromHSV(hue, 1, 1)
+        RadarStroke.Color = Color3.fromHSV(hue, 1, 1)
     end
     
     if not radarEnabled then return end
@@ -299,16 +348,20 @@ RunService.RenderStepped:Connect(function()
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     
-    local myPos = character.HumanoidRootPart.Position
     local camera = Workspace.CurrentCamera
     if not camera then return end
     
-    local camLookVector = camera.CFrame.LookVector
-    local camAngle = math.atan2(camLookVector.X, camLookVector.Z)
-    
     local myHRP = character.HumanoidRootPart
-    local myHeading = math.atan2(myHRP.CFrame.LookVector.X, myHRP.CFrame.LookVector.Z)
-    CenterArrow.Rotation = math.deg(myHeading - camAngle)
+    local myPos = myHRP.Position
+    
+    local camCF = camera.CFrame
+    local camLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+    local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+    
+    local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
+    local myForwardDot = myLook:Dot(camLook)
+    local myRightDot = myLook:Dot(camRight)
+    CenterArrow.Rotation = math.deg(math.atan2(myRightDot, myForwardDot))
 
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
@@ -337,20 +390,21 @@ RunService.RenderStepped:Connect(function()
             if distance <= maxDistanceVal then
                 blip.Visible = true
                 
-                local targetAngle = math.atan2(offset.X, offset.Z)
-                local relativeAngle = targetAngle - camAngle
+                local relX = offset:Dot(camRight)
+                local relY = -offset:Dot(camLook)
                 
-                local clampedDist = math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal
+                local screenRel = Vector2.new(relX, relY)
+                if screenRel.Magnitude > 0 then
+                    local clampedDist = math.clamp(distance / maxDistanceVal, 0, 1) * radarRadiusVal
+                    screenRel = screenRel.Unit * clampedDist
+                end
                 
-                -- Perbaikan orientasi sumbu X (dibalik menggunakan tanda minus agar akurat kiri-kanannya)
-                local blipX = -math.sin(relativeAngle) * clampedDist
-                local blipY = -math.cos(relativeAngle) * clampedDist
+                blip.Position = UDim2.new(0.5, screenRel.X, 0.5, screenRel.Y)
                 
-                blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
-                
-                local targetHeading = math.atan2(targetHRP.CFrame.LookVector.X, targetHRP.CFrame.LookVector.Z)
-                local relativeHeading = targetHeading - camAngle
-                blip.Rotation = math.deg(relativeHeading)
+                local targetLook = Vector3.new(targetHRP.CFrame.LookVector.X, 0, targetHRP.CFrame.LookVector.Z).Unit
+                local tForwardDot = targetLook:Dot(camLook)
+                local tRightDot = targetLook:Dot(camRight)
+                blip.Rotation = math.deg(math.atan2(tRightDot, tForwardDot))
             else
                 blip.Visible = false
             end
