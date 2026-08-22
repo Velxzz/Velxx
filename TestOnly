@@ -1,3 +1,4 @@
+-- Salin dan jalankan script ini lewat Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -13,9 +14,9 @@ local radarSize = 120
 local radarRadius = 60
 local maxDistance = 200
 
--- Asset ID gambar kustom
-local myArrowImage = "rbxassetid://136352049524226"   -- Gambar panah untuk Kita (di tengah)
-local otherArrowImage = "rbxassetid://107576921395362" -- Gambar panah untuk Orang Lain
+-- Texture ID kustom kamu
+local myArrowImage = "rbxassetid://83978146105606"   -- Gambar panah untuk Kita (di tengah)
+local otherArrowImage = "rbxassetid://98960754572491" -- Gambar panah untuk Orang Lain
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarGui"
@@ -39,9 +40,9 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = RadarFrame
 
--- Titik tengah (Karakter kita menggunakan gambar kustom)
+-- Titik tengah (Karakter kita menggunakan Texture ID kustom)
 local CenterArrow = Instance.new("ImageLabel")
-CenterArrow.Size = UDim2.new(0, 14, 0, 14)
+CenterArrow.Size = UDim2.new(0, 16, 0, 16)
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
 CenterArrow.BackgroundTransparency = 1
@@ -63,9 +64,6 @@ RunService.RenderStepped:Connect(function()
     
     local myAngle = math.atan2(myLookVector.X, myLookVector.Z)
 
-    -- Rotasi gambar karakter kita di tengah mengikuti arah hadap kamera/karakter
-    CenterArrow.Rotation = 0 -- Atau bisa disesuaikan jika ingin ikut berputar
-
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -78,9 +76,9 @@ RunService.RenderStepped:Connect(function()
             
             local blip = playerBlips[player]
             if not blip then
-                -- Menggunakan gambar kustom untuk player lain
+                -- Menggunakan Texture ID untuk player lain
                 blip = Instance.new("ImageLabel")
-                blip.Size = UDim2.new(0, 14, 0, 14)
+                blip.Size = UDim2.new(0, 16, 0, 16)
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
                 blip.BackgroundTransparency = 1
                 blip.Image = otherArrowImage
@@ -102,7 +100,7 @@ RunService.RenderStepped:Connect(function()
                 
                 blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
                 
-                -- Rotasi gambar panah player lain mengikuti arah hadap mereka secara relatif
+                -- Rotasi gambar panah player lain mengikuti arah hadap mereka
                 local targetLook = targetHRP.CFrame.LookVector
                 local targetHeading = math.atan2(targetLook.X, targetLook.Z)
                 local relativeHeading = targetHeading - myAngle
