@@ -37,7 +37,7 @@ FloatBtn.Font = Enum.Font.GothamBold
 FloatBtn.TextSize = 10
 FloatBtn.BorderSizePixel = 0
 FloatBtn.Active = true
-FloatBtn.Draggable = true -- Bisa digeser
+FloatBtn.Draggable = true
 
 local FloatCorner = Instance.new("UICorner", FloatBtn)
 FloatCorner.CornerRadius = UDim.new(1, 0)
@@ -48,13 +48,13 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 285)
+MainFrame.Size = UDim2.new(0, 220, 0, 315) -- Disesuaikan ukurannya untuk tombol baru
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false -- DIBUAT TERSEMBUNYI SAAT PERTAMA LOAD
+MainFrame.Visible = false
 
 local UICorner = Instance.new("UICorner", MainFrame)
 UICorner.CornerRadius = UDim.new(0, 8)
@@ -93,12 +93,13 @@ end
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
+local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 5) -- Tombol Reset Arah Baru
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
 ZoomFrame.Size = UDim2.new(0.9, 0, 0, 26)
 ZoomFrame.BackgroundTransparency = 1
-ZoomFrame.LayoutOrder = 5
+ZoomFrame.LayoutOrder = 6
 
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
 ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
@@ -129,7 +130,7 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 6)
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 7)
 
 local ShortcutInfo = Instance.new("TextLabel", MainFrame)
 ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
@@ -138,11 +139,12 @@ ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
 ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
 ShortcutInfo.Font = Enum.Font.Gotham
 ShortcutInfo.TextSize = 8
-ShortcutInfo.LayoutOrder = 7
+ShortcutInfo.LayoutOrder = 8
 Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
 local activeCCTV = nil
+local initialCFrame = nil -- Menyimpan CFrame asli saat di-spawn
 local isMonitoring = false
 local isCamLocked = true
 local zoomLevel = 1
@@ -150,7 +152,6 @@ local baseFOV = 70
 local cameraRotX = 0
 local cameraRotY = 0
 
--- Fungsi Toggle Muncul/Sembunyi Menu Utama
 local function toggleMenuVisibility()
     MainFrame.Visible = not MainFrame.Visible
 end
@@ -175,6 +176,8 @@ end
 local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     local camCFrame = CurrentCamera.CFrame
+    
+    initialCFrame = camCFrame -- Menyimpan rotasi/posisi asli spawn
     
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
@@ -216,20 +219,38 @@ local function toggleViewAction()
 end
 ToggleViewBtn.MouseButton1Click:Connect(toggleViewAction)
 
--- PERBAIKAN LOCK/UNLOCK KAMERA
+-- TOGGLE CAMERA LOCK / UNLOCK (Diperbarui agar menyimpan posisi geseran terakhir)
 LockCamBtn.MouseButton1Click:Connect(function()
     isCamLocked = not isCamLocked
     if isCamLocked then
         LockCamBtn.Text = "CAMERA LOCK: LOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        
+        -- Kunci ke arah sudut pandang terakhir hasil pergeseran
+        if activeCCTV then
+            activeCCTV.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
+        end
     else
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
         
-        -- Mencegah kamera mental: Ambil rotasi dari kamera saat ini, bukan mereset ke blok CCTV
         local lookVector = CurrentCamera.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
+    end
+end)
+
+-- FITUR BARU: RESET ARAH KAMERA KE SPAWN AWAL
+ResetDirBtn.MouseButton1Click:Connect(function()
+    if activeCCTV and initialCFrame then
+        activeCCTV.CFrame = initialCFrame
+        local lookVector = initialCFrame.LookVector
+        cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
+        cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
+        
+        if isMonitoring then
+            CurrentCamera.CFrame = activeCCTV.CFrame
+        end
     end
 end)
 
@@ -248,10 +269,11 @@ end)
 local function resetAction()
     stopMonitoring()
     if activeCCTV then activeCCTV:Destroy(); activeCCTV = nil end
+    initialCFrame = nil
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- PERBAIKAN RENDER PRIORITY (Mencegah sistem game menimpa kamera CCTV)
+-- Render Priority
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
         if isCamLocked then
@@ -266,11 +288,10 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
     end
 end)
 
--- ==================== PERBAIKAN KONTROL SENTUH HP & MOUSE ====================
+-- Kontrol HP & Mouse
 local activeTouch = nil
 local lastTouchPos = Vector2.new()
 
--- Mouse PC
 UserInputService.InputChanged:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if isMonitoring and not isCamLocked and input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -280,7 +301,6 @@ UserInputService.InputChanged:Connect(function(input, gameProcessed)
     end
 end)
 
--- Touch HP
 UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
     if gameProcessed then return end
     if isMonitoring and not isCamLocked then
@@ -294,7 +314,7 @@ UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
         local delta = touch.Position - lastTouchPos
         lastTouchPos = touch.Position
         
-        cameraRotX = cameraRotX - delta.X * 0.005 -- Sensitivity Touch
+        cameraRotX = cameraRotX - delta.X * 0.005
         cameraRotY = math.clamp(cameraRotY - delta.Y * 0.005, -math.pi/2 + 0.01, math.pi/2 - 0.01)
     end
 end)
@@ -303,7 +323,7 @@ UserInputService.TouchEnded:Connect(function(touch)
     if touch == activeTouch then activeTouch = nil end
 end)
 
--- Shortcut Keyboard
+-- Keyboard Shortcuts
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.M then toggleMenuVisibility()
