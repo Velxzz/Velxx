@@ -1,7 +1,7 @@
 -- Services
-local Players = service_or_get_local_players_placeholder or game:GetService("Players")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Safe UI Container
@@ -14,21 +14,21 @@ else
 end
 
 -- Clean up GUI lama jika ada
-local oldGui = parentContainer:FindFirstChild("SourceViewerGui")
+local oldGui = parentContainer:FindFirstChild("SourceDumperGui")
 if oldGui then oldGui:Destroy() end
 
 -- ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SourceViewerGui"
+ScreenGui.Name = "SourceDumperGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999999
 ScreenGui.Enabled = true
 ScreenGui.Parent = parentContainer
 
--- Main Frame (Jendela Utama)
+-- Main Frame (Ukuran Compact 380x260)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 420, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -210, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 380, 0, 260)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -130)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -39,82 +39,82 @@ UICorner.CornerRadius = UDim.new(0, 8)
 
 -- Header Bar
 local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 35)
+Header.Size = UDim2.new(1, 0, 0, 28)
 Header.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 Header.BorderSizePixel = 0
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -120, 1, 0)
-Title.Position = UDim2.new(0, 12, 0, 0)
-Title.Text = "LUA SOURCE VIEWER & INSPECTOR"
+Title.Size = UDim2.new(1, -110, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Text = "URL SOURCE DUMPER"
 Title.TextColor3 = Color3.fromRGB(0, 170, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 12
+Title.TextSize = 11
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
 -- Tombol Minimize (-)
 local MinimizeBtn = Instance.new("TextButton", Header)
-MinimizeBtn.Size = UDim2.new(0, 30, 0, 24)
-MinimizeBtn.Position = UDim2.new(1, -95, 0.5, -12)
+MinimizeBtn.Size = UDim2.new(0, 24, 0, 20)
+MinimizeBtn.Position = UDim2.new(1, -78, 0.5, -10)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
 MinimizeBtn.Text = "-"
 MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextSize = 14
+MinimizeBtn.TextSize = 12
 Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 4)
 
--- Tombol Close / Destroy (X)
+-- Tombol Close (X)
 local CloseBtn = Instance.new("TextButton", Header)
-CloseBtn.Size = UDim2.new(0, 30, 0, 24)
-CloseBtn.Position = UDim2.new(1, -35, 0.5, -12)
+CloseBtn.Size = UDim2.new(0, 24, 0, 20)
+CloseBtn.Position = UDim2.new(1, -28, 0.5, -10)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 11
+CloseBtn.TextSize = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
 -- Tombol Copy 
 local CopyBtn = Instance.new("TextButton", Header)
-CopyBtn.Size = UDim2.new(0, 50, 0, 24)
-CopyBtn.Position = UDim2.new(1, -150, 0.5, -12)
+CopyBtn.Size = UDim2.new(0, 42, 0, 20)
+CopyBtn.Position = UDim2.new(1, -123, 0.5, -10)
 CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 200)
 CopyBtn.Text = "Copy"
 CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.Font = Enum.Font.GothamBold
-CopyBtn.TextSize = 10
+CopyBtn.TextSize = 9
 Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 4)
 
 -- Container Isi
 local Container = Instance.new("Frame", MainFrame)
-Container.Size = UDim2.new(1, -20, 1, -50)
-Container.Position = UDim2.new(0, 10, 0, 42)
+Container.Size = UDim2.new(1, -16, 1, -38)
+Container.Position = UDim2.new(0, 8, 0, 34)
 Container.BackgroundTransparency = 1
 
--- TextBox Tujuan Skrip / Path Objek
+-- TextBox Input Link / Format loadstring
 local TargetBox = Instance.new("TextBox", Container)
-TargetBox.Size = UDim2.new(1, 0, 0, 30)
+TargetBox.Size = UDim2.new(1, 0, 0, 26)
 TargetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
 TargetBox.BorderSizePixel = 0
-TargetBox.PlaceholderText = "Ketik path target (Contoh: game.Workspace.Part atau LocalScript)"
+TargetBox.PlaceholderText = "Paste link raw GitHub atau format loadstring di sini..."
 TargetBox.Text = ""
 TargetBox.TextColor3 = Color3.fromRGB(240, 240, 240)
 TargetBox.Font = Enum.Font.Code
-TargetBox.TextSize = 10
+TargetBox.TextSize = 9
 TargetBox.ClearTextOnFocus = false
-Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 5)
 
 -- ScrollingFrame untuk Menampilkan Kode Sumber
 local CodeScroll = Instance.new("ScrollingFrame", Container)
-CodeScroll.Size = UDim2.new(1, 0, 1, -40)
-CodeScroll.Position = UDim2.new(0, 0, 0, 36)
+CodeScroll.Size = UDim2.new(1, 0, 1, -56)
+CodeScroll.Position = UDim2.new(0, 0, 0, 30)
 CodeScroll.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 CodeScroll.BorderSizePixel = 0
-CodeScroll.ScrollBarThickness = 6
+CodeScroll.ScrollBarThickness = 5
 CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 5)
 
 -- TextBox Penampil Kode Sumber
 local CodeViewer = Instance.new("TextBox", CodeScroll)
@@ -122,40 +122,40 @@ CodeViewer.Size = UDim2.new(1, 0, 1, 0)
 CodeViewer.BackgroundTransparency = 1
 CodeViewer.MultiLine = true
 CodeViewer.ClearTextOnFocus = false
-CodeViewer.TextEditable = false -- Hanya untuk melihat (read-only)
-CodeViewer.Text = "-- Masukkan path target di atas, lalu tekan Enter atau klik Target untuk melihat kode sumbernya."
+CodeViewer.TextEditable = false
+CodeViewer.Text = "-- Masukkan link URL atau loadstring lalu tekan Enter untuk melihat isi kodenya."
 CodeViewer.TextColor3 = Color3.fromRGB(150, 230, 150)
 CodeViewer.Font = Enum.Font.Code
-CodeViewer.TextSize = 11
+CodeViewer.TextSize = 10
 CodeViewer.TextXAlignment = Enum.TextXAlignment.Left
 CodeViewer.TextYAlignment = Enum.TextYAlignment.Top
 
--- Status Label kecil di pojok bawah
+-- Status Label
 local StatusNote = Instance.new("TextLabel", MainFrame)
-StatusNote.Size = UDim2.new(1, -20, 0, 15)
-StatusNote.Position = UDim2.new(0, 10, 1, -18)
+StatusNote.Size = UDim2.new(1, -16, 0, 14)
+StatusNote.Position = UDim2.new(0, 8, 1, -15)
 StatusNote.Text = "Status: Ready"
 StatusNote.TextColor3 = Color3.fromRGB(120, 120, 120)
 StatusNote.Font = Enum.Font.Gotham
-StatusNote.TextSize = 9
+StatusNote.TextSize = 8
 StatusNote.TextXAlignment = Enum.TextXAlignment.Left
 StatusNote.BackgroundTransparency = 1
 
--- Tombol Mengambang (Float Button) untuk memunculkan kembali saat diminimize
+-- Tombol Mengambang (Float Button) saat Minimize
 local FloatOpenBtn = Instance.new("TextButton", ScreenGui)
-FloatOpenBtn.Size = UDim2.new(0, 40, 0, 40)
+FloatOpenBtn.Size = UDim2.new(0, 35, 0, 35)
 FloatOpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
 FloatOpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 FloatOpenBtn.Text = "SRC"
 FloatOpenBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
 FloatOpenBtn.Font = Enum.Font.GothamBold
-FloatOpenBtn.TextSize = 12
+FloatOpenBtn.TextSize = 10
 FloatOpenBtn.Visible = false
 FloatOpenBtn.Active = true
 FloatOpenBtn.Draggable = true
 Instance.new("UICorner", FloatOpenBtn).CornerRadius = UDim.new(1, 0)
 
--- Logika Minimize
+-- Logika Minimize & Close
 local isMinimized = false
 MinimizeBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -169,7 +169,6 @@ FloatOpenBtn.MouseButton1Click:Connect(function()
     FloatOpenBtn.Visible = false
 end)
 
--- Logika Destroy / Tutup Total GUI
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
@@ -178,7 +177,7 @@ end)
 CopyBtn.MouseButton1Click:Connect(function()
     if setclipboard then
         setclipboard(CodeViewer.Text)
-        StatusNote.Text = "Status: Kode berhasil disalin ke Clipboard!"
+        StatusNote.Text = "Status: Kode berhasil disalin!"
         StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
     else
         StatusNote.Text = "Status: Executor tidak mendukung setclipboard!"
@@ -186,46 +185,36 @@ CopyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Fungsi Mendapatkan & Menampilkan Kode Sumber Target
+-- Fungsi Mengambil dan Menampilkan Kode Sumber dari URL/Loadstring
 TargetBox.FocusLost:Connect(function(enterPressed)
     if not enterPressed then return end
-    local query = TargetBox.Text
-    if query == "" then return end
+    local input = TargetBox.Text
+    if input == "" then return end
     
-    StatusNote.Text = "Status: Mencari objek..."
+    StatusNote.Text = "Status: Mengambil data dari URL..."
     StatusNote.TextColor3 = Color3.fromRGB(255, 170, 0)
     
-    -- Mencoba mencari objek berdasarkan path string sederhana
-    local success, targetObj = pcall(function()
-        -- Eksekusi string aman pakai loadstring atau pencarian hierarki dasar
-        local env = {game = game, workspace = workspace, script = script}
-        local fn, err = loadstring("return " .. query)
-        if fn then
-            setfenv(fn, env)
-            return fn()
+    -- Membersihkan input: jika user memasukkan format loadstring lengkap, ambil URL di dalamnya
+    local targetURL = input
+    if string.find(input, "game:HttpGet") then
+        local extracted = string.match(input, "['%\"()(http[s]?://.-)['%\"()]'")
+        if extracted then
+            targetURL = extracted
         end
-        return nil
+    end
+    
+    -- Eksekusi HttpGet untuk mendownload isi skrip
+    local success, result = pcall(function()
+        return game:HttpGet(targetURL)
     end)
     
-    if success and targetObj then
-        -- Cek apakah objek punya fungsi decompile (biasanya didukung executor tingkat lanjut)
-        if decompile and (targetObj:IsA("LocalScript") or targetObj:IsA("ModuleScript")) then
-            local sourceCode = decompile(targetObj)
-            CodeViewer.Text = sourceCode
-            StatusNote.Text = "Status: Berhasil decompile skrip!"
-            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
-        elseif targetObj:IsA("StringValue") then
-            CodeViewer.Text = targetObj.Value
-            StatusNote.Text = "Status: Berhasil memuat StringValue!"
-            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
-        else
-            CodeViewer.Text = "-- Objek ditemukan, tapi bukan LocalScript/ModuleScript atau fungsi decompile tidak didukung executor ini.\n-- Nama Tipe: " .. targetObj.ClassName
-            StatusNote.Text = "Status: Objek valid, tapi tidak bisa dibaca kodenya."
-            StatusNote.TextColor3 = Color3.fromRGB(220, 150, 0)
-        end
+    if success and result and result ~= "" then
+        CodeViewer.Text = result
+        StatusNote.Text = "Status: Berhasil memuat kode sumber!"
+        StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
     else
-        CodeViewer.Text = "-- ERROR: Objek atau Path tidak ditemukan di dalam game!\n-- Pastikan penulisan path benar (contoh: game.Players.LocalPlayer.PlayerScripts...)"
-        StatusNote.Text = "Status: Target tidak ditemukan!"
+        CodeViewer.Text = "-- Gagal mengambil kode dari URL tersebut.\n-- Pastikan link URL benar atau dapat diakses publik (Raw GitHub)."
+        StatusNote.Text = "Status: Gagal mengambil URL!"
         StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
     end
 end)
