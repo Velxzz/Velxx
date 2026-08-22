@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 315) -- Disesuaikan ukurannya untuk tombol baru
+MainFrame.Size = UDim2.new(0, 220, 0, 345) -- Disesuaikan ukurannya untuk tombol Reset Zoom
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -93,7 +93,7 @@ end
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
-local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 5) -- Tombol Reset Arah Baru
+local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 5)
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
@@ -130,7 +130,10 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 7)
+-- Tombol Reset Zoom Baru
+local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 7)
+
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 8)
 
 local ShortcutInfo = Instance.new("TextLabel", MainFrame)
 ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
@@ -139,12 +142,12 @@ ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
 ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
 ShortcutInfo.Font = Enum.Font.Gotham
 ShortcutInfo.TextSize = 8
-ShortcutInfo.LayoutOrder = 8
+ShortcutInfo.LayoutOrder = 9
 Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
 local activeCCTV = nil
-local initialCFrame = nil -- Menyimpan CFrame asli saat di-spawn
+local initialCFrame = nil
 local isMonitoring = false
 local isCamLocked = true
 local zoomLevel = 1
@@ -177,7 +180,7 @@ local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     local camCFrame = CurrentCamera.CFrame
     
-    initialCFrame = camCFrame -- Menyimpan rotasi/posisi asli spawn
+    initialCFrame = camCFrame
     
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
@@ -219,14 +222,12 @@ local function toggleViewAction()
 end
 ToggleViewBtn.MouseButton1Click:Connect(toggleViewAction)
 
--- TOGGLE CAMERA LOCK / UNLOCK (Diperbarui agar menyimpan posisi geseran terakhir)
 LockCamBtn.MouseButton1Click:Connect(function()
     isCamLocked = not isCamLocked
     if isCamLocked then
         LockCamBtn.Text = "CAMERA LOCK: LOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         
-        -- Kunci ke arah sudut pandang terakhir hasil pergeseran
         if activeCCTV then
             activeCCTV.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
         end
@@ -240,7 +241,6 @@ LockCamBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- FITUR BARU: RESET ARAH KAMERA KE SPAWN AWAL
 ResetDirBtn.MouseButton1Click:Connect(function()
     if activeCCTV and initialCFrame then
         activeCCTV.CFrame = initialCFrame
@@ -254,15 +254,24 @@ ResetDirBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ZOOM IN (Batas maksimal diperbesar hingga 100x)
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    zoomLevel = math.min(5, zoomLevel + 1)
+    zoomLevel = math.min(100, zoomLevel + 1)
     updateZoomDisplay()
 end)
 
+-- ZOOM OUT
 ZoomOutBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.max(1, zoomLevel - 1)
+    updateZoomDisplay()
+end)
+
+-- FITUR BARU: RESET ZOOM
+ResetZoomBtn.MouseButton1Click:Connect(function()
+    if not isMonitoring then return end
+    zoomLevel = 1
     updateZoomDisplay()
 end)
 
@@ -270,6 +279,7 @@ local function resetAction()
     stopMonitoring()
     if activeCCTV then activeCCTV:Destroy(); activeCCTV = nil end
     initialCFrame = nil
+    zoomLevel = 1
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
@@ -320,7 +330,7 @@ UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
 end)
 
 UserInputService.TouchEnded:Connect(function(touch)
-    if touch == activeTouch then activeTouch = nil end
+    if touch == activeTouch me touch == activeTouch then activeTouch = nil end
 end)
 
 -- Keyboard Shortcuts
