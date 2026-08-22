@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 345) -- Disesuaikan ukurannya untuk tombol Reset Zoom
+MainFrame.Size = UDim2.new(0, 220, 0, 370) -- Ditingkatkan ukurannya agar cukup menampung semua tombol
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -130,7 +130,7 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
--- Tombol Reset Zoom Baru
+-- Tombol Reset Zoom
 local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 7)
 
 local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 8)
@@ -254,7 +254,7 @@ ResetDirBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ZOOM IN (Batas maksimal diperbesar hingga 100x)
+-- ZOOM IN
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.min(100, zoomLevel + 1)
@@ -268,7 +268,7 @@ ZoomOutBtn.MouseButton1Click:Connect(function()
     updateZoomDisplay()
 end)
 
--- FITUR BARU: RESET ZOOM
+-- RESET ZOOM
 ResetZoomBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = 1
@@ -329,8 +329,11 @@ UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
     end
 end)
 
+-- BAGIAN PERBAIKAN: Dibenarkan struktur logika TouchEnded
 UserInputService.TouchEnded:Connect(function(touch)
-    if touch == activeTouch me touch == activeTouch then activeTouch = nil end
+    if touch == activeTouch then 
+        activeTouch = nil 
+    end
 end)
 
 -- Keyboard Shortcuts
