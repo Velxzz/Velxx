@@ -25,10 +25,32 @@ ScreenGui.Name = "CCTVSystemGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parentContainer
 
--- Frame Utama
+-- ==================== FLOATING SHORTCUT BUTTON ====================
+local FloatBtn = Instance.new("TextButton", ScreenGui)
+FloatBtn.Name = "MenuFloatShortcut"
+FloatBtn.Size = UDim2.new(0, 45, 0, 45)
+FloatBtn.Position = UDim2.new(0.02, 0, 0.3, 0) -- Bisa digeser juga posisinya kalau mau
+FloatBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+FloatBtn.Text = "CCTV"
+FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatBtn.Font = Enum.Font.GothamBold
+FloatBtn.TextSize = 10
+FloatBtn.BorderSizePixel = 0
+FloatBtn.Active = true
+FloatBtn.Draggable = true
+
+local FloatCorner = Instance.new("UICorner", FloatBtn)
+FloatCorner.CornerRadius = UDim.new(1, 0) -- Bentuk bulat melayang
+
+-- Efek garis pinggir tipis supaya estetik
+local FloatStroke = Instance.new("UIStroke", FloatBtn)
+FloatStroke.Color = Color3.fromRGB(0, 150, 255)
+FloatStroke.Thickness = 2
+
+-- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 275)
-MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 285)
+MainFrame.Position = UDim2.new(0.08, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -115,12 +137,12 @@ local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 6)
 
 -- Menu Shortcut Info Panel
 local ShortcutInfo = Instance.new("TextLabel", MainFrame)
-ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 22)
+ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
 ShortcutInfo.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ShortcutInfo.Text = "Shortcut: [E] View | [R] Reset"
+ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
 ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
 ShortcutInfo.Font = Enum.Font.Gotham
-ShortcutInfo.TextSize = 9
+ShortcutInfo.TextSize = 8
 ShortcutInfo.LayoutOrder = 7
 Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
@@ -131,9 +153,16 @@ local isCamLocked = true
 local zoomLevel = 1
 local baseFOV = 70
 
--- Variabel Rotasi Kamera Bebas
 local cameraRotX = 0
 local cameraRotY = 0
+
+-- Fungsi Toggle Muncul/Sembunyi Menu Utama
+local function toggleMenuVisibility()
+    MainFrame.Visible = not MainFrame.Visible
+end
+
+-- Hubungkan tombol Floating Shortcut supaya bisa diklik untuk buka/tutup menu
+FloatBtn.MouseButton1Click:Connect(toggleMenuVisibility)
 
 -- Function Stop Monitoring
 local function stopMonitoring()
@@ -148,7 +177,6 @@ local function stopMonitoring()
     CurrentCamera.FieldOfView = baseFOV
 end
 
--- Update Display Text Zoom
 local function updateZoomDisplay()
     ZoomLabel.Text = "Zoom: " .. zoomLevel .. "x"
 end
@@ -174,8 +202,10 @@ local function spawnCCTVAction()
     block.Parent = Workspace
     
     activeCCTV = block
-    cameraRotX = 0
-    cameraRotY = 0
+    
+    local lookVector = camCFrame.LookVector
+    cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
+    cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
     
     if isMonitoring then
         CurrentCamera.CFrame = activeCCTV.CFrame
@@ -194,7 +224,14 @@ local function toggleViewAction()
         ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
-        CurrentCamera.CFrame = activeCCTV.CFrame
+        
+        if activeCCTV then
+            local lookVector = activeCCTV.CFrame.LookVector
+            cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
+            cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
+            CurrentCamera.CFrame = activeCCTV.CFrame
+        end
+        
         updateZoomDisplay()
     else
         stopMonitoring()
@@ -215,6 +252,11 @@ LockCamBtn.MouseButton1Click:Connect(function()
     else
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+        if activeCCTV then
+            local lookVector = activeCCTV.CFrame.LookVector
+            cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
+            cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
+        end
     end
 end)
 
@@ -243,17 +285,15 @@ end
 
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- RenderStepped untuk Mengunci Posisi, Rotasi, dan FOV agar Kebal dari Kendaraan/Game
+-- RenderStepped
 RunService.RenderStepped:Connect(function()
     if isMonitoring and activeCCTV then
-        -- 1. Kunci Posisi & Rotasi Kamera
         if isCamLocked then
             CurrentCamera.CFrame = activeCCTV.CFrame
         else
             CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
         end
         
-        -- 2. Kunci FOV secara mutlak setiap frame (Mencegah efek kedut-kedut dari motor/kendaraan)
         local targetFOV = baseFOV / zoomLevel
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
@@ -261,21 +301,23 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Kontrol Geser Kamera dengan Mouse saat Mode Unlock
+-- Kontrol Geser Kamera dengan Mouse saat UNLOCKED
 UserInputService.InputChanged:Connect(function(input, gameProcessed)
     if isMonitoring and not isCamLocked and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Delta
         local sensitivity = 0.003
         cameraRotX = cameraRotX - delta.X * sensitivity
-        cameraRotY = math.clamp(cameraRotY - delta.Y * sensitivity, -math.pi/2, math.pi/2)
+        cameraRotY = math.clamp(cameraRotY - delta.Y * sensitivity, -math.pi/2 + 0.01, math.pi/2 - 0.01)
     end
 end)
 
--- Menu Shortcut Keyboard (E dan R)
+-- Shortcut Keyboard ([M] untuk Floating Menu, [E] View, [R] Reset)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
-    if input.KeyCode == Enum.KeyCode.E then
+    if input.KeyCode == Enum.KeyCode.M then
+        toggleMenuVisibility()
+    elseif input.KeyCode == Enum.KeyCode.E then
         toggleViewAction()
     elseif input.KeyCode == Enum.KeyCode.R then
         resetAction()
