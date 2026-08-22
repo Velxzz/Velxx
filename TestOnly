@@ -1,143 +1,121 @@
--- Services
+-- LocalScript (Taruh di StarterPlayer > StarterPlayerScripts)
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
-local Workspace = game:GetService("Workspace")
+local RunService =GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Safe UI Container
-local parentContainer = gethui and gethui() or (CoreGui:FindFirstChild("CoreGui") or LocalPlayer:WaitForChild("PlayerGui"))
+-- Konfigurasi Radar
+local radarRadius = 80 -- Ukuran radius radar di layar (dalam piksel)
+local maxDistance = 200 -- Jarak maksimal dunia (studs) yang bisa dideteksi radar
 
--- Clean up GUI lama jika ada
-if parentContainer:FindFirstChild("CustomSpectateGui") then
-    parentContainer.CustomSpectateGui:Destroy()
-end
-
--- ScreenGui Utama
+-- Membuat GUI secara otomatis
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CustomSpectateGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999999
-ScreenGui.Parent = parentContainer
+ScreenGui.Name = "RadarGui"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 1. Tombol Mengambang (Float Shortcut) Berbentuk Mata Transparan di Tengah Atas (1/4 Atas)
-local FloatEyeBtn = Instance.new("TextButton", ScreenGui)
-FloatEyeBtn.Name = "Button"
-FloatEyeBtn.Size = UDim2.new(0, 45, 0, 45)
-FloatEyeBtn.Position = UDim2.new(0.5, -22, 0.25, -22)
-FloatEyeBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-FloatEyeBtn.BackgroundTransparency = 0.4 -- Transparan
-FloatEyeBtn.Text = "👁️"
-FloatEyeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatEyeBtn.Font = Enum.Font.GothamBold
-FloatEyeBtn.TextSize = 20
-FloatEyeBtn.Active = true
-FloatEyeBtn.Draggable = true
-Instance.new("UICorner", FloatEyeBtn).CornerRadius = UDim.new(1, 0) -- Bentuk Bulat
+local RadarFrame = Instance.new("Frame")
+RadarFrame.Size = UDim2.new(0, 160, 0, 160)
+RadarFrame.Position = UDim2.new(0, 20, 1, -180) -- Posisi di pojok kiri bawah
+RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+RadarFrame.BackgroundTransparency = 0.5
+RadarFrame.BorderSizePixel = 2
+RadarFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+RadarFrame.Parent = ScreenGui
 
--- 2. Main Control Bar (Bar Navigasi) di Tengah Bawah (3/4 Bawah / Nyaris Tengah Bawah)
-local Bar = Instance.new("Frame", ScreenGui)
-Bar.Name = "Bar"
-Bar.Size = UDim2.new(0, 200, 0, 45)
--- Posisi awal tersembunyi di luar layar / transparan, nanti di-tween kemari: UDim2.new(0.5, -100, 0.75, 0)
-Bar.Position = UDim2.new(0.5, -100, 1.2, 0) 
-Bar.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-Bar.BackgroundTransparency = 0.2
-Bar.BorderSizePixel = 0
-Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 8)
+-- Bentuk lingkaran untuk radar
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = RadarFrame
 
--- Judul / Nama Player yang sedang ditonton
-local Title = Instance.new("TextLabel", Bar)
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -70, 1, 0)
-Title.Position = UDim2.new(0, 35, 0, 0)
-Title.Text = LocalPlayer.Name
-Title.TextColor3 = Color3.fromRGB(0, 170, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 11
-Title.BackgroundTransparency = 1
+-- Titik tengah (Karakter kita)
+local CenterDot = Instance.new("Frame")
+CenterDot.Size = UDim2.new(0, 6, 0, 6)
+CenterDot.Position = UDim2.new(0.5, -3, 0.5, -3)
+CenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CenterDot.Parent = RadarFrame
 
--- Tombol Previous (<)
-local PreviousBtn = Instance.new("TextButton", Bar)
-PreviousBtn.Name = "Previous"
-PreviousBtn.Size = UDim2.new(0, 30, 1, 0)
-PreviousBtn.Position = UDim2.new(0, 0, 0, 0)
-PreviousBtn.BackgroundTransparency = 1
-PreviousBtn.Text = "<"
-PreviousBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-PreviousBtn.Font = Enum.Font.GothamBold
-PreviousBtn.TextSize = 14
+local CenterCorner = Instance.new("UICorner")
+CenterCorner.CornerRadius = UDim.new(1, 0)
+CenterCorner.Parent = CenterDot
 
--- Tombol Next (>)
-local NextBtn = Instance.new("TextButton", Bar)
-NextBtn.Name = "Next"
-NextBtn.Size = UDim2.new(0, 30, 1, 0)
-NextBtn.Position = UDim2.new(1, -30, 0, 0)
-NextBtn.BackgroundTransparency = 1
-NextBtn.Text = ">"
-NextBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-NextBtn.Font = Enum.Font.GothamBold
-NextBtn.TextSize = 14
+-- Garis Radar yang berputar
+local Sweeper = Instance.new("Frame")
+Sweeper.Size = UDim2.new(0, radarRadius, 0, 2)
+Sweeper.Position = UDim2.new(0.5, 0, 0.5, 0)
+Sweeper.AnchorPoint = Vector2.new(0, 0.5)
+Sweeper.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+Sweeper.BackgroundTransparency = 0.5
+Sweeper.Parent = RadarFrame
 
--- Logika 100% dari Script Dex Asli
-local cam = Workspace.CurrentCamera
-local isSpectating = false
+-- Folder penampung titik player lain
+local BlipsContainer = Instance.new("Folder")
+BlipsContainer.Name = "Blips"
+BlipsContainer.Parent = RadarFrame
 
-local function getPlayerIndex()
-    for index, player in pairs(Players:GetPlayers()) do
-        if player.Name == Title.Text then
-            return index
+-- Tabel untuk menyimpan GUI titik pemain
+local playerBlips = {}
+
+RunService.RenderStepped:Connect(function()
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local myPos = character.HumanoidRootPart.Position
+    local myLookVector = character.HumanoidRootPart.CFrame.LookVector
+    
+    -- Memutar garis radar
+    local sweepAngle = tick() * 3 -- Kecepatan putaran
+    Sweeper.Rotation = math.deg(sweepAngle)
+
+    -- Update posisi player lain
+    local activePlayers = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            activePlayers[player] = true
+            local targetPos = player.Character.HumanoidRootPart.Position
+            
+            -- Hitung selisih posisi
+            local offset = targetPos - myPos
+            local distance = offset.Magnitude
+            
+            -- Ambil referensi titik (blip) atau buat baru jika belum ada
+            local blip = playerBlips[player]
+            if not blip then
+                blip = Instance.new("Frame")
+                blip.Size = UDim2.new(0, 6, 0, 6)
+                blip.AnchorPoint = Vector2.new(0.5, 0.5)
+                blip.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Titik hijau
+                blip.Parent = BlipsContainer
+                
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(1, 0)
+                corner.Parent = blip
+                
+                playerBlips[player] = blip
+            end
+            
+            if distance <= maxDistance then
+                blip.Visible = true
+                
+                -- Hitung rotasi relatif terhadap arah pandang kamera/karakter kita
+                local angle = math.atan2(offset.X, offset.Z) - math.atan2(myLookVector.X, myLookVector.Z)
+                
+                -- Skalakan jarak ke dalam radius radar GUI
+                local clampedDist = math.clamp(distance / maxDistance, 0, 1) * radarRadius
+                
+                -- Hitung posisi X dan Y di dalam lingkaran radar
+                local blipX = math.sin(angle) * clampedDist
+                local blipY = math.cos(angle) * clampedDist
+                
+                blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
+            else
+                blip.Visible = false
+            end
         end
     end
-    return 1
-end
-
--- Tombol Mata (Toggle Spectate)
-FloatEyeBtn.MouseButton1Click:Connect(function()
-    if not isSpectating then
-        isSpectating = true
-        FloatEyeBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100) -- Berubah warna jadi hijau saat aktif
-        Bar:TweenPosition(UDim2.new(0.5, -100, 0.75, 0), "In", "Linear", 0.5, true)
-        pcall(function()
-            Title.Text = Players:GetPlayerFromCharacter(cam.CameraSubject.Parent).Name
-        end)
-    else
-        isSpectating = false
-        FloatEyeBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25) -- Kembali normal
-        pcall(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                cam.CameraSubject = LocalPlayer.Character.Humanoid
-            end
-        end)
-        Bar:TweenPosition(UDim2.new(0.5, -100, 1.2, 0), "In", "Linear", 0.5, true)
+    
+    -- Hapus titik pemain yang keluar game
+    for player, blip in pairs(playerBlips) do
+        if not activePlayers[player] then
+            blip:Destroy()
+            playerBlips[player] = nil
+        end
     end
-end)
-
--- Tombol Previous (<)
-PreviousBtn.MouseButton1Click:Connect(function()
-    task.wait(0.1)
-    local allPlayers = Players:GetPlayers()
-    local currentIndex = getPlayerIndex()
-    if not pcall(function()
-        cam.CameraSubject = allPlayers[currentIndex - 1].Character.Humanoid
-    end) then
-        cam.CameraSubject = allPlayers[#allPlayers].Character.Humanoid
-    end
-    pcall(function()
-        Title.Text = Players:GetPlayerFromCharacter(cam.CameraSubject.Parent).Name
-    end)
-end)
-
--- Tombol Next (>)
-NextBtn.MouseButton1Click:Connect(function()
-    task.wait(0.1)
-    local allPlayers = Players:GetPlayers()
-    local currentIndex = getPlayerIndex()
-    if not pcall(function()
-        cam.CameraSubject = allPlayers[currentIndex + 1].Character.Humanoid
-    end) then
-        cam.CameraSubject = allPlayers[1].Character.Humanoid
-    end
-    pcall(function()
-        Title.Text = Players:GetPlayerFromCharacter(cam.CameraSubject.Parent).Name
-    end)
 end)
