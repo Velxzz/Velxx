@@ -1,9 +1,9 @@
--- Salin dan jalankan script ini lewat Executor
+-- Radar UI V1.1
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Hapus GUI lama jika ada
@@ -17,9 +17,9 @@ local radarSizeVal = 120
 local radarRadiusVal = 60
 local maxDistanceVal = 200
 local arrowSizeVal = 16
-local radarShape = "Bulat" -- Pilihan: "Kotak", "Bulat", "Squircle"
-local outlineMode = "RGB" -- Pilihan: "Hitam", "RGB"
-local customPosition = UDim2.new(1, -140, 0, 20) -- Default pojok kanan atas
+local radarShape = "Bulat" -- "Kotak", "Bulat", "Squircle"
+local outlineMode = "RGB" -- "Hitam", "RGB"
+local customPosition = UDim2.new(1, -125, 0, 10)
 
 -- Texture ID Kustom
 local myArrowImage = "rbxassetid://83978146105606"
@@ -35,22 +35,50 @@ if not success then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- 1. TOMBOL SHORTCUT (UNTUK BUKA/TUTUP MENU)
+-- 1. TOMBOL SHORTCUT (BISA DI-DRAG / DIGESER)
 local ShortcutButton = Instance.new("TextButton")
-ShortcutButton.Size = UDim2.new(0, 45, 0, 45)
-ShortcutButton.Position = UDim2.new(1, -60, 0.4, 0)
-ShortcutButton.AnchorPoint = Vector2.new(0, 0.5)
+ShortcutButton.Size = UDim2.new(0, 42, 0, 42)
+ShortcutButton.Position = UDim2.new(1, -55, 0.4, 0)
 ShortcutButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ShortcutButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+ShortcutButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ShortcutButton.Text = "⚙️"
-ShortcutButton.TextSize = 22
+ShortcutButton.TextSize = 20
 ShortcutButton.BorderSizePixel = 2
-ShortcutButton.BorderColor3 = Color3.fromRGB(0, 255, 0)
+ShortcutButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
 ShortcutButton.Parent = ScreenGui
 
 local ShortCorner = Instance.new("UICorner")
-ShortCorner.CornerRadius = UDim.new(0, 10)
+ShortCorner.CornerRadius = UDim.new(0, 8)
 ShortCorner.Parent = ShortcutButton
+
+-- Logika Dragging untuk Tombol Shortcut
+local dragging, dragInput, dragStart, startPos
+
+ShortcutButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ShortcutButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        ShortcutButton.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
 -- 2. FRAME UTAMA RADAR
 local RadarFrame = Instance.new("Frame")
@@ -58,11 +86,11 @@ RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
 RadarFrame.Position = customPosition
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
-RadarFrame.BorderSizePixel = 2
+RadarFrame.BorderSizePixel = 3
 RadarFrame.Parent = ScreenGui
 
 local RadarCorner = Instance.new("UICorner")
-RadarCorner.CornerRadius = UDim.new(1, 0) -- Default bulat
+RadarCorner.CornerRadius = UDim.new(1, 0)
 RadarCorner.Parent = RadarFrame
 
 -- 3. MENU PENGATURAN (UI PANEL)
@@ -72,20 +100,20 @@ MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuFrame.BackgroundTransparency = 0.1
 MenuFrame.BorderSizePixel = 2
-MenuFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
-MenuFrame.Visible = false -- Awalnya tersembunyi
+MenuFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
+MenuFrame.Visible = false
 MenuFrame.Parent = ScreenGui
 
 local MenuCorner = Instance.new("UICorner")
 MenuCorner.CornerRadius = UDim.new(0, 12)
 MenuCorner.Parent = MenuFrame
 
--- Judul Menu
+-- Judul Menu (Putih)
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "RADAR SETTINGS"
-TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 16
 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
 TitleLabel.Parent = MenuFrame
@@ -106,7 +134,7 @@ local function createButtonOption(name, yPos, defaultText, callback)
     btn.Size = UDim2.new(0, 100, 0, 28)
     btn.Position = UDim2.new(1, -115, 0, yPos)
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.TextColor3 = Color3.fromRGB(0, 255, 0)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Text = defaultText
     btn.TextSize = 12
     btn.Parent = MenuFrame
@@ -120,15 +148,14 @@ local function createButtonOption(name, yPos, defaultText, callback)
     end)
 end
 
--- FITUR 1: Radar On/Off
+-- FITUR-FITUR MENU
 createButtonOption("Radar UI", 50, "ON", function(btn)
     radarEnabled = not radarEnabled
     btn.Text = radarEnabled and "ON" or "OFF"
-    btn.TextColor3 = radarEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    btn.TextColor3 = radarEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 100, 100)
     RadarFrame.Visible = radarEnabled
 end)
 
--- FITUR 2: Ukuran Radar
 createButtonOption("Ukuran Radar", 90, "120px", function(btn)
     if radarSizeVal == 120 then
         radarSizeVal = 160
@@ -146,7 +173,6 @@ createButtonOption("Ukuran Radar", 90, "120px", function(btn)
     RadarFrame.Size = UDim2.new(0, radarSizeVal, 0, radarSizeVal)
 end)
 
--- FITUR 3: Bentuk Radar (Kotak, Bulat, Squircle)
 createButtonOption("Bentuk Radar", 130, "Bulat", function(btn)
     if radarShape == "Bulat" then
         radarShape = "Kotak"
@@ -163,7 +189,6 @@ createButtonOption("Bentuk Radar", 130, "Bulat", function(btn)
     end
 end)
 
--- FITUR 4: Outline Mode (Hitam / RGB)
 createButtonOption("Outline Radar", 170, "RGB", function(btn)
     if outlineMode == "RGB" then
         outlineMode = "Hitam"
@@ -175,7 +200,6 @@ createButtonOption("Outline Radar", 170, "RGB", function(btn)
     end
 end)
 
--- FITUR 5: Ukuran Arrow / Panah
 createButtonOption("Ukuran Arrow", 210, "16px", function(btn)
     if arrowSizeVal == 16 then
         arrowSizeVal = 22
@@ -189,7 +213,6 @@ createButtonOption("Ukuran Arrow", 210, "16px", function(btn)
     end
 end)
 
--- FITUR 6: Jarak Render Maksimal (Render Distance)
 createButtonOption("Jarak Render", 250, "200 Studs", function(btn)
     if maxDistanceVal == 200 then
         maxDistanceVal = 400
@@ -203,22 +226,20 @@ createButtonOption("Jarak Render", 250, "200 Studs", function(btn)
     end
 end)
 
--- FITUR 7: Letak Radar (Preset posisi cepat)
 createButtonOption("Letak Radar", 290, "Kanan Atas", function(btn)
-    if customPosition == UDim2.new(1, -140, 0, 20) then
-        customPosition = UDim2.new(0, 20, 0, 20) -- Kiri Atas
+    if customPosition == UDim2.new(1, -125, 0, 10) then
+        customPosition = UDim2.new(0, 10, 0, 10)
         btn.Text = "Kiri Atas"
-    elseif customPosition == UDim2.new(0, 20, 0, 20) then
-        customPosition = UDim2.new(1, -140, 1, -140) -- Kanan Bawah
+    elseif customPosition == UDim2.new(0, 10, 0, 10) then
+        customPosition = UDim2.new(1, -125, 1, -125)
         btn.Text = "Kanan Bawah"
     else
-        customPosition = UDim2.new(1, -140, 0, 20) -- Kembali Kanan Atas
+        customPosition = UDim2.new(1, -125, 0, 10)
         btn.Text = "Kanan Atas"
     end
     RadarFrame.Position = customPosition
 end)
 
--- Tombol Tutup Menu
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 230, 0, 30)
 CloseBtn.Position = UDim2.new(0.5, -115, 1, -40)
@@ -232,15 +253,23 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
--- Logika Shortcut Toggle Menu
-ShortcutButton.MouseButton1Click:Connect(function()
-    MenuFrame.Visible = not MenuFrame.Visible
+-- Logika Klik Shortcut (Buka/Tutup Menu)
+local clickCheck = 0
+ShortcutButton.MouseButton1Down:Connect(function()
+    clickCheck = tick()
 end)
+
+ShortcutButton.MouseButton1Up:Connect(function()
+    if tick() - clickCheck < 0.2 then
+        MenuFrame.Visible = not MenuFrame.Visible
+    end
+end)
+
 CloseBtn.MouseButton1Click:Connect(function()
     MenuFrame.Visible = false
 end)
 
--- ELEMEN RADAR DI DALAM FRAME
+-- ELEMEN RADAR
 local CenterArrow = Instance.new("ImageLabel")
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -254,17 +283,15 @@ BlipsContainer.Parent = RadarFrame
 
 local playerBlips = {}
 
--- LOOP UTAMA RADAR & EFEK RGB
 RunService.RenderStepped:Connect(function()
-    -- Efek Outline RGB otomatis jika diaktifkan
+    -- Efek Outline RGB Aktif
     if outlineMode == "RGB" and radarEnabled then
-        local hue = tick() % 5 / 5
+        local hue = (tick() % 4) / 4
         RadarFrame.BorderColor3 = Color3.fromHSV(hue, 1, 1)
     end
     
     if not radarEnabled then return end
     
-    -- Update ukuran panah sesuai pengaturan menu
     CenterArrow.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
 
     local character = LocalPlayer.Character
@@ -302,7 +329,6 @@ RunService.RenderStepped:Connect(function()
                 playerBlips[player] = blip
             end
             
-            -- Update ukuran blip player lain sesuai pengaturan menu
             blip.Size = UDim2.new(0, arrowSizeVal, 0, arrowSizeVal)
             
             if distance <= maxDistanceVal then
