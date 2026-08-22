@@ -1,74 +1,55 @@
 -- Services
-local Players = service_or_get_local_players_placeholder or game:GetService("Players")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
-local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Safe UI Container
-local parentContainer
-if gethui then
-    parentContainer = gethui()
-else
-    local success, core = pcall(function() return CoreGui end)
-    parentContainer = (success and core) or LocalPlayer:WaitForChild("PlayerGui")
-end
+local parentContainer = gethui and gethui() or (CoreGui:FindFirstChild("CoreGui") or LocalPlayer:WaitForChild("PlayerGui"))
 
--- Clean up GUI lama jika ada
-local oldGui = parentContainer:FindFirstChild("AntiObfuscateViewer")
-if oldGui then oldGui:Destroy() end
+-- Hapus UI lama jika ada
+if parentContainer:FindFirstChild("MiniDexEditor") then
+    parentContainer.MiniDexEditor:Destroy()
+end
 
 -- ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AntiObfuscateViewer"
+ScreenGui.Name = "MiniDexEditor"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999999999
-ScreenGui.Enabled = true
+ScreenGui.DisplayOrder = 999999
 ScreenGui.Parent = parentContainer
 
--- Main Frame (Ukuran Compact 380x260)
+-- Main Frame (Jendela Kustom Explorer & Editor)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 380, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -130)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.Size = UDim2.new(0, 480, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 
-local UICorner = Instance.new("UICorner", MainFrame)
-UICorner.CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
 -- Header Bar
 local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 28)
-Header.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
 Header.BorderSizePixel = 0
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -110, 1, 0)
+Title.Size = UDim2.new(1, -50, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "ANTI-OBFUSCATE & DUAL-SCROLL"
-Title.TextColor3 = Color3.fromRGB(255, 80, 80)
+Title.Text = "MINI DEX: GAME DATA MODIFIER"
+Title.TextColor3 = Color3.fromRGB(0, 170, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 10
+Title.TextSize = 11
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
--- Tombol Minimize (-)
-local MinimizeBtn = Instance.new("TextButton", Header)
-MinimizeBtn.Size = UDim2.new(0, 24, 0, 20)
-MinimizeBtn.Position = UDim2.new(1, -78, 0.5, -10)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-MinimizeBtn.Text = "-"
-MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextSize = 12
-Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 4)
-
 -- Tombol Close (X)
 local CloseBtn = Instance.new("TextButton", Header)
-CloseBtn.Size = UDim2.new(0, 24, 0, 20)
-CloseBtn.Position = UDim2.new(1, -28, 0.5, -10)
+CloseBtn.Size = UDim2.new(0, 26, 0, 22)
+CloseBtn.Position = UDim2.new(1, -32, 0.5, -11)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -76,168 +57,113 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- Tombol Copy 
-local CopyBtn = Instance.new("TextButton", Header)
-CopyBtn.Size = UDim2.new(0, 42, 0, 20)
-CopyBtn.Position = UDim2.new(1, -123, 0.5, -10)
-CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 200)
-CopyBtn.Text = "Copy"
-CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CopyBtn.Font = Enum.Font.GothamBold
-CopyBtn.TextSize = 9
-Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 4)
-
--- Container Isi
-local Container = Instance.new("Frame", MainFrame)
-Container.Size = UDim2.new(1, -16, 1, -38)
-Container.Position = UDim2.new(0, 8, 0, 34)
-Container.BackgroundTransparency = 1
-
--- TextBox Input Link / Skrip Obfuscated
-local TargetBox = Instance.new("TextBox", Container)
-TargetBox.Size = UDim2.new(1, 0, 0, 26)
-TargetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-TargetBox.BorderSizePixel = 0
-TargetBox.PlaceholderText = "Paste loadstring target atau skrip ter-obfuscate di sini..."
-TargetBox.Text = ""
-TargetBox.TextColor3 = Color3.fromRGB(240, 240, 240)
-TargetBox.Font = Enum.Font.Code
-TargetBox.TextSize = 9
-TargetBox.ClearTextOnFocus = false
-Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 5)
-
--- ScrollingFrame untuk Menampilkan Kode Sumber (Mendukung Scroll Vertikal & Horizontal)
-local CodeScroll = Instance.new("ScrollingFrame", Container)
-CodeScroll.Size = UDim2.new(1, 0, 1, -56)
-CodeScroll.Position = UDim2.new(0, 0, 0, 30)
-CodeScroll.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-CodeScroll.BorderSizePixel = 0
-CodeScroll.ScrollBarThickness = 6
-CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY -- Mengaktifkan arah X (Horizontal) dan Y (Vertikal) sekaligus
-CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 5)
-
--- TextBox Penampil Kode Sumber
-local CodeViewer = Instance.new("TextBox", CodeScroll)
-CodeViewer.Size = UDim2.new(0, 1000, 0, 1000) -- Ukuran awal area teks diperlebar ke samping agar bisa digeser horizontal
-CodeViewer.BackgroundTransparency = 1
-CodeViewer.MultiLine = true
-CodeViewer.ClearTextOnFocus = false
-CodeViewer.TextEditable = false
-CodeViewer.Text = "-- [DUAL SCROLL MODE] Masukkan target untuk melihat kode dengan scroll vertikal & horizontal."
-CodeViewer.TextColor3 = Color3.fromRGB(255, 150, 150)
-CodeViewer.Font = Enum.Font.Code
-CodeViewer.TextSize = 10
-CodeViewer.TextXAlignment = Enum.TextXAlignment.Left
-CodeViewer.TextYAlignment = Enum.TextYAlignment.Top
-
--- Fungsi Otomatis Update CanvasSize Berdasarkan Panjang & Lebar Teks
-local function UpdateCanvasSize()
-    local textBounds = CodeViewer.TextBounds
-    -- Menambahkan padding ekstra agar tidak mentok di pinggir
-    CodeViewer.Size = UDim2.new(0, math.max(textBounds.X + 50, CodeScroll.AbsoluteSize.X), 0, math.max(textBounds.Y + 50, CodeScroll.AbsoluteSize.Y))
-    CodeScroll.CanvasSize = UDim2.new(0, textBounds.X + 50, 0, textBounds.Y + 50)
-end
-
-CodeViewer:GetPropertyChangedSignal("Text"):Connect(UpdateCanvasSize)
-
--- Status Label
-local StatusNote = Instance.new("TextLabel", MainFrame)
-StatusNote.Size = UDim2.new(1, -16, 0, 14)
-StatusNote.Position = UDim2.new(0, 8, 1, -15)
-StatusNote.Text = "Status: Waiting for target..."
-StatusNote.TextColor3 = Color3.fromRGB(120, 120, 120)
-StatusNote.Font = Enum.Font.Gotham
-StatusNote.TextSize = 8
-StatusNote.TextXAlignment = Enum.TextXAlignment.Left
-StatusNote.BackgroundTransparency = 1
-
--- Tombol Mengambang (Float Button) saat Minimize
-local FloatOpenBtn = Instance.new("TextButton", ScreenGui)
-FloatOpenBtn.Size = UDim2.new(0, 35, 0, 35)
-FloatOpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
-FloatOpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-FloatOpenBtn.Text = "BYP"
-FloatOpenBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-FloatOpenBtn.Font = Enum.Font.GothamBold
-FloatOpenBtn.TextSize = 10
-FloatOpenBtn.Visible = false
-FloatOpenBtn.Active = true
-FloatOpenBtn.Draggable = true
-Instance.new("UICorner", FloatOpenBtn).CornerRadius = UDim.new(1, 0)
-
--- Logika Minimize & Close
-local isMinimized = false
-MinimizeBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    MainFrame.Visible = not isMinimized
-    FloatOpenBtn.Visible = isMinimized
-end)
-
-FloatOpenBtn.MouseButton1Click:Connect(function()
-    isMinimized = false
-    MainFrame.Visible = true
-    FloatOpenBtn.Visible = false
-end)
-
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Logika Copy to Clipboard
-CopyBtn.MouseButton1Click:Connect(function()
-    if setclipboard then
-        setclipboard(CodeViewer.Text)
-        StatusNote.Text = "Status: Kode berhasil disalin!"
-        StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        StatusNote.Text = "Status: setclipboard tidak didukung!"
-        StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
-    end
-end)
+-- Panel Kiri: Input Path Objek yang Mau Dimodifikasi
+local LeftPanel = Instance.new("Frame", MainFrame)
+LeftPanel.Size = UDim2.new(0, 220, 1, -45)
+LeftPanel.Position = UDim2.new(0, 8, 0, 36)
+LeftPanel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0, 6)
 
--- Logika Utama Pencegatan (Anti-Obfuscate Interceptor)
-TargetBox.FocusLost:Connect(function(enterPressed)
-    if not enterPressed then return end
-    local input = TargetBox.Text
-    if input == "" then return end
+local PathBox = Instance.new("TextBox", LeftPanel)
+PathBox.Size = UDim2.new(1, -12, 0, 28)
+PathBox.Position = UDim2.new(0, 6, 0, 6)
+PathBox.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+PathBox.PlaceholderText = "Path (cth: workspace.Part)"
+PathBox.Text = "workspace.Part"
+PathBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+PathBox.Font = Enum.Font.Code
+PathBox.TextSize = 10
+Instance.new("UICorner", PathBox).CornerRadius = UDim.new(0, 4)
+
+-- Panel Kanan: Menu Editor Properti & Nilai
+local RightPanel = Instance.new("Frame", MainFrame)
+RightPanel.Size = UDim2.new(1, -238, 1, -45)
+RightPanel.Position = UDim2.new(0, 232, 0, 36)
+RightPanel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Instance.new("UICorner", RightPanel).CornerRadius = UDim.new(0, 6)
+
+local InfoLabel = Instance.new("TextLabel", RightPanel)
+InfoLabel.Size = UDim2.new(1, -12, 0, 40)
+InfoLabel.Position = UDim2.new(0, 6, 0, 6)
+InfoLabel.Text = "Status: Masukkan path objek di kiri lalu ubah nilainya di bawah."
+InfoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+InfoLabel.Font = Enum.Font.Gotham
+InfoLabel.TextSize = 9
+InfoLabel.TextWrapped = true
+InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+InfoLabel.TextYAlignment = Enum.TextYAlignment.Top
+InfoLabel.BackgroundTransparency = 1
+
+-- TextBox untuk Mengubah Properti/Nilai (Misal: Value atau Transparency)
+local PropBox = Instance.new("TextBox", RightPanel)
+PropBox.Size = UDim2.new(1, -12, 0, 30)
+PropBox.Position = UDim2.new(0, 6, 0, 60)
+PropBox.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+PropBox.PlaceholderText = "Nama Properti (cth: Transparency / Value)"
+PropBox.Text = "Transparency"
+PropBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+PropBox.Font = Enum.Font.Code
+PropBox.TextSize = 10
+Instance.new("UICorner", PropBox).CornerRadius = UDim.new(0, 4)
+
+local ValBox = Instance.new("TextBox", RightPanel)
+ValBox.Size = UDim2.new(1, -12, 0, 30)
+ValBox.Position = UDim2.new(0, 6, 0, 96)
+ValBox.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+ValBox.PlaceholderText = "Nilai Baru (cth: 0.5 atau true)"
+ValBox.Text = ""
+ValBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+ValBox.Font = Enum.Font.Code
+ValBox.TextSize = 10
+Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 4)
+
+-- Tombol Eksekusi Modifikasi
+local ModifyBtn = Instance.new("TextButton", RightPanel)
+ModifyBtn.Size = UDim2.new(1, -12, 0, 32)
+ModifyBtn.Position = UDim2.new(0, 6, 0, 134)
+ModifyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+ModifyBtn.Text = "TERAPKAN PERUBAHAN DATA"
+ModifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModifyBtn.Font = Enum.Font.GothamBold
+ModifyBtn.TextSize = 10
+Instance.new("UICorner", ModifyBtn).CornerRadius = UDim.new(0, 4)
+
+-- Logika Mengubah Data Game secara Real-Time
+ModifyBtn.MouseButton1Click:Connect(function()
+    local path = PathBox.Text
+    local prop = PropBox.Text
+    local val = ValBox.Text
     
-    StatusNote.Text = "Status: Mencegat dan menipu proteksi..."
-    StatusNote.TextColor3 = Color3.fromRGB(255, 170, 0)
-    
-    local targetURL = input
-    if string.find(input, "game:HttpGet") then
-        local extracted = string.match(input, "['%\"()(http[s]?://.-)['%\"()]'")
-        if extracted then
-            targetURL = extracted
-        end
-    end
-    
-    local success, rawContent = pcall(function()
-        if string.match(targetURL, "^http") then
-            return game:HttpGet(targetURL)
+    local success, err = pcall(function()
+        -- Evaluasi path objek
+        local env = {game = game, workspace = workspace}
+        local fn = loadstring("return " .. path)
+        setfenv(fn, env)
+        local targetObj = fn()
+        
+        if targetObj then
+            -- Konversi tipe data otomatis (angka, boolean, atau teks)
+            local finalVal = val
+            if val == "true" then finalVal = true
+            elseif val == "false" then finalVal = false
+            elseif tonumber(val) ~= nil then finalVal = tonumber(val) end
+            
+            -- Ubah properti objek game
+            targetObj[prop] = finalVal
+            InfoLabel.Text = "Sukses! " .. path .. "." .. prop .. " diubah jadi: " .. tostring(finalVal)
+            InfoLabel.TextColor3 = Color3.fromRGB(50, 255, 50)
         else
-            return input
+            InfoLabel.Text = "Error: Objek tidak ditemukan di path tersebut."
+            InfoLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         end
     end)
     
-    if success and rawContent and rawContent ~= "" then
-        if string.find(rawContent, "loadstring") or string.find(rawContent, "string.char") or #rawContent > 500 then
-            CodeViewer.Text = "-- [!] PERINGATAN: Skrip terdeteksi menggunakan Obfuscator / Enkripsi.\n" ..
-                              "-- [!] Sistem pencegatan berhasil menipu lapisan enkripsi.\n" ..
-                              "-- Berikut adalah data sumber mentah yang berhasil ditangkap:\n\n" .. rawContent
-            StatusNote.Text = "Status: Berhasil membajak & menipu obfuscator!"
-            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
-        else
-            CodeViewer.Text = rawContent
-            StatusNote.Text = "Status: Berhasil menampilkan kode sumber!"
-            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
-        end
-        UpdateCanvasSize()
-    else
-        CodeViewer.Text = "-- ERROR: Gagal mencegat target atau isi kosong."
-        StatusNote.Text = "Status: Interceptor gagal!"
-        StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
-        UpdateCanvasSize()
+    if not success then
+        InfoLabel.Text = "Gagal Modifikasi: " .. tostring(err)
+        InfoLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
     end
 end)
