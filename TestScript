@@ -1,6 +1,8 @@
 -- Services
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local CurrentCamera = Workspace.CurrentCamera
 
@@ -25,7 +27,7 @@ ScreenGui.Parent = parentContainer
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 200, 0, 210)
+MainFrame.Size = UDim2.new(0, 220, 0, 275)
 MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -55,7 +57,7 @@ Title.LayoutOrder = 1
 -- Helper Function Tombol
 local function createButton(text, color, order)
     local btn = Instance.new("TextButton", MainFrame)
-    btn.Size = UDim2.new(0.9, 0, 0, 28)
+    btn.Size = UDim2.new(0.9, 0, 0, 26)
     btn.BackgroundColor3 = color
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -69,44 +71,71 @@ local function createButton(text, color, order)
     return btn
 end
 
--- Buttons
+-- Elements
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
+local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
-ZoomFrame.Size = UDim2.new(0.9, 0, 0, 28)
+ZoomFrame.Size = UDim2.new(0.9, 0, 0, 26)
 ZoomFrame.BackgroundTransparency = 1
-ZoomFrame.LayoutOrder = 4
-
-local ZoomInBtn = Instance.new("TextButton", ZoomFrame)
-ZoomInBtn.Size = UDim2.new(0.48, 0, 1, 0)
-ZoomInBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-ZoomInBtn.Text = "ZOOM IN (+)"
-ZoomInBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ZoomInBtn.Font = Enum.Font.GothamBold
-ZoomInBtn.TextSize = 9
-Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
+ZoomFrame.LayoutOrder = 5
 
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
-ZoomOutBtn.Size = UDim2.new(0.48, 0, 1, 0)
-ZoomOutBtn.Position = UDim2.new(0.52, 0, 0, 0)
+ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
 ZoomOutBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-ZoomOutBtn.Text = "ZOOM OUT (-)"
+ZoomOutBtn.Text = "-"
 ZoomOutBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ZoomOutBtn.Font = Enum.Font.GothamBold
-ZoomOutBtn.TextSize = 9
+ZoomOutBtn.TextSize = 12
 Instance.new("UICorner", ZoomOutBtn).CornerRadius = UDim.new(0, 5)
 
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 5)
+local ZoomLabel = Instance.new("TextLabel", ZoomFrame)
+ZoomLabel.Size = UDim2.new(0.36, 0, 1, 0)
+ZoomLabel.Position = UDim2.new(0.32, 0, 0, 0)
+ZoomLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ZoomLabel.Text = "Zoom: 1x"
+ZoomLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ZoomLabel.Font = Enum.Font.GothamBold
+ZoomLabel.TextSize = 9
+Instance.new("UICorner", ZoomLabel).CornerRadius = UDim.new(0, 5)
+
+local ZoomInBtn = Instance.new("TextButton", ZoomFrame)
+ZoomInBtn.Size = UDim2.new(0.3, 0, 1, 0)
+ZoomInBtn.Position = UDim2.new(0.7, 0, 0, 0)
+ZoomInBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+ZoomInBtn.Text = "+"
+ZoomInBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ZoomInBtn.Font = Enum.Font.GothamBold
+ZoomInBtn.TextSize = 12
+Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
+
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 6)
+
+-- Menu Shortcut Info Panel
+local ShortcutInfo = Instance.new("TextLabel", MainFrame)
+ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 22)
+ShortcutInfo.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ShortcutInfo.Text = "Shortcut: [E] View | [R] Reset"
+ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
+ShortcutInfo.Font = Enum.Font.Gotham
+ShortcutInfo.TextSize = 9
+ShortcutInfo.LayoutOrder = 7
+Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
 local activeCCTV = nil
 local isMonitoring = false
-local defaultFOV = 70
-local currentFOV = 70
+local isCamLocked = true
+local zoomLevel = 1
+local baseFOV = 70
 
--- Function Stop Monitoring (Kembali ke Kamera Pemain)
+-- Variabel Rotasi Kamera Bebas
+local cameraRotX = 0
+local cameraRotY = 0
+
+-- Function Stop Monitoring
 local function stopMonitoring()
     isMonitoring = false
     ToggleViewBtn.Text = "VIEW CCTV: OFF"
@@ -116,11 +145,16 @@ local function stopMonitoring()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         CurrentCamera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     end
-    CurrentCamera.FieldOfView = defaultFOV
+    CurrentCamera.FieldOfView = baseFOV
 end
 
--- Spawn CCTV (Tetap Menyimpan Posisi Kamera Tanpa Menghapus Fitur Pantau)
-SpawnBtn.MouseButton1Click:Connect(function()
+-- Update Display Text Zoom
+local function updateZoomDisplay()
+    ZoomLabel.Text = "Zoom: " .. zoomLevel .. "x"
+end
+
+-- Spawn CCTV
+local function spawnCCTVAction()
     if activeCCTV then
         activeCCTV:Destroy()
         activeCCTV = nil
@@ -140,14 +174,18 @@ SpawnBtn.MouseButton1Click:Connect(function()
     block.Parent = Workspace
     
     activeCCTV = block
+    cameraRotX = 0
+    cameraRotY = 0
     
     if isMonitoring then
         CurrentCamera.CFrame = activeCCTV.CFrame
     end
-end)
+end
 
--- Toggle View CCTV (Ganti Mode Pandang Bebas Bolak-Balik)
-ToggleViewBtn.MouseButton1Click:Connect(function()
+SpawnBtn.MouseButton1Click:Connect(spawnCCTVAction)
+
+-- Toggle View CCTV
+local function toggleViewAction()
     if not activeCCTV then return end
     
     isMonitoring = not isMonitoring
@@ -157,30 +195,89 @@ ToggleViewBtn.MouseButton1Click:Connect(function()
         
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
         CurrentCamera.CFrame = activeCCTV.CFrame
-        CurrentCamera.FieldOfView = currentFOV
+        updateZoomDisplay()
     else
         stopMonitoring()
     end
+end
+
+ToggleViewBtn.MouseButton1Click:Connect(toggleViewAction)
+
+-- Toggle Camera Lock / Unlock
+LockCamBtn.MouseButton1Click:Connect(function()
+    isCamLocked = not isCamLocked
+    if isCamLocked then
+        LockCamBtn.Text = "CAMERA LOCK: LOCKED"
+        LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        if activeCCTV and isMonitoring then
+            CurrentCamera.CFrame = activeCCTV.CFrame
+        end
+    else
+        LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
+        LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    end
 end)
 
--- Zoom In/Out
+-- Zoom In (+)
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    currentFOV = math.max(10, currentFOV - 10)
-    CurrentCamera.FieldOfView = currentFOV
+    zoomLevel = math.min(5, zoomLevel + 1)
+    updateZoomDisplay()
 end)
 
+-- Zoom Out (-)
 ZoomOutBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    currentFOV = math.min(120, currentFOV + 10)
-    CurrentCamera.FieldOfView = currentFOV
+    zoomLevel = math.max(1, zoomLevel - 1)
+    updateZoomDisplay()
 end)
 
--- Reset CCTV (Menghapus Blok & Mematikan Mode Pantau)
-ResetBtn.MouseButton1Click:Connect(function()
+-- Reset CCTV
+local function resetAction()
     stopMonitoring()
     if activeCCTV then
         activeCCTV:Destroy()
         activeCCTV = nil
+    end
+end
+
+ResetBtn.MouseButton1Click:Connect(resetAction)
+
+-- RenderStepped untuk Mengunci Posisi, Rotasi, dan FOV agar Kebal dari Kendaraan/Game
+RunService.RenderStepped:Connect(function()
+    if isMonitoring and activeCCTV then
+        -- 1. Kunci Posisi & Rotasi Kamera
+        if isCamLocked then
+            CurrentCamera.CFrame = activeCCTV.CFrame
+        else
+            CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
+        end
+        
+        -- 2. Kunci FOV secara mutlak setiap frame (Mencegah efek kedut-kedut dari motor/kendaraan)
+        local targetFOV = baseFOV / zoomLevel
+        if CurrentCamera.FieldOfView ~= targetFOV then
+            CurrentCamera.FieldOfView = targetFOV
+        end
+    end
+end)
+
+-- Kontrol Geser Kamera dengan Mouse saat Mode Unlock
+UserInputService.InputChanged:Connect(function(input, gameProcessed)
+    if isMonitoring and not isCamLocked and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Delta
+        local sensitivity = 0.003
+        cameraRotX = cameraRotX - delta.X * sensitivity
+        cameraRotY = math.clamp(cameraRotY - delta.Y * sensitivity, -math.pi/2, math.pi/2)
+    end
+end)
+
+-- Menu Shortcut Keyboard (E dan R)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.E then
+        toggleViewAction()
+    elseif input.KeyCode == Enum.KeyCode.R then
+        resetAction()
     end
 end)
