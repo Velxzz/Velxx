@@ -1,4 +1,5 @@
--- Radar UI V1.1
+-- Radar UI V1.2
+-- Salin dan jalankan script ini lewat Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -270,11 +271,13 @@ CloseBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ELEMEN RADAR
+-- CenterArrow (Arrow kita) diberi ZIndex lebih tinggi (2) agar selalu berada di atas arrow orang lain
 local CenterArrow = Instance.new("ImageLabel")
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
 CenterArrow.BackgroundTransparency = 1
 CenterArrow.Image = myArrowImage
+CenterArrow.ZIndex = 2
 CenterArrow.Parent = RadarFrame
 
 local BlipsContainer = Instance.new("Folder")
@@ -324,6 +327,7 @@ RunService.RenderStepped:Connect(function()
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
                 blip.BackgroundTransparency = 1
                 blip.Image = otherArrowImage
+                blip.ZIndex = 1 -- ZIndex blip orang lain lebih rendah (1)
                 blip.Parent = BlipsContainer
                 
                 playerBlips[player] = blip
