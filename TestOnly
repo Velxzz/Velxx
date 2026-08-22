@@ -9,9 +9,13 @@ if CoreGui:FindFirstChild("RadarGui") then
 end
 
 -- Konfigurasi Radar
-local radarSize = 120 -- Ukuran frame total
-local radarRadius = 60 -- Radius jangkauan visual
-local maxDistance = 200 -- Jangkauan maksimal dunia (studs)
+local radarSize = 120
+local radarRadius = 60
+local maxDistance = 200
+
+-- Asset ID gambar kustom
+local myArrowImage = "rbxassetid://136352049524226"   -- Gambar panah untuk Kita (di tengah)
+local otherArrowImage = "rbxassetid://107576921395362" -- Gambar panah untuk Orang Lain
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarGui"
@@ -24,7 +28,7 @@ end
 
 local RadarFrame = Instance.new("Frame")
 RadarFrame.Size = UDim2.new(0, radarSize, 0, radarSize)
-RadarFrame.Position = UDim2.new(1, -140, 0, 20) -- Pojok kanan atas
+RadarFrame.Position = UDim2.new(1, -140, 0, 20)
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
 RadarFrame.BorderSizePixel = 2
@@ -35,16 +39,14 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = RadarFrame
 
--- Titik tengah (Karakter kita / Panah kecil di tengah)
-local CenterDot = Instance.new("Frame")
-CenterDot.Size = UDim2.new(0, 8, 0, 8)
-CenterDot.Position = UDim2.new(0.5, -4, 0.5, -4)
-CenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CenterDot.Parent = RadarFrame
-
-local CenterCorner = Instance.new("UICorner")
-CenterCorner.CornerRadius = UDim.new(1, 0)
-CenterCorner.Parent = CenterDot
+-- Titik tengah (Karakter kita menggunakan gambar kustom)
+local CenterArrow = Instance.new("ImageLabel")
+CenterArrow.Size = UDim2.new(0, 14, 0, 14)
+CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
+CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
+CenterArrow.BackgroundTransparency = 1
+CenterArrow.Image = myArrowImage
+CenterArrow.Parent = RadarFrame
 
 local BlipsContainer = Instance.new("Folder")
 BlipsContainer.Name = "Blips"
@@ -59,8 +61,10 @@ RunService.RenderStepped:Connect(function()
     local myPos = myHRP.Position
     local myLookVector = myHRP.CFrame.LookVector
     
-    -- Hitung sudut pandang kita di bidang XZ
     local myAngle = math.atan2(myLookVector.X, myLookVector.Z)
+
+    -- Rotasi gambar karakter kita di tengah mengikuti arah hadap kamera/karakter
+    CenterArrow.Rotation = 0 -- Atau bisa disesuaikan jika ingin ikut berputar
 
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
@@ -74,14 +78,12 @@ RunService.RenderStepped:Connect(function()
             
             local blip = playerBlips[player]
             if not blip then
-                -- Menggunakan TextLabel atau Frame berbentuk segitiga/panah sederhana
-                blip = Instance.new("TextLabel")
-                blip.Size = UDim2.new(0, 12, 0, 12)
+                -- Menggunakan gambar kustom untuk player lain
+                blip = Instance.new("ImageLabel")
+                blip.Size = UDim2.new(0, 14, 0, 14)
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
                 blip.BackgroundTransparency = 1
-                blip.Text = "▲" -- Simbol panah
-                blip.TextSize = 12
-                blip.TextColor3 = Color3.fromRGB(0, 255, 0)
+                blip.Image = otherArrowImage
                 blip.Parent = BlipsContainer
                 
                 playerBlips[player] = blip
@@ -90,20 +92,17 @@ RunService.RenderStepped:Connect(function()
             if distance <= maxDistance then
                 blip.Visible = true
                 
-                -- Hitung sudut relatif target terhadap arah hadap kita
                 local targetAngle = math.atan2(offset.X, offset.Z)
                 local relativeAngle = targetAngle - myAngle
                 
-                -- Skalakan jarak ke radius radar
                 local clampedDist = math.clamp(distance / maxDistance, 0, 1) * radarRadius
                 
-                -- Koreksi orientasi (supaya depan di atas: sin untuk X, -cos untuk Y)
                 local blipX = math.sin(relativeAngle) * clampedDist
                 local blipY = -math.cos(relativeAngle) * clampedDist
                 
                 blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
                 
-                -- Rotasi panah mengikuti arah hadap player lain secara relatif
+                -- Rotasi gambar panah player lain mengikuti arah hadap mereka secara relatif
                 local targetLook = targetHRP.CFrame.LookVector
                 local targetHeading = math.atan2(targetLook.X, targetLook.Z)
                 local relativeHeading = targetHeading - myAngle
@@ -114,7 +113,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
     
-    -- Hapus blip jika player keluar
     for player, blip in pairs(playerBlips) do
         if not activePlayers[player] then
             blip:Destroy()
