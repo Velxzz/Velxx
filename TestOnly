@@ -1,9 +1,10 @@
--- Service Roblox
+-- ===============================================
+-- RADAR & ESP HUB v3.4 (X-RAY CHAMS & FIXED ESP)
+-- ===============================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 
 _G.RadarData = {
@@ -11,60 +12,45 @@ _G.RadarData = {
     maxDistanceVal = 200, arrowSizeVal = 16, radarShape = "Bulat",
     outlineMode = "RGB", customPosition = UDim2.new(1, -125, 0, 10),
     espBoxEnabled = false, espLineEnabled = false,
-    espHighlightEnabled = false, espHologramEnabled = true,
+    espHighlightEnabled = false, espHologramEnabled = true, -- ESP X-Ray Chams
     myArrowImage = "rbxassetid://83978146105606",
     otherArrowImage = "rbxassetid://98960754572491"
 }
 
--- BERSIHKAN GUI LAMA
 if CoreGui:FindFirstChild("RadarMenuGui") then CoreGui.RadarMenuGui:Destroy() end
 if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("RadarMenuGui") then LocalPlayer.PlayerGui.RadarMenuGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarMenuGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true -- PENTING: Mencegah offset TopBar Roblox
+ScreenGui.IgnoreGuiInset = true
 local ok = pcall(function() ScreenGui.Parent = CoreGui end)
 if not ok or not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-_G.EspContainer = Instance.new("Folder")
-_G.EspContainer.Name = "ESPContainer"
-_G.EspContainer.Parent = ScreenGui
+local EspContainer = Instance.new("Folder")
+EspContainer.Name = "ESPContainer"
+EspContainer.Parent = ScreenGui
 
 -- SHORTCUT BUTTON
 local ShortcutBtn = Instance.new("TextButton")
-ShortcutBtn.Size = UDim2.new(0, 90, 0, 35)
-ShortcutBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
-ShortcutBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ShortcutBtn.TextColor3 = Color3.fromRGB(0, 255, 200)
-ShortcutBtn.Text = "OPEN HUB"
-ShortcutBtn.TextSize = 13
-ShortcutBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
-ShortcutBtn.Parent = ScreenGui
-
+ShortcutBtn.Size = UDim2.new(0, 90, 0, 35) ShortcutBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+ShortcutBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20) ShortcutBtn.TextColor3 = Color3.fromRGB(0, 255, 200)
+ShortcutBtn.Text = "OPEN HUB" ShortcutBtn.TextSize = 13
+ShortcutBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold) ShortcutBtn.Parent = ScreenGui
 local ShortCorner = Instance.new("UICorner") ShortCorner.CornerRadius = UDim.new(0, 8) ShortCorner.Parent = ShortcutBtn
 local ShortStroke = Instance.new("UIStroke") ShortStroke.Color = Color3.fromRGB(0, 255, 200) ShortStroke.Thickness = 1.5 ShortStroke.Parent = ShortcutBtn
 
 -- RADAR UI
 local RadarFrame = Instance.new("Frame")
-RadarFrame.Size = UDim2.new(0, 120, 0, 120)
-RadarFrame.Position = _G.RadarData.customPosition
-RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-RadarFrame.BackgroundTransparency = 0.5
-RadarFrame.ClipsDescendants = true
-RadarFrame.BorderSizePixel = 0
-RadarFrame.Parent = ScreenGui
+RadarFrame.Size = UDim2.new(0, 120, 0, 120) RadarFrame.Position = _G.RadarData.customPosition
+RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) RadarFrame.BackgroundTransparency = 0.5
+RadarFrame.ClipsDescendants = true RadarFrame.BorderSizePixel = 0 RadarFrame.Parent = ScreenGui
 
 local RadarCorner = Instance.new("UICorner") RadarCorner.CornerRadius = UDim.new(1, 0) RadarCorner.Parent = RadarFrame
 local RadarStroke = Instance.new("UIStroke") RadarStroke.Thickness = 3 RadarStroke.Color = Color3.fromRGB(255, 255, 255) RadarStroke.Parent = RadarFrame
 _G.RadarStroke = RadarStroke
-_G.RadarFrame = RadarFrame
-_G.RadarCorner = RadarCorner
 
-local GridContainer = Instance.new("Frame")
-GridContainer.Size = UDim2.new(1, 0, 1, 0)
-GridContainer.BackgroundTransparency = 1
-GridContainer.Parent = RadarFrame
+local GridContainer = Instance.new("Frame") GridContainer.Size = UDim2.new(1, 0, 1, 0) GridContainer.BackgroundTransparency = 1 GridContainer.Parent = RadarFrame
 
 local function updateGrid()
     GridContainer:ClearAllChildren()
@@ -84,19 +70,14 @@ updateGrid()
 
 -- MENU UI
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 260, 0, 480)
-MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -240)
-MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MenuFrame.BorderSizePixel = 0
-MenuFrame.Visible = true
-MenuFrame.Parent = ScreenGui
-
+MenuFrame.Size = UDim2.new(0, 260, 0, 480) MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -240)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) MenuFrame.BorderSizePixel = 0 MenuFrame.Visible = true MenuFrame.Parent = ScreenGui
 local MenuCorner = Instance.new("UICorner") MenuCorner.CornerRadius = UDim.new(0, 12) MenuCorner.Parent = MenuFrame
 local MenuStroke = Instance.new("UIStroke") MenuStroke.Color = Color3.fromRGB(0, 255, 200) MenuStroke.Thickness = 2 MenuStroke.Parent = MenuFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 40) TitleLabel.BackgroundTransparency = 1 TitleLabel.Text = "HUB v3.2 - FIXED ESP"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) TitleLabel.TextSize = 14 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold) TitleLabel.Parent = MenuFrame
+TitleLabel.Size = UDim2.new(1, 0, 0, 40) TitleLabel.BackgroundTransparency = 1 TitleLabel.Text = "HUB v3.4 - X-RAY CHAMS"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) TitleLabel.TextSize = 13 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold) TitleLabel.Parent = MenuFrame
 
 local function createOption(name, yPos, defaultText, callback)
     local lbl = Instance.new("TextLabel") lbl.Size = UDim2.new(0, 120, 0, 28) lbl.Position = UDim2.new(0, 15, 0, yPos)
@@ -108,8 +89,8 @@ local function createOption(name, yPos, defaultText, callback)
 end
 
 createOption("Radar UI", 45, "ON", function(b) _G.RadarData.radarEnabled = not _G.RadarData.radarEnabled b.Text = _G.RadarData.radarEnabled and "ON" or "OFF" RadarFrame.Visible = _G.RadarData.radarEnabled end)
-createOption("ESP 3D Hologram", 80, "ON", function(b) _G.RadarData.espHologramEnabled = not _G.RadarData.espHologramEnabled b.Text = _G.RadarData.espHologramEnabled and "ON" or "OFF" b.TextColor3 = _G.RadarData.espHologramEnabled and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100) end)
-createOption("ESP Box", 115, "OFF", function(b) _G.RadarData.espBoxEnabled = not _G.RadarData.espBoxEnabled b.Text = _G.RadarData.espBoxEnabled and "ON" or "OFF" end)
+createOption("ESP X-Ray Chams", 80, "ON", function(b) _G.RadarData.espHologramEnabled = not _G.RadarData.espHologramEnabled b.Text = _G.RadarData.espHologramEnabled and "ON" or "OFF" end)
+createOption("ESP Box 2D", 115, "OFF", function(b) _G.RadarData.espBoxEnabled = not _G.RadarData.espBoxEnabled b.Text = _G.RadarData.espBoxEnabled and "ON" or "OFF" end)
 createOption("ESP Line", 150, "OFF", function(b) _G.RadarData.espLineEnabled = not _G.RadarData.espLineEnabled b.Text = _G.RadarData.espLineEnabled and "ON" or "OFF" end)
 createOption("ESP Highlight", 185, "OFF", function(b) _G.RadarData.espHighlightEnabled = not _G.RadarData.espHighlightEnabled b.Text = _G.RadarData.espHighlightEnabled and "ON" or "OFF" end)
 createOption("Ukuran Radar", 220, "120px", function(b) if _G.RadarData.radarSizeVal == 120 then _G.RadarData.radarSizeVal = 160 _G.RadarData.radarRadiusVal = 80 b.Text = "160px" elseif _G.RadarData.radarSizeVal == 160 then _G.RadarData.radarSizeVal = 90 _G.RadarData.radarRadiusVal = 45 b.Text = "90px" else _G.RadarData.radarSizeVal = 120 _G.RadarData.radarRadiusVal = 60 b.Text = "120px" end RadarFrame.Size = UDim2.new(0, _G.RadarData.radarSizeVal, 0, _G.RadarData.radarSizeVal) updateGrid() end)
@@ -126,105 +107,48 @@ local CloseCorner = Instance.new("UICorner") CloseCorner.CornerRadius = UDim.new
 ShortcutBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = not MenuFrame.Visible end)
 CloseBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = false end)
 
--- LOGIKA RENDER & ESP PRESIFIKASI
+-- RADAR CENTER ARROW
 local CenterArrow = Instance.new("ImageLabel")
 CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5) CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
 CenterArrow.BackgroundTransparency = 1 CenterArrow.Image = _G.RadarData.myArrowImage CenterArrow.ZIndex = 2 CenterArrow.Parent = RadarFrame
 
 local BlipsContainer = Instance.new("Folder") BlipsContainer.Name = "Blips" BlipsContainer.Parent = RadarFrame
-
 local playerBlips = {}
-local espElements = {}
-local hologramClones = {}
+local espCache = {}
 
-local HologramFolder = Workspace:FindFirstChild("3DHologramFolder") or Instance.new("Folder", Workspace)
-HologramFolder.Name = "3DHologramFolder"
-
-local function create3DHologram(player)
-    if hologramClones[player] then return hologramClones[player] end
-    local char = player.Character
-    if not char then return nil end
-    
-    char.Archivable = true
-    local clone = char:Clone()
-    char.Archivable = false
-    
-    for _, item in ipairs(clone:GetDescendants()) do
-        if item:IsA("Script") or item:IsA("LocalScript") or item:IsA("Animator") or item:IsA("Humanoid") then
-            item:Destroy()
-        elseif item:IsA("BasePart") then
-            item.CanCollide = false
-            item.Anchored = true
-            item.CastShadow = false
-            item.Material = Enum.Material.ForceField
-            item.Color = Color3.fromRGB(0, 200, 255)
-            item.Transparency = 0.35
-        end
-    end
-    
-    clone.Name = "Holo_" .. player.Name
-    clone.Parent = HologramFolder
-    hologramClones[player] = clone
-    return clone
+local function drawLine(parent)
+    local line = Instance.new("Frame")
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.BackgroundColor3 = Color3.fromRGB(0, 255, 200)
+    line.BorderSizePixel = 0
+    line.Parent = parent
+    return line
 end
 
-local function remove3DHologram(player)
-    if hologramClones[player] then
-        hologramClones[player]:Destroy()
-        hologramClones[player] = nil
-    end
-end
-
--- PERHITUNGAN BOX PRESIF TANPA SHIFT/OFFSET
-local function getAccurateBoundingBox(character, camera)
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return false, 0, 0, 0, 0 end
-    
-    local cframe, size = character:GetBoundingBox()
-    local extents = size / 2
-    
-    local corners = {
-        cframe * Vector3.new(-extents.X,  extents.Y, -extents.Z),
-        cframe * Vector3.new( extents.X,  extents.Y, -extents.Z),
-        cframe * Vector3.new(-extents.X, -extents.Y, -extents.Z),
-        cframe * Vector3.new( extents.X, -extents.Y, -extents.Z),
-        cframe * Vector3.new(-extents.X,  extents.Y,  extents.Z),
-        cframe * Vector3.new( extents.X,  extents.Y,  extents.Z),
-        cframe * Vector3.new(-extents.X, -extents.Y,  extents.Z),
-        cframe * Vector3.new( extents.X, -extents.Y,  extents.Z)
-    }
-    
-    local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
-    local anyOnScreen = false
-    
-    for _, corner in ipairs(corners) do
-        local screenPos, onScreen = camera:WorldToViewportPoint(corner)
-        if onScreen then anyOnScreen = true end
-        minX = math.min(minX, screenPos.X)
-        minY = math.min(minY, screenPos.Y)
-        maxX = math.max(maxX, screenPos.X)
-        maxY = math.max(maxY, screenPos.Y)
-    end
-    
-    return anyOnScreen, minX, minY, (maxX - minX), (maxY - minY)
+local function updateLine(line, p1, p2)
+    local dist = (p2 - p1).Magnitude
+    local angle = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
+    line.Size = UDim2.new(0, dist, 0, 1.5)
+    line.Position = UDim2.new(0, (p1.X + p2.X) / 2, 0, (p1.Y + p2.Y) / 2)
+    line.Rotation = angle
 end
 
 RunService.RenderStepped:Connect(function()
     if _G.RadarData.outlineMode == "RGB" and _G.RadarData.radarEnabled then
         _G.RadarStroke.Color = Color3.fromHSV((tick() % 4) / 4, 1, 1)
     end
-    
+
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     local camera = Workspace.CurrentCamera
     if not camera then return end
-    
+
     local myHRP = character.HumanoidRootPart
     local myPos = myHRP.Position
     local camCF = camera.CFrame
     local camLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
     local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
-    
+
     if _G.RadarData.radarEnabled then
         CenterArrow.Size = UDim2.new(0, _G.RadarData.arrowSizeVal, 0, _G.RadarData.arrowSizeVal)
         local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
@@ -237,11 +161,10 @@ RunService.RenderStepped:Connect(function()
             activePlayers[player] = true
             local targetChar = player.Character
             local targetHRP = targetChar.HumanoidRootPart
-            local targetHead = targetChar:FindFirstChild("Head") or targetHRP
             local offset = targetHRP.Position - myPos
             local distance = offset.Magnitude
-            
-            -- RADAR
+
+            -- RADAR BLIP
             if _G.RadarData.radarEnabled then
                 local blip = playerBlips[player]
                 if not blip then
@@ -259,92 +182,85 @@ RunService.RenderStepped:Connect(function()
                     blip.Rotation = math.deg(math.atan2(targetLook:Dot(camRight), targetLook:Dot(camLook)))
                 else blip.Visible = false end
             elseif playerBlips[player] then playerBlips[player].Visible = false end
-            
-            -- ESP CONTAINER CREATION
-            local esp = espElements[player]
+
+            -- ESP CACHE
+            local esp = espCache[player]
             if not esp then
                 esp = {}
-                local box = Instance.new("Frame") box.BackgroundTransparency = 1 box.BorderSizePixel = 0 box.Parent = _G.EspContainer
-                local boxStroke = Instance.new("UIStroke") boxStroke.Thickness = 1.5 boxStroke.Color = Color3.fromRGB(255, 50, 50) boxStroke.Parent = box
-                esp.Box = box
-                
-                local line = Instance.new("Frame") 
-                line.AnchorPoint = Vector2.new(0.5, 0.5) 
-                line.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
-                line.BorderSizePixel = 0 
-                line.Parent = _G.EspContainer
-                esp.Line = line
-                
-                local hl = Instance.new("Highlight") hl.FillColor = Color3.fromRGB(255, 0, 0) hl.FillTransparency = 0.5 hl.OutlineColor = Color3.fromRGB(255, 255, 255) esp.Highlight = hl
-                espElements[player] = esp
+                -- Box 2D
+                local box = Instance.new("Frame") box.BackgroundTransparency = 1 box.BorderSizePixel = 0 box.Parent = EspContainer
+                local stroke = Instance.new("UIStroke") stroke.Thickness = 1.5 stroke.Color = Color3.fromRGB(255, 50, 50) stroke.Parent = box
+                esp.Box2D = box
+
+                -- Line
+                esp.Line = drawLine(EspContainer)
+
+                -- Highlight (Standard)
+                local hl = Instance.new("Highlight") hl.FillColor = Color3.fromRGB(255, 0, 0) hl.FillTransparency = 0.5 hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                esp.Highlight = hl
+
+                -- Highlight X-RAY (Chams AlwaysOnTop)
+                local xray = Instance.new("Highlight")
+                xray.Name = "XRayChams"
+                xray.FillColor = Color3.fromRGB(0, 200, 255)
+                xray.FillTransparency = 0.2
+                xray.OutlineColor = Color3.fromRGB(255, 255, 255)
+                xray.OutlineTransparency = 0
+                xray.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Tembus Tembok!
+                esp.XRay = xray
+
+                espCache[player] = esp
             end
-            
-            if _G.RadarData.espHighlightEnabled then esp.Highlight.Parent = targetChar esp.Highlight.Enabled = true else esp.Highlight.Enabled = false end
-            
-            -- REAL 3D HOLOGRAM
+
+            -- ESP X-RAY CHAMS (TEMBUS TEMBOK MANIFESTASI REAL MODEL)
             if _G.RadarData.espHologramEnabled then
-                local holoClone = create3DHologram(player)
-                if holoClone then
-                    for _, pPart in ipairs(targetChar:GetChildren()) do
-                        if pPart:IsA("BasePart") then
-                            local cPart = holoClone:FindFirstChild(pPart.Name)
-                            if cPart then cPart.CFrame = pPart.CFrame end
-                        end
-                    end
-                end
+                esp.XRay.Parent = targetChar
+                esp.XRay.Enabled = true
             else
-                remove3DHologram(player)
+                esp.XRay.Enabled = false
             end
-            
-            -- ESP BOX PRESIF
-            if _G.RadarData.espBoxEnabled then
-                local onScreen, x, y, w, h = getAccurateBoundingBox(targetChar, camera)
-                if onScreen then 
-                    esp.Box.Size = UDim2.new(0, w, 0, h) 
-                    esp.Box.Position = UDim2.new(0, x, 0, y) 
-                    esp.Box.Visible = true 
-                else 
-                    esp.Box.Visible = false 
-                end
-            else 
-                esp.Box.Visible = false 
+
+            -- ESP HIGHLIGHT STANDARD
+            if _G.RadarData.espHighlightEnabled then esp.Highlight.Parent = targetChar esp.Highlight.Enabled = true else esp.Highlight.Enabled = false end
+
+            local screenPos, onScreen = camera:WorldToViewportPoint(targetHRP.Position)
+
+            -- ESP LINE
+            if _G.RadarData.espLineEnabled and onScreen then
+                local vp = camera.ViewportSize
+                updateLine(esp.Line, Vector2.new(vp.X / 2, vp.Y), Vector2.new(screenPos.X, screenPos.Y))
+                esp.Line.Visible = true
+            else
+                esp.Line.Visible = false
             end
-            
-            -- ESP LINE PRESIF
-            if _G.RadarData.espLineEnabled then
-                local targetPos, onScreen = camera:WorldToViewportPoint(targetHRP.Position)
-                if onScreen then
-                    local vp = camera.ViewportSize
-                    local startPos = Vector2.new(vp.X / 2, vp.Y)
-                    local endPos = Vector2.new(targetPos.X, targetPos.Y)
-                    
-                    local distanceVector = endPos - startPos
-                    local length = distanceVector.Magnitude
-                    local angle = math.deg(math.atan2(distanceVector.Y, distanceVector.X))
-                    
-                    esp.Line.Size = UDim2.new(0, length, 0, 1.5)
-                    esp.Line.Position = UDim2.new(0, (startPos.X + endPos.X) / 2, 0, (startPos.Y + endPos.Y) / 2)
-                    esp.Line.Rotation = angle
-                    esp.Line.Visible = true
-                else 
-                    esp.Line.Visible = false 
-                end
-            else 
-                esp.Line.Visible = false 
+
+            -- ESP BOX 2D
+            if _G.RadarData.espBoxEnabled and onScreen then
+                local head = targetChar:FindFirstChild("Head")
+                local headPos = head and camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0)) or screenPos
+                local legPos = camera:WorldToViewportPoint(targetHRP.Position - Vector3.new(0, 3, 0))
+                
+                local height = math.abs(headPos.Y - legPos.Y)
+                local width = height * 0.65
+                
+                esp.Box2D.Size = UDim2.new(0, width, 0, height)
+                esp.Box2D.Position = UDim2.new(0, screenPos.X - width/2, 0, headPos.Y)
+                esp.Box2D.Visible = true
+            else
+                esp.Box2D.Visible = false
             end
         end
     end
-    
-    -- CLEANUP MEMORI
+
+    -- CLEANUP
     for p, b in pairs(playerBlips) do if not activePlayers[p] then b:Destroy() playerBlips[p] = nil end end
-    for p, e in pairs(espElements) do
+    for p, e in pairs(espCache) do
         if not activePlayers[p] then
-            if e.Box then e.Box:Destroy() end if e.Line then e.Line:Destroy() end
+            if e.Box2D then e.Box2D:Destroy() end
+            if e.Line then e.Line:Destroy() end
             if e.Highlight then e.Highlight:Destroy() end
-            espElements[p] = nil
+            if e.XRay then e.XRay:Destroy() end
+            espCache[p] = nil
         end
-    end
-    for p, _ in pairs(hologramClones) do
-        if not activePlayers[p] then remove3DHologram(p) end
     end
 end)
