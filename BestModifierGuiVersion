@@ -29,9 +29,9 @@ ScreenGui.DisplayOrder = 999999999
 ScreenGui.Enabled = true
 ScreenGui.Parent = parentContainer
 
--- Frame Utama
+-- Frame Utama (Diperbesar sikit ke bawah agar muat tombol baru)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 300)
+MainFrame.Size = UDim2.new(0, 240, 0, 335)
 MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 MainFrame.BorderSizePixel = 0
@@ -68,7 +68,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 440)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -237,7 +237,7 @@ local SaveConfigBtn = Instance.new("TextButton", configRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
 SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 SaveConfigBtn.BorderSizePixel = 0
-SaveConfigBtn.Text = "Save Config"
+SaveConfigBtn.Text = "Save New"
 SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SaveConfigBtn.Font = Enum.Font.GothamBold
 SaveConfigBtn.TextSize = 10
@@ -254,11 +254,27 @@ LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 10
 Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
+-- UI Update Config Row (Fitur Baru)
+local updateRow = Instance.new("Frame", ContentScroll)
+updateRow.Size = UDim2.new(1, -6, 0, 28)
+updateRow.BackgroundTransparency = 1
+updateRow.LayoutOrder = 9
+
+local UpdateConfigBtn = Instance.new("TextButton", updateRow)
+UpdateConfigBtn.Size = UDim2.new(1, 0, 1, 0)
+UpdateConfigBtn.BackgroundColor3 = Color3.fromRGB(130, 60, 200)
+UpdateConfigBtn.BorderSizePixel = 0
+UpdateConfigBtn.Text = "Update Config (Overwrite Code)"
+UpdateConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+UpdateConfigBtn.Font = Enum.Font.GothamBold
+UpdateConfigBtn.TextSize = 10
+Instance.new("UICorner", UpdateConfigBtn).CornerRadius = UDim.new(0, 4)
+
 -- UI Code Box
 local loadBoxRow = Instance.new("Frame", ContentScroll)
 loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
 loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 9
+loadBoxRow.LayoutOrder = 10
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
@@ -275,7 +291,7 @@ Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 10
+statusRow.LayoutOrder = 11
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -551,16 +567,21 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE CONFIG (AMAN & ANTI-CRASH)
+-- LOGIKA SAVE NEW CONFIG (Membuat File Baru)
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
         return
     end
     
-    -- Generator ID aman berbasis sisa waktu + random tambahan
-    local uniqueID = string.format("%X", math.floor(tick() % 86400 * 100)) .. "_" .. math.random(100, 999)
-    local randomCode = "C_" .. uniqueID
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local randomCode = "C_"
+    local rng = Random.new()
+    
+    for i = 1, 13 do
+        local randIndex = rng:NextInteger(1, #chars)
+        randomCode = randomCode .. chars:sub(randIndex, randIndex)
+    end
     
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
@@ -570,19 +591,49 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
-        pcall(function()
-            writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
-        end)
+        writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
     end
     
-    pcall(function()
-        if setclipboard then
-            setclipboard(randomCode)
-        end
-    end)
+    if setclipboard then
+        setclipboard(randomCode)
+        StatusLabel.Text = "Saved & Copied!"
+    else
+        StatusLabel.Text = "Saved Code: " .. randomCode
+    end
+end)
+
+-- LOGIKA UPDATE CONFIG (Menimpa File Lama Sesuai Kode di TextBox)
+UpdateConfigBtn.MouseButton1Click:Connect(function()
+    if #spawnedBlocks == 0 then
+        StatusLabel.Text = "Spawn blocks first!"
+        return
+    end
     
-    LoadBox.Text = randomCode
-    StatusLabel.Text = "Saved! Code: " .. randomCode
+    local codeToUpdate = LoadBox.Text:gsub("%s+", "")
+    if codeToUpdate == "" then
+        StatusLabel.Text = "Enter code to update!"
+        return
+    end
+    
+    local fileName = "ModifierConfigs/" .. codeToUpdate .. ".json"
+    
+    -- Cek ketersediaan file lama
+    if isfile and not isfile(fileName) then
+        StatusLabel.Text = "Code file not found!"
+        return
+    end
+    
+    local dataToSave = {}
+    for _, block in ipairs(spawnedBlocks) do
+        local cf = block.CFrame
+        table.insert(dataToSave, {cf:GetComponents()})
+    end
+    
+    if writefile then
+        local encodedData = HttpService:JSONEncode(dataToSave)
+        writefile(fileName, encodedData)
+        StatusLabel.Text = "Updated: " .. codeToUpdate
+    end
 end)
 
 -- LOGIKA LOAD CONFIG
@@ -610,7 +661,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         
         local rawData = readfile(fileName)
         local success, decodedData = pcall(function()
-            return HttpService:JSONEncode(rawData)
+            return HttpService:JSONDecode(rawData)
         end)
         
         if success and type(decodedData) == "table" then
