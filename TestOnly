@@ -3,19 +3,18 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- Cek apakah GUI sebelumnya sudah ada, kalau ada hapus dulu supaya tidak numpuk
+-- Hapus GUI lama jika ada
 if CoreGui:FindFirstChild("RadarGui") then
     CoreGui.RadarGui:Destroy()
 end
 
 -- Konfigurasi Radar
-local radarRadius = 80 -- Ukuran radius radar di layar (piksel)
-local maxDistance = 200 -- Jarak maksimal (studs)
+local radarSize = 120 -- Ukuran frame total
+local radarRadius = 60 -- Radius jangkauan visual
+local maxDistance = 200 -- Jangkauan maksimal dunia (studs)
 
--- Membuat GUI di CoreGui agar tidak terdeteksi / terhapus sistem game
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarGui"
--- Coba parent ke CoreGui, jika gagal lempar ke PlayerGui
 local success = pcall(function()
     ScreenGui.Parent = CoreGui
 end)
@@ -24,8 +23,8 @@ if not success then
 end
 
 local RadarFrame = Instance.new("Frame")
-RadarFrame.Size = UDim2.new(0, 160, 0, 160)
-RadarFrame.Position = UDim2.new(0, 20, 1, -180) -- Pojok kiri bawah
+RadarFrame.Size = UDim2.new(0, radarSize, 0, radarSize)
+RadarFrame.Position = UDim2.new(1, -140, 0, 20) -- Pojok kanan atas
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
 RadarFrame.BorderSizePixel = 2
@@ -36,10 +35,10 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = RadarFrame
 
--- Titik tengah (Karakter kita)
+-- Titik tengah (Karakter kita / Panah kecil di tengah)
 local CenterDot = Instance.new("Frame")
-CenterDot.Size = UDim2.new(0, 6, 0, 6)
-CenterDot.Position = UDim2.new(0.5, -3, 0.5, -3)
+CenterDot.Size = UDim2.new(0, 8, 0, 8)
+CenterDot.Position = UDim2.new(0.5, -4, 0.5, -4)
 CenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CenterDot.Parent = RadarFrame
 
@@ -47,71 +46,75 @@ local CenterCorner = Instance.new("UICorner")
 CenterCorner.CornerRadius = UDim.new(1, 0)
 CenterCorner.Parent = CenterDot
 
--- Garis Radar yang berputar
-local Sweeper = Instance.new("Frame")
-Sweeper.Size = UDim2.new(0, radarRadius, 0, 2)
-Sweeper.Position = UDim2.new(0.5, 0, 0.5, 0)
-Sweeper.AnchorPoint = Vector2.new(0, 0.5)
-Sweeper.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-Sweeper.BackgroundTransparency = 0.5
-Sweeper.Parent = RadarFrame
-
 local BlipsContainer = Instance.new("Folder")
 BlipsContainer.Name = "Blips"
 BlipsContainer.Parent = RadarFrame
 
 local playerBlips = {}
 
--- Main Loop Radar
 RunService.RenderStepped:Connect(function()
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    local myPos = character.HumanoidRootPart.Position
-    local myLookVector = character.HumanoidRootPart.CFrame.LookVector
+    local myHRP = character.HumanoidRootPart
+    local myPos = myHRP.Position
+    local myLookVector = myHRP.CFrame.LookVector
     
-    -- Putar garis radar
-    local sweepAngle = tick() * 3
-    Sweeper.Rotation = math.deg(sweepAngle)
+    -- Hitung sudut pandang kita di bidang XZ
+    local myAngle = math.atan2(myLookVector.X, myLookVector.Z)
 
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             activePlayers[player] = true
-            local targetPos = player.Character.HumanoidRootPart.Position
+            local targetHRP = player.Character.HumanoidRootPart
+            local targetPos = targetHRP.Position
             
             local offset = targetPos - myPos
             local distance = offset.Magnitude
             
             local blip = playerBlips[player]
             if not blip then
-                blip = Instance.new("Frame")
-                blip.Size = UDim2.new(0, 6, 0, 6)
+                -- Menggunakan TextLabel atau Frame berbentuk segitiga/panah sederhana
+                blip = Instance.new("TextLabel")
+                blip.Size = UDim2.new(0, 12, 0, 12)
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
-                blip.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+                blip.BackgroundTransparency = 1
+                blip.Text = "▲" -- Simbol panah
+                blip.TextSize = 12
+                blip.TextColor3 = Color3.fromRGB(0, 255, 0)
                 blip.Parent = BlipsContainer
-                
-                local corner = Instance.new("UICorner")
-                corner.CornerRadius = UDim.new(1, 0)
-                corner.Parent = blip
                 
                 playerBlips[player] = blip
             end
             
             if distance <= maxDistance then
                 blip.Visible = true
-                local angle = math.atan2(offset.X, offset.Z) - math.atan2(myLookVector.X, myLookVector.Z)
+                
+                -- Hitung sudut relatif target terhadap arah hadap kita
+                local targetAngle = math.atan2(offset.X, offset.Z)
+                local relativeAngle = targetAngle - myAngle
+                
+                -- Skalakan jarak ke radius radar
                 local clampedDist = math.clamp(distance / maxDistance, 0, 1) * radarRadius
                 
-                local blipX = math.sin(angle) * clampedDist
-                local blipY = math.cos(angle) * clampedDist
+                -- Koreksi orientasi (supaya depan di atas: sin untuk X, -cos untuk Y)
+                local blipX = math.sin(relativeAngle) * clampedDist
+                local blipY = -math.cos(relativeAngle) * clampedDist
                 
                 blip.Position = UDim2.new(0.5, blipX, 0.5, blipY)
+                
+                -- Rotasi panah mengikuti arah hadap player lain secara relatif
+                local targetLook = targetHRP.CFrame.LookVector
+                local targetHeading = math.atan2(targetLook.X, targetLook.Z)
+                local relativeHeading = targetHeading - myAngle
+                blip.Rotation = math.deg(relativeHeading)
             else
                 blip.Visible = false
             end
         end
     end
     
+    -- Hapus blip jika player keluar
     for player, blip in pairs(playerBlips) do
         if not activePlayers[player] then
             blip:Destroy()
@@ -119,5 +122,3 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
-print("Radar berhasil dijalankan!")
