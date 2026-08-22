@@ -22,8 +22,8 @@ local outlineMode = "RGB" -- "Hitam", "RGB"
 local customPosition = UDim2.new(1, -125, 0, 10)
 
 -- Texture ID Kustom
-local myArrowImage = "rbxassetid://83978146105606"
-local otherArrowImage = "rbxassetid://98960754572491"
+local myArrowImage = "rbxassetid://72519815983572"
+local otherArrowImage = "rbxassetid://108029451048494"
 
 -- MEMBUAT GUI UTAMA
 local ScreenGui = Instance.new("ScreenGui")
