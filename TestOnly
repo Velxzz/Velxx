@@ -1,27 +1,37 @@
--- LocalScript (Taruh di StarterPlayer > StarterPlayerScripts)
 local Players = game:GetService("Players")
-local RunService =GetService("RunService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- Konfigurasi Radar
-local radarRadius = 80 -- Ukuran radius radar di layar (dalam piksel)
-local maxDistance = 200 -- Jarak maksimal dunia (studs) yang bisa dideteksi radar
+-- Cek apakah GUI sebelumnya sudah ada, kalau ada hapus dulu supaya tidak numpuk
+if CoreGui:FindFirstChild("RadarGui") then
+    CoreGui.RadarGui:Destroy()
+end
 
--- Membuat GUI secara otomatis
+-- Konfigurasi Radar
+local radarRadius = 80 -- Ukuran radius radar di layar (piksel)
+local maxDistance = 200 -- Jarak maksimal (studs)
+
+-- Membuat GUI di CoreGui agar tidak terdeteksi / terhapus sistem game
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RadarGui"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+-- Coba parent ke CoreGui, jika gagal lempar ke PlayerGui
+local success = pcall(function()
+    ScreenGui.Parent = CoreGui
+end)
+if not success then
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
 
 local RadarFrame = Instance.new("Frame")
 RadarFrame.Size = UDim2.new(0, 160, 0, 160)
-RadarFrame.Position = UDim2.new(0, 20, 1, -180) -- Posisi di pojok kiri bawah
+RadarFrame.Position = UDim2.new(0, 20, 1, -180) -- Pojok kiri bawah
 RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RadarFrame.BackgroundTransparency = 0.5
 RadarFrame.BorderSizePixel = 2
 RadarFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
 RadarFrame.Parent = ScreenGui
 
--- Bentuk lingkaran untuk radar
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = RadarFrame
@@ -46,42 +56,38 @@ Sweeper.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 Sweeper.BackgroundTransparency = 0.5
 Sweeper.Parent = RadarFrame
 
--- Folder penampung titik player lain
 local BlipsContainer = Instance.new("Folder")
 BlipsContainer.Name = "Blips"
 BlipsContainer.Parent = RadarFrame
 
--- Tabel untuk menyimpan GUI titik pemain
 local playerBlips = {}
 
+-- Main Loop Radar
 RunService.RenderStepped:Connect(function()
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     local myPos = character.HumanoidRootPart.Position
     local myLookVector = character.HumanoidRootPart.CFrame.LookVector
     
-    -- Memutar garis radar
-    local sweepAngle = tick() * 3 -- Kecepatan putaran
+    -- Putar garis radar
+    local sweepAngle = tick() * 3
     Sweeper.Rotation = math.deg(sweepAngle)
 
-    -- Update posisi player lain
     local activePlayers = {}
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             activePlayers[player] = true
             local targetPos = player.Character.HumanoidRootPart.Position
             
-            -- Hitung selisih posisi
             local offset = targetPos - myPos
             local distance = offset.Magnitude
             
-            -- Ambil referensi titik (blip) atau buat baru jika belum ada
             local blip = playerBlips[player]
             if not blip then
                 blip = Instance.new("Frame")
                 blip.Size = UDim2.new(0, 6, 0, 6)
                 blip.AnchorPoint = Vector2.new(0.5, 0.5)
-                blip.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Titik hijau
+                blip.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
                 blip.Parent = BlipsContainer
                 
                 local corner = Instance.new("UICorner")
@@ -93,14 +99,9 @@ RunService.RenderStepped:Connect(function()
             
             if distance <= maxDistance then
                 blip.Visible = true
-                
-                -- Hitung rotasi relatif terhadap arah pandang kamera/karakter kita
                 local angle = math.atan2(offset.X, offset.Z) - math.atan2(myLookVector.X, myLookVector.Z)
-                
-                -- Skalakan jarak ke dalam radius radar GUI
                 local clampedDist = math.clamp(distance / maxDistance, 0, 1) * radarRadius
                 
-                -- Hitung posisi X dan Y di dalam lingkaran radar
                 local blipX = math.sin(angle) * clampedDist
                 local blipY = math.cos(angle) * clampedDist
                 
@@ -111,7 +112,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
     
-    -- Hapus titik pemain yang keluar game
     for player, blip in pairs(playerBlips) do
         if not activePlayers[player] then
             blip:Destroy()
@@ -119,3 +119,5 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
+print("Radar berhasil dijalankan!")
