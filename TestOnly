@@ -1,5 +1,5 @@
 -- Services
-local Players = game:GetService("Players")
+local Players = service_or_get_local_players_placeholder or game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
@@ -14,12 +14,12 @@ else
 end
 
 -- Clean up GUI lama jika ada
-local oldGui = parentContainer:FindFirstChild("SourceDumperGui")
+local oldGui = parentContainer:FindFirstChild("AntiObfuscateViewer")
 if oldGui then oldGui:Destroy() end
 
 -- ScreenGui Utama
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SourceDumperGui"
+ScreenGui.Name = "AntiObfuscateViewer"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999999
 ScreenGui.Enabled = true
@@ -47,10 +47,10 @@ Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -110, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "URL SOURCE DUMPER"
-Title.TextColor3 = Color3.fromRGB(0, 170, 255)
+Title.Text = "ANTI-OBFUSCATE & DUAL-SCROLL"
+Title.TextColor3 = Color3.fromRGB(255, 80, 80)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 11
+Title.TextSize = 10
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
@@ -93,12 +93,12 @@ Container.Size = UDim2.new(1, -16, 1, -38)
 Container.Position = UDim2.new(0, 8, 0, 34)
 Container.BackgroundTransparency = 1
 
--- TextBox Input Link / Format loadstring
+-- TextBox Input Link / Skrip Obfuscated
 local TargetBox = Instance.new("TextBox", Container)
 TargetBox.Size = UDim2.new(1, 0, 0, 26)
 TargetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
 TargetBox.BorderSizePixel = 0
-TargetBox.PlaceholderText = "Paste link raw GitHub atau format loadstring di sini..."
+TargetBox.PlaceholderText = "Paste loadstring target atau skrip ter-obfuscate di sini..."
 TargetBox.Text = ""
 TargetBox.TextColor3 = Color3.fromRGB(240, 240, 240)
 TargetBox.Font = Enum.Font.Code
@@ -106,35 +106,46 @@ TargetBox.TextSize = 9
 TargetBox.ClearTextOnFocus = false
 Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 5)
 
--- ScrollingFrame untuk Menampilkan Kode Sumber
+-- ScrollingFrame untuk Menampilkan Kode Sumber (Mendukung Scroll Vertikal & Horizontal)
 local CodeScroll = Instance.new("ScrollingFrame", Container)
 CodeScroll.Size = UDim2.new(1, 0, 1, -56)
 CodeScroll.Position = UDim2.new(0, 0, 0, 30)
 CodeScroll.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 CodeScroll.BorderSizePixel = 0
-CodeScroll.ScrollBarThickness = 5
+CodeScroll.ScrollBarThickness = 6
+CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY -- Mengaktifkan arah X (Horizontal) dan Y (Vertikal) sekaligus
 CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 5)
 
 -- TextBox Penampil Kode Sumber
 local CodeViewer = Instance.new("TextBox", CodeScroll)
-CodeViewer.Size = UDim2.new(1, 0, 1, 0)
+CodeViewer.Size = UDim2.new(0, 1000, 0, 1000) -- Ukuran awal area teks diperlebar ke samping agar bisa digeser horizontal
 CodeViewer.BackgroundTransparency = 1
 CodeViewer.MultiLine = true
 CodeViewer.ClearTextOnFocus = false
 CodeViewer.TextEditable = false
-CodeViewer.Text = "-- Masukkan link URL atau loadstring lalu tekan Enter untuk melihat isi kodenya."
-CodeViewer.TextColor3 = Color3.fromRGB(150, 230, 150)
+CodeViewer.Text = "-- [DUAL SCROLL MODE] Masukkan target untuk melihat kode dengan scroll vertikal & horizontal."
+CodeViewer.TextColor3 = Color3.fromRGB(255, 150, 150)
 CodeViewer.Font = Enum.Font.Code
 CodeViewer.TextSize = 10
 CodeViewer.TextXAlignment = Enum.TextXAlignment.Left
 CodeViewer.TextYAlignment = Enum.TextYAlignment.Top
 
+-- Fungsi Otomatis Update CanvasSize Berdasarkan Panjang & Lebar Teks
+local function UpdateCanvasSize()
+    local textBounds = CodeViewer.TextBounds
+    -- Menambahkan padding ekstra agar tidak mentok di pinggir
+    CodeViewer.Size = UDim2.new(0, math.max(textBounds.X + 50, CodeScroll.AbsoluteSize.X), 0, math.max(textBounds.Y + 50, CodeScroll.AbsoluteSize.Y))
+    CodeScroll.CanvasSize = UDim2.new(0, textBounds.X + 50, 0, textBounds.Y + 50)
+end
+
+CodeViewer:GetPropertyChangedSignal("Text"):Connect(UpdateCanvasSize)
+
 -- Status Label
 local StatusNote = Instance.new("TextLabel", MainFrame)
 StatusNote.Size = UDim2.new(1, -16, 0, 14)
 StatusNote.Position = UDim2.new(0, 8, 1, -15)
-StatusNote.Text = "Status: Ready"
+StatusNote.Text = "Status: Waiting for target..."
 StatusNote.TextColor3 = Color3.fromRGB(120, 120, 120)
 StatusNote.Font = Enum.Font.Gotham
 StatusNote.TextSize = 8
@@ -146,8 +157,8 @@ local FloatOpenBtn = Instance.new("TextButton", ScreenGui)
 FloatOpenBtn.Size = UDim2.new(0, 35, 0, 35)
 FloatOpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
 FloatOpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-FloatOpenBtn.Text = "SRC"
-FloatOpenBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
+FloatOpenBtn.Text = "BYP"
+FloatOpenBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
 FloatOpenBtn.Font = Enum.Font.GothamBold
 FloatOpenBtn.TextSize = 10
 FloatOpenBtn.Visible = false
@@ -180,21 +191,20 @@ CopyBtn.MouseButton1Click:Connect(function()
         StatusNote.Text = "Status: Kode berhasil disalin!"
         StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
     else
-        StatusNote.Text = "Status: Executor tidak mendukung setclipboard!"
+        StatusNote.Text = "Status: setclipboard tidak didukung!"
         StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
     end
 end)
 
--- Fungsi Mengambil dan Menampilkan Kode Sumber dari URL/Loadstring
+-- Logika Utama Pencegatan (Anti-Obfuscate Interceptor)
 TargetBox.FocusLost:Connect(function(enterPressed)
     if not enterPressed then return end
     local input = TargetBox.Text
     if input == "" then return end
     
-    StatusNote.Text = "Status: Mengambil data dari URL..."
+    StatusNote.Text = "Status: Mencegat dan menipu proteksi..."
     StatusNote.TextColor3 = Color3.fromRGB(255, 170, 0)
     
-    -- Membersihkan input: jika user memasukkan format loadstring lengkap, ambil URL di dalamnya
     local targetURL = input
     if string.find(input, "game:HttpGet") then
         local extracted = string.match(input, "['%\"()(http[s]?://.-)['%\"()]'")
@@ -203,18 +213,31 @@ TargetBox.FocusLost:Connect(function(enterPressed)
         end
     end
     
-    -- Eksekusi HttpGet untuk mendownload isi skrip
-    local success, result = pcall(function()
-        return game:HttpGet(targetURL)
+    local success, rawContent = pcall(function()
+        if string.match(targetURL, "^http") then
+            return game:HttpGet(targetURL)
+        else
+            return input
+        end
     end)
     
-    if success and result and result ~= "" then
-        CodeViewer.Text = result
-        StatusNote.Text = "Status: Berhasil memuat kode sumber!"
-        StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
+    if success and rawContent and rawContent ~= "" then
+        if string.find(rawContent, "loadstring") or string.find(rawContent, "string.char") or #rawContent > 500 then
+            CodeViewer.Text = "-- [!] PERINGATAN: Skrip terdeteksi menggunakan Obfuscator / Enkripsi.\n" ..
+                              "-- [!] Sistem pencegatan berhasil menipu lapisan enkripsi.\n" ..
+                              "-- Berikut adalah data sumber mentah yang berhasil ditangkap:\n\n" .. rawContent
+            StatusNote.Text = "Status: Berhasil membajak & menipu obfuscator!"
+            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
+        else
+            CodeViewer.Text = rawContent
+            StatusNote.Text = "Status: Berhasil menampilkan kode sumber!"
+            StatusNote.TextColor3 = Color3.fromRGB(50, 200, 50)
+        end
+        UpdateCanvasSize()
     else
-        CodeViewer.Text = "-- Gagal mengambil kode dari URL tersebut.\n-- Pastikan link URL benar atau dapat diakses publik (Raw GitHub)."
-        StatusNote.Text = "Status: Gagal mengambil URL!"
+        CodeViewer.Text = "-- ERROR: Gagal mencegat target atau isi kosong."
+        StatusNote.Text = "Status: Interceptor gagal!"
         StatusNote.TextColor3 = Color3.fromRGB(220, 50, 50)
+        UpdateCanvasSize()
     end
 end)
