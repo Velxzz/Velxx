@@ -1,5 +1,5 @@
 -- ===============================================
--- RADAR & ESP HUB v4.0 (RADAR LINE & SCROLL MENU)
+-- RADAR & ESP HUB v5.0 (FIXED POSITION & TEXTBOX)
 -- ===============================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -8,11 +8,20 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 _G.RadarData = {
-    radarEnabled = true, radarSizeVal = 120, radarRadiusVal = 60,
-    maxDistanceVal = 200, arrowSizeVal = 16, radarShape = "Bulat",
-    outlineMode = "RGB", customPosition = UDim2.new(1, -125, 0, 10),
-    espBoxEnabled = false, espLineEnabled = false, espNameEnabled = true,
-    espHighlightEnabled = false, espHologramEnabled = true, radarLineEnabled = true,
+    radarEnabled = true,
+    radarSizeVal = 120,
+    radarRadiusVal = 60,
+    maxDistanceVal = 200,
+    arrowSizeVal = 14,
+    radarLineThickness = 1,
+    radarShape = "Bulat",
+    outlineMode = "RGB",
+    espBoxEnabled = false,
+    espLineEnabled = false,
+    espNameEnabled = true,
+    espHighlightEnabled = false,
+    espHologramEnabled = false,
+    radarLineEnabled = true,
     myArrowImage = "rbxassetid://83978146105606",
     otherArrowImage = "rbxassetid://98960754572491"
 }
@@ -27,9 +36,8 @@ ScreenGui.IgnoreGuiInset = true
 local ok = pcall(function() ScreenGui.Parent = CoreGui end)
 if not ok or not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- VIEWPORT FRAME UNTUK ESP 3D
+-- VIEWPORT UI
 local ViewportUI = Instance.new("ViewportFrame")
-ViewportUI.Name = "ESP3D_Viewport"
 ViewportUI.Size = UDim2.new(1, 0, 1, 0)
 ViewportUI.BackgroundTransparency = 1
 ViewportUI.BorderSizePixel = 0
@@ -44,10 +52,9 @@ ViewportFolder.Name = "ViewportWorld"
 ViewportFolder.Parent = ViewportUI
 
 local EspContainer = Instance.new("Folder")
-EspContainer.Name = "ESPContainer"
 EspContainer.Parent = ScreenGui
 
--- FLOATING GEAR SHORTCUT BUTTON ⚙️
+-- FLOATING SHORTCUT ⚙️
 local ShortcutBtn = Instance.new("TextButton")
 ShortcutBtn.Size = UDim2.new(0, 45, 0, 45)
 ShortcutBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
@@ -60,14 +67,19 @@ ShortcutBtn.Parent = ScreenGui
 local ShortCorner = Instance.new("UICorner") ShortCorner.CornerRadius = UDim.new(1, 0) ShortCorner.Parent = ShortcutBtn
 local ShortStroke = Instance.new("UIStroke") ShortStroke.Color = Color3.fromRGB(0, 255, 200) ShortStroke.Thickness = 2 ShortStroke.Parent = ShortcutBtn
 
--- RADAR UI
+-- RADAR FRAME (TOP RIGHT ANCHORED)
 local RadarFrame = Instance.new("Frame")
-RadarFrame.Size = UDim2.new(0, 120, 0, 120) RadarFrame.Position = _G.RadarData.customPosition
-RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) RadarFrame.BackgroundTransparency = 0.5
-RadarFrame.ClipsDescendants = true RadarFrame.BorderSizePixel = 0 RadarFrame.Parent = ScreenGui
+RadarFrame.AnchorPoint = Vector2.new(1, 0)
+RadarFrame.Position = UDim2.new(1, -10, 0, 10)
+RadarFrame.Size = UDim2.new(0, _G.RadarData.radarSizeVal, 0, _G.RadarData.radarSizeVal)
+RadarFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+RadarFrame.BackgroundTransparency = 0.5
+RadarFrame.ClipsDescendants = true
+RadarFrame.BorderSizePixel = 0
+RadarFrame.Parent = ScreenGui
 
 local RadarCorner = Instance.new("UICorner") RadarCorner.CornerRadius = UDim.new(1, 0) RadarCorner.Parent = RadarFrame
-local RadarStroke = Instance.new("UIStroke") RadarStroke.Thickness = 3 RadarStroke.Color = Color3.fromRGB(255, 255, 255) RadarStroke.Parent = RadarFrame
+local RadarStroke = Instance.new("UIStroke") RadarStroke.Thickness = 2 RadarStroke.Color = Color3.fromRGB(255, 255, 255) RadarStroke.Parent = RadarFrame
 _G.RadarStroke = RadarStroke
 
 local GridContainer = Instance.new("Frame") GridContainer.Size = UDim2.new(1, 0, 1, 0) GridContainer.BackgroundTransparency = 1 GridContainer.Parent = RadarFrame
@@ -88,45 +100,84 @@ local function updateGrid()
 end
 updateGrid()
 
--- MAIN MENU UI WITH SCROLLING
+-- MAIN MENU SCROLLING UI
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 260, 0, 320) MenuFrame.Position = UDim2.new(0.5, -130, 0.5, -160)
+MenuFrame.Size = UDim2.new(0, 270, 0, 320) MenuFrame.Position = UDim2.new(0.5, -135, 0.5, -160)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) MenuFrame.BorderSizePixel = 0 MenuFrame.Visible = true MenuFrame.Parent = ScreenGui
-local MenuCorner = Instance.new("UICorner") MenuCorner.CornerRadius = UDim.new(0, 12) MenuCorner.Parent = MenuFrame
+local MenuCorner = Instance.new("UICorner") MenuCorner.CornerRadius = UDim.new(0, 10) MenuCorner.Parent = MenuFrame
 local MenuStroke = Instance.new("UIStroke") MenuStroke.Color = Color3.fromRGB(0, 255, 200) MenuStroke.Thickness = 2 MenuStroke.Parent = MenuFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 35) TitleLabel.BackgroundTransparency = 1 TitleLabel.Text = "RADAR & ESP HUB v4.0"
+TitleLabel.Size = UDim2.new(1, 0, 0, 35) TitleLabel.BackgroundTransparency = 1 TitleLabel.Text = "RADAR & ESP HUB v5.0"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) TitleLabel.TextSize = 13 TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold) TitleLabel.Parent = MenuFrame
 
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Size = UDim2.new(1, -10, 1, -80) ScrollFrame.Position = UDim2.new(0, 5, 0, 35)
 ScrollFrame.BackgroundTransparency = 1 ScrollFrame.BorderSizePixel = 0 ScrollFrame.ScrollBarThickness = 4
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 380) ScrollFrame.Parent = MenuFrame
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 420) ScrollFrame.Parent = MenuFrame
 
-local function createOption(name, yPos, defaultText, callback)
-    local lbl = Instance.new("TextLabel") lbl.Size = UDim2.new(0, 120, 0, 28) lbl.Position = UDim2.new(0, 10, 0, yPos)
+local function createToggle(name, yPos, defaultText, callback)
+    local lbl = Instance.new("TextLabel") lbl.Size = UDim2.new(0, 130, 0, 26) lbl.Position = UDim2.new(0, 10, 0, yPos)
     lbl.BackgroundTransparency = 1 lbl.Text = name lbl.TextColor3 = Color3.fromRGB(220, 220, 220) lbl.TextXAlignment = Enum.TextXAlignment.Left lbl.TextSize = 12 lbl.Parent = ScrollFrame
-    local btn = Instance.new("TextButton") btn.Size = UDim2.new(0, 95, 0, 26) btn.Position = UDim2.new(1, -110, 0, yPos)
+    local btn = Instance.new("TextButton") btn.Size = UDim2.new(0, 95, 0, 24) btn.Position = UDim2.new(1, -110, 0, yPos)
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40) btn.TextColor3 = Color3.fromRGB(255, 255, 255) btn.Text = defaultText btn.TextSize = 12 btn.Parent = ScrollFrame
-    local corner = Instance.new("UICorner") corner.CornerRadius = UDim.new(0, 6) corner.Parent = btn
+    local corner = Instance.new("UICorner") corner.CornerRadius = UDim.new(0, 5) corner.Parent = btn
     btn.MouseButton1Click:Connect(function() callback(btn) end)
 end
 
-createOption("Radar UI", 5, "ON", function(b) _G.RadarData.radarEnabled = not _G.RadarData.radarEnabled b.Text = _G.RadarData.radarEnabled and "ON" or "OFF" RadarFrame.Visible = _G.RadarData.radarEnabled end)
-createOption("Radar Line ESP", 40, "ON", function(b) _G.RadarData.radarLineEnabled = not _G.RadarData.radarLineEnabled b.Text = _G.RadarData.radarLineEnabled and "ON" or "OFF" end)
-createOption("ESP Real 3D Model", 75, "ON", function(b) _G.RadarData.espHologramEnabled = not _G.RadarData.espHologramEnabled b.Text = _G.RadarData.espHologramEnabled and "ON" or "OFF" ViewportUI.Visible = _G.RadarData.espHologramEnabled end)
-createOption("ESP Name", 110, "ON", function(b) _G.RadarData.espNameEnabled = not _G.RadarData.espNameEnabled b.Text = _G.RadarData.espNameEnabled and "ON" or "OFF" end)
-createOption("ESP Box 2D", 145, "OFF", function(b) _G.RadarData.espBoxEnabled = not _G.RadarData.espBoxEnabled b.Text = _G.RadarData.espBoxEnabled and "ON" or "OFF" end)
-createOption("ESP Line 2D", 180, "OFF", function(b) _G.RadarData.espLineEnabled = not _G.RadarData.espLineEnabled b.Text = _G.RadarData.espLineEnabled and "ON" or "OFF" end)
-createOption("ESP Highlight", 215, "OFF", function(b) _G.RadarData.espHighlightEnabled = not _G.RadarData.espHighlightEnabled b.Text = _G.RadarData.espHighlightEnabled and "ON" or "OFF" end)
-createOption("Ukuran Radar", 250, "120px", function(b) if _G.RadarData.radarSizeVal == 120 then _G.RadarData.radarSizeVal = 160 _G.RadarData.radarRadiusVal = 80 b.Text = "160px" elseif _G.RadarData.radarSizeVal == 160 then _G.RadarData.radarSizeVal = 90 _G.RadarData.radarRadiusVal = 45 b.Text = "90px" else _G.RadarData.radarSizeVal = 120 _G.RadarData.radarRadiusVal = 60 b.Text = "120px" end RadarFrame.Size = UDim2.new(0, _G.RadarData.radarSizeVal, 0, _G.RadarData.radarSizeVal) updateGrid() end)
-createOption("Bentuk Radar", 285, "Bulat", function(b) if _G.RadarData.radarShape == "Bulat" then _G.RadarData.radarShape = "Kotak" RadarCorner.CornerRadius = UDim.new(0, 0) b.Text = "Kotak" else _G.RadarData.radarShape = "Bulat" RadarCorner.CornerRadius = UDim.new(1, 0) b.Text = "Bulat" end end)
-createOption("Outline Radar", 320, "RGB", function(b) if _G.RadarData.outlineMode == "RGB" then _G.RadarData.outlineMode = "Hitam" RadarStroke.Color = Color3.fromRGB(0, 0, 0) b.Text = "Hitam" else _G.RadarData.outlineMode = "RGB" b.Text = "RGB" end end)
-createOption("Jarak Render", 355, "200 Studs", function(b) if _G.RadarData.maxDistanceVal == 200 then _G.RadarData.maxDistanceVal = 400 b.Text = "400 Studs" else _G.RadarData.maxDistanceVal = 200 b.Text = "200 Studs" end updateGrid() end)
+local function createInput(name, yPos, defaultValue, callback)
+    local lbl = Instance.new("TextLabel") lbl.Size = UDim2.new(0, 130, 0, 26) lbl.Position = UDim2.new(0, 10, 0, yPos)
+    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.TextColor3 = Color3.fromRGB(220, 220, 220) lbl.TextXAlignment = Enum.TextXAlignment.Left lbl.TextSize = 12 lbl.Parent = ScrollFrame
+    local box = Instance.new("TextBox") box.Size = UDim2.new(0, 95, 0, 24) box.Position = UDim2.new(1, -110, 0, yPos)
+    box.BackgroundColor3 = Color3.fromRGB(30, 30, 30) box.TextColor3 = Color3.fromRGB(0, 255, 200) box.Text = tostring(defaultValue) box.TextSize = 12 box.Parent = ScrollFrame
+    local corner = Instance.new("UICorner") corner.CornerRadius = UDim.new(0, 5) corner.Parent = box
+    local stroke = Instance.new("UIStroke") stroke.Color = Color3.fromRGB(60, 60, 60) stroke.Parent = box
+    box.FocusLost:Connect(function()
+        local num = tonumber(box.Text)
+        if num then callback(num) else box.Text = tostring(defaultValue) end
+    end)
+end
+
+createToggle("Radar UI", 5, "ON", function(b) _G.RadarData.radarEnabled = not _G.RadarData.radarEnabled b.Text = _G.RadarData.radarEnabled and "ON" or "OFF" RadarFrame.Visible = _G.RadarData.radarEnabled end)
+createToggle("Radar Line ESP", 35, "ON", function(b) _G.RadarData.radarLineEnabled = not _G.RadarData.radarLineEnabled b.Text = _G.RadarData.radarLineEnabled and "ON" or "OFF" end)
+createToggle("ESP Name", 65, "ON", function(b) _G.RadarData.espNameEnabled = not _G.RadarData.espNameEnabled b.Text = _G.RadarData.espNameEnabled and "ON" or "OFF" end)
+createToggle("ESP 3D Model", 95, "OFF", function(b) _G.RadarData.espHologramEnabled = not _G.RadarData.espHologramEnabled b.Text = _G.RadarData.espHologramEnabled and "ON" or "OFF" ViewportUI.Visible = _G.RadarData.espHologramEnabled end)
+createToggle("ESP Box 2D", 125, "OFF", function(b) _G.RadarData.espBoxEnabled = not _G.RadarData.espBoxEnabled b.Text = _G.RadarData.espBoxEnabled and "ON" or "OFF" end)
+createToggle("ESP Line 2D", 155, "OFF", function(b) _G.RadarData.espLineEnabled = not _G.RadarData.espLineEnabled b.Text = _G.RadarData.espLineEnabled and "ON" or "OFF" end)
+createToggle("ESP Highlight", 185, "OFF", function(b) _G.RadarData.espHighlightEnabled = not _G.RadarData.espHighlightEnabled b.Text = _G.RadarData.espHighlightEnabled and "ON" or "OFF" end)
+createToggle("Bentuk Radar", 215, "Bulat", function(b)
+    if _G.RadarData.radarShape == "Bulat" then
+        _G.RadarData.radarShape = "Squircle" RadarCorner.CornerRadius = UDim.new(0.3, 0) b.Text = "Squircle"
+    elseif _G.RadarData.radarShape == "Squircle" then
+        _G.RadarData.radarShape = "Kotak" RadarCorner.CornerRadius = UDim.new(0, 0) b.Text = "Kotak"
+    else
+        _G.RadarData.radarShape = "Bulat" RadarCorner.CornerRadius = UDim.new(1, 0) b.Text = "Bulat"
+    end
+end)
+createToggle("Outline Radar", 245, "RGB", function(b) if _G.RadarData.outlineMode == "RGB" then _G.RadarData.outlineMode = "Hitam" RadarStroke.Color = Color3.fromRGB(0, 0, 0) b.Text = "Hitam" else _G.RadarData.outlineMode = "RGB" b.Text = "RGB" end end)
+
+createInput("Ukuran Radar (px)", 275, 120, function(val)
+    _G.RadarData.radarSizeVal = val
+    _G.RadarData.radarRadiusVal = val / 2
+    RadarFrame.Size = UDim2.new(0, val, 0, val)
+    updateGrid()
+end)
+
+createInput("Jarak Render (Studs)", 305, 200, function(val)
+    _G.RadarData.maxDistanceVal = val
+    updateGrid()
+end)
+
+createInput("Ketebalan Line Radar", 335, 1, function(val)
+    _G.RadarData.radarLineThickness = val
+end)
+
+createInput("Ukuran Arrow (px)", 365, 14, function(val)
+    _G.RadarData.arrowSizeVal = val
+end)
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 230, 0, 30) CloseBtn.Position = UDim2.new(0.5, -115, 1, -35)
+CloseBtn.Size = UDim2.new(0, 240, 0, 30) CloseBtn.Position = UDim2.new(0.5, -120, 1, -35)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40) CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Text = "Sembunyikan Menu" CloseBtn.TextSize = 12 CloseBtn.Parent = MenuFrame
 local CloseCorner = Instance.new("UICorner") CloseCorner.CornerRadius = UDim.new(0, 6) CloseCorner.Parent = CloseBtn
@@ -136,7 +187,7 @@ CloseBtn.MouseButton1Click:Connect(function() MenuFrame.Visible = false end)
 
 -- RADAR CENTER ARROW
 local CenterArrow = Instance.new("ImageLabel")
-CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5) CenterArrow.Position = UDim2.new(0.5, 0, 0.5, 0)
+CenterArrow.AnchorPoint = Vector2.new(0.5, 0.5)
 CenterArrow.BackgroundTransparency = 1 CenterArrow.Image = _G.RadarData.myArrowImage CenterArrow.ZIndex = 3 CenterArrow.Parent = RadarFrame
 
 local BlipsContainer = Instance.new("Folder") BlipsContainer.Name = "Blips" BlipsContainer.Parent = RadarFrame
@@ -157,7 +208,7 @@ end
 local function updateLine(line, p1, p2, thickness)
     local dist = (p2 - p1).Magnitude
     local angle = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
-    line.Size = UDim2.new(0, dist, 0, thickness or 1.5)
+    line.Size = UDim2.new(0, dist, 0, thickness or 1)
     line.Position = UDim2.new(0, (p1.X + p2.X) / 2, 0, (p1.Y + p2.Y) / 2)
     line.Rotation = angle
 end
@@ -180,10 +231,7 @@ local function createViewportClone(player)
 end
 
 local function removeViewportClone(player)
-    if viewportClones[player] then
-        viewportClones[player]:Destroy()
-        viewportClones[player] = nil
-    end
+    if viewportClones[player] then viewportClones[player]:Destroy() viewportClones[player] = nil end
 end
 
 RunService.RenderStepped:Connect(function()
@@ -196,8 +244,7 @@ RunService.RenderStepped:Connect(function()
     local camera = Workspace.CurrentCamera
     if not camera then return end
 
-    ViewportCam.CFrame = camera.CFrame
-    ViewportCam.FieldOfView = camera.FieldOfView
+    ViewportCam.CFrame = camera.CFrame ViewportCam.FieldOfView = camera.FieldOfView
 
     local myHRP = character.HumanoidRootPart
     local myPos = myHRP.Position
@@ -209,6 +256,7 @@ RunService.RenderStepped:Connect(function()
 
     if _G.RadarData.radarEnabled then
         CenterArrow.Size = UDim2.new(0, _G.RadarData.arrowSizeVal, 0, _G.RadarData.arrowSizeVal)
+        CenterArrow.Position = UDim2.new(0, centerPosPx.X, 0, centerPosPx.Y)
         local myLook = Vector3.new(myHRP.CFrame.LookVector.X, 0, myHRP.CFrame.LookVector.Z).Unit
         CenterArrow.Rotation = math.deg(math.atan2(myLook:Dot(camRight), myLook:Dot(camLook)))
     end
@@ -233,7 +281,7 @@ RunService.RenderStepped:Connect(function()
 
                 local rLine = radarLines[player]
                 if not rLine then
-                    rLine = drawLine(RadarFrame, 1, Color3.fromRGB(0, 255, 200))
+                    rLine = drawLine(RadarFrame, _G.RadarData.radarLineThickness, Color3.fromRGB(0, 255, 200))
                     rLine.ZIndex = 1
                     radarLines[player] = rLine
                 end
@@ -251,7 +299,7 @@ RunService.RenderStepped:Connect(function()
                 blip.Visible = true
 
                 if _G.RadarData.radarLineEnabled then
-                    updateLine(rLine, centerPosPx, blipPosPx, 1)
+                    updateLine(rLine, centerPosPx, blipPosPx, _G.RadarData.radarLineThickness)
                     rLine.Visible = true
                 else
                     rLine.Visible = false
@@ -272,7 +320,7 @@ RunService.RenderStepped:Connect(function()
                 
                 local nameLbl = Instance.new("TextLabel")
                 nameLbl.BackgroundTransparency = 1 nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                nameLbl.TextSize = 13 nameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
+                nameLbl.TextSize = 12 nameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
                 nameLbl.Parent = EspContainer
                 esp.Name = nameLbl
 
