@@ -25,15 +25,16 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ModifierGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999999999
+ScreenGui.DisplayOrder = 9
 ScreenGui.Enabled = true
 ScreenGui.Parent = parentContainer
 
--- Frame Utama (Diperbesar sikit ke bawah agar muat tombol baru)
+-- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 335)
+MainFrame.Size = UDim2.new(0, 240, 0, 300)
 MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.2
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -45,7 +46,7 @@ UICornerMain.CornerRadius = UDim.new(0, 10)
 -- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 35)
-HeaderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HeaderBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 HeaderBar.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner", HeaderBar)
@@ -55,11 +56,16 @@ local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.Text = "MODIFIER V1.0 PRO"
-Title.TextColor3 = Color3.fromRGB(0, 102, 204)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
+
+-- Title RGB
+RunService.RenderStepped:Connect(function()
+    local hue = (tick() % 5) / 5
+    Title.TextColor3 = Color3.fromHSV(hue, 1, 1)
+end)
 
 -- Scroll Content
 local ContentScroll = Instance.new("ScrollingFrame", MainFrame)
@@ -68,7 +74,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 440)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -84,7 +90,7 @@ local function createToggleRow(parent, labelText, order)
     local label = Instance.new("TextLabel", row)
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Text = labelText .. " :"
-    label.TextColor3 = Color3.fromRGB(40, 40, 40)
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
     label.Font = Enum.Font.GothamBold
     label.TextSize = 10
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -129,7 +135,7 @@ speedRow.LayoutOrder = 3
 local speedLabel = Instance.new("TextLabel", speedRow)
 speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
 speedLabel.Text = "Modifier Speed :"
-speedLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+speedLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 speedLabel.Font = Enum.Font.GothamBold
 speedLabel.TextSize = 10
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -155,7 +161,7 @@ spawnRow.LayoutOrder = 4
 local spawnLabel = Instance.new("TextLabel", spawnRow)
 spawnLabel.Size = UDim2.new(0.6, 0, 1, 0)
 spawnLabel.Text = "Spawn Block :"
-spawnLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+spawnLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 spawnLabel.Font = Enum.Font.GothamBold
 spawnLabel.TextSize = 10
 spawnLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -181,7 +187,7 @@ undoRow.LayoutOrder = 5
 local undoLabel = Instance.new("TextLabel", undoRow)
 undoLabel.Size = UDim2.new(0.6, 0, 1, 0)
 undoLabel.Text = "Undo Last Block :"
-undoLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+undoLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 undoLabel.Font = Enum.Font.GothamBold
 undoLabel.TextSize = 10
 undoLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -207,7 +213,7 @@ resetRow.LayoutOrder = 6
 local resetLabel = Instance.new("TextLabel", resetRow)
 resetLabel.Size = UDim2.new(0.6, 0, 1, 0)
 resetLabel.Text = "Reset Modifier :"
-resetLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
+resetLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 resetLabel.Font = Enum.Font.GothamBold
 resetLabel.TextSize = 10
 resetLabel.TextXAlignment = Enum.TextXAlignment.Left
