@@ -33,7 +33,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 320)
+MainFrame.Size = UDim2.new(0, 220, 0, 340)
 MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -65,7 +65,7 @@ ScrollFrame.Size = UDim2.new(1, -8, 1, -36)
 ScrollFrame.Position = UDim2.new(0, 4, 0, 32)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 580)
 ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
@@ -139,6 +139,30 @@ local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
     end
 end
 
+local function createFeatureBtn(name, yPos)
+    local Lbl = Instance.new("TextLabel", ScrollFrame)
+    Lbl.Size = UDim2.new(0, 130, 0, 24)
+    Lbl.Position = UDim2.new(0, 5, 0, yPos)
+    Lbl.BackgroundTransparency = 1
+    Lbl.Text = name
+    Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.Font = Enum.Font.GothamSemibold
+    Lbl.TextSize = 10
+
+    local Btn = Instance.new("TextButton", ScrollFrame)
+    Btn.Size = UDim2.new(0, 60, 0, 22)
+    Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
+    Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    Btn.BackgroundTransparency = 0.3
+    Btn.Text = "EXEC"
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 9
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
+    return Btn
+end
+
 local ActiveFeaturesBtn = createToggle("Active Features:", 5)
 local FastToggleBtn = createToggle("Fast boost :", 32)
 local FastSpeedBox = createConfigRow("Fast Spd:", 100, nil, 58, false)
@@ -149,7 +173,7 @@ local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 111, tr
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 138)
 local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
--- FITUR STEER SETTING DENGAN DISPLAY CAR NAME & LABELED INPUT
+-- STEER SETTING WITH MAXTORQUE Z-AXIS INPUT
 local SteerSettingToggleBtn = createToggle("Steer Setting :", 191)
 
 local CarLabel = Instance.new("TextLabel", ScrollFrame)
@@ -164,8 +188,11 @@ CarLabel.TextSize = 9
 
 local SteerBoxP = createConfigRow("P (Power) :", "-", nil, 240, false)
 local SteerBoxD = createConfigRow("D (Dampening) :", "-", nil, 267, false)
+local SteerBoxTorque = createConfigRow("MaxTorque (Z) :", "-", nil, 294, false)
 
-local LockToggleBtn = createToggle("Lock button :", 294)
+local RemoveWheelieBtn = createFeatureBtn("Del Wheelie Data:", 321)
+
+local LockToggleBtn = createToggle("Lock button :", 348)
 
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -206,35 +233,11 @@ local function createTriggerRow(name, yPos)
     return SetBtn, ResetBtn
 end
 
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 321)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 348)
+local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 375)
+local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 402)
 
-local function createFeatureBtn(name, yPos)
-    local Lbl = Instance.new("TextLabel", ScrollFrame)
-    Lbl.Size = UDim2.new(0, 130, 0, 24)
-    Lbl.Position = UDim2.new(0, 5, 0, yPos)
-    Lbl.BackgroundTransparency = 1
-    Lbl.Text = name
-    Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.Font = Enum.Font.GothamSemibold
-    Lbl.TextSize = 10
-
-    local Btn = Instance.new("TextButton", ScrollFrame)
-    Btn.Size = UDim2.new(0, 60, 0, 22)
-    Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
-    Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    Btn.BackgroundTransparency = 0.3
-    Btn.Text = "EXEC"
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 9
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
-    return Btn
-end
-
-local GiveBtn = createFeatureBtn("Teleport Tool:", 375)
-local FlyBtn = createFeatureBtn("Fly GUI:", 402)
+local GiveBtn = createFeatureBtn("Teleport Tool:", 429)
+local FlyBtn = createFeatureBtn("Fly GUI:", 456)
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -280,6 +283,7 @@ local isSteerSettingActive = false
 
 local defaultP = nil
 local defaultD = nil
+local defaultTorqueZ = nil
 local activeBodyGyro = nil
 
 local boundRightButton = nil
@@ -342,9 +346,10 @@ SteerSettingToggleBtn.MouseButton1Click:Connect(function()
     SteerSettingToggleBtn.Text = isSteerSettingActive and "ON" or "OFF"
     SteerSettingToggleBtn.BackgroundColor3 = isSteerSettingActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
     
-    if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD then
+    if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD and defaultTorqueZ then
         activeBodyGyro.P = defaultP
         activeBodyGyro.D = defaultD
+        activeBodyGyro.MaxTorque = Vector3.new(0, 0, defaultTorqueZ)
     end
 end)
 
@@ -360,6 +365,41 @@ SteerBoxD.FocusLost:Connect(function()
     if not val and defaultD then
         SteerBoxD.Text = tostring(defaultD)
     end
+end)
+
+SteerBoxTorque.FocusLost:Connect(function()
+    local val = tonumber(SteerBoxTorque.Text)
+    if not val and defaultTorqueZ then
+        SteerBoxTorque.Text = tostring(defaultTorqueZ)
+    end
+end)
+
+-- FITUR PENGHAPUS DATA GAME (WHEELIE)
+RemoveWheelieBtn.MouseButton1Click:Connect(function()
+    local playerCarName = LocalPlayer.Name .. "Car"
+    local carModel = workspace:FindFirstChild(playerCarName)
+    local deletedCount = 0
+
+    if carModel then
+        for _, item in ipairs(carModel:GetDescendants()) do
+            if item.Name:lower():find("wheelie") then
+                item:Destroy()
+                deletedCount = deletedCount + 1
+            end
+        end
+    end
+
+    if deletedCount > 0 then
+        RemoveWheelieBtn.Text = "DEL ("..deletedCount..")"
+        RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        RemoveWheelieBtn.Text = "NOT FOUND"
+        RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    end
+
+    task.wait(1.5)
+    RemoveWheelieBtn.Text = "EXEC"
+    RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
@@ -550,7 +590,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA TERBARU DENGAN PENCARIAN PRESISI BERBASIS USERNAME CAR MODEL
+-- RUNSERVICE DENGAN AUTO-FILL DEFAULT MAXTORQUE (SUMBU Z) & OVERRIDE
 RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
@@ -565,7 +605,6 @@ RunService.Stepped:Connect(function()
             seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
         end
 
-        -- Cari Model kendaraan pemain berdasarkan pola nama [Username]Car
         local playerCarName = LocalPlayer.Name .. "Car"
         local carModel = workspace:FindFirstChild(playerCarName) or seat:FindFirstAncestor(playerCarName) or seat.Parent.Parent
         
@@ -578,18 +617,22 @@ RunService.Stepped:Connect(function()
                     activeBodyGyro = gyro
                     defaultP = gyro.P
                     defaultD = gyro.D
+                    defaultTorqueZ = gyro.MaxTorque.Z
                     
-                    -- Masukkan nilai bawaan game ke TextBox P & D
+                    -- Masukkan nilai default ke UI
                     SteerBoxP.Text = tostring(defaultP)
                     SteerBoxD.Text = tostring(defaultD)
+                    SteerBoxTorque.Text = tostring(defaultTorqueZ)
                 end
 
                 if isSteerSettingActive then
                     local targetP = tonumber(SteerBoxP.Text) or defaultP
                     local targetD = tonumber(SteerBoxD.Text) or defaultD
+                    local targetTorqueZ = tonumber(SteerBoxTorque.Text) or defaultTorqueZ
 
                     gyro.P = targetP
                     gyro.D = targetD
+                    gyro.MaxTorque = Vector3.new(0, 0, targetTorqueZ)
                 end
             end
         end
