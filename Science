@@ -33,7 +33,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 300)
+MainFrame.Size = UDim2.new(0, 220, 0, 320)
 MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -65,7 +65,7 @@ ScrollFrame.Size = UDim2.new(1, -8, 1, -36)
 ScrollFrame.Position = UDim2.new(0, 4, 0, 32)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 480)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520)
 ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
@@ -149,11 +149,23 @@ local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 111, tr
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 138)
 local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
--- FITUR TUNGGAL STEER SETTING
+-- FITUR STEER SETTING DENGAN DISPLAY CAR NAME & LABELED INPUT
 local SteerSettingToggleBtn = createToggle("Steer Setting :", 191)
-local SteerBoxP, SteerBoxD = createConfigRow("P & D Steer:", "-", "-", 218, true)
 
-local LockToggleBtn = createToggle("Lock button :", 245)
+local CarLabel = Instance.new("TextLabel", ScrollFrame)
+CarLabel.Size = UDim2.new(0, 190, 0, 20)
+CarLabel.Position = UDim2.new(0, 5, 0, 218)
+CarLabel.BackgroundTransparency = 1
+CarLabel.Text = "Car: None"
+CarLabel.TextColor3 = Color3.fromRGB(0, 255, 220)
+CarLabel.TextXAlignment = Enum.TextXAlignment.Left
+CarLabel.Font = Enum.Font.GothamBold
+CarLabel.TextSize = 9
+
+local SteerBoxP = createConfigRow("P (Power) :", "-", nil, 240, false)
+local SteerBoxD = createConfigRow("D (Dampening) :", "-", nil, 267, false)
+
+local LockToggleBtn = createToggle("Lock button :", 294)
 
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -194,8 +206,8 @@ local function createTriggerRow(name, yPos)
     return SetBtn, ResetBtn
 end
 
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 272)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 299)
+local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 321)
+local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 348)
 
 local function createFeatureBtn(name, yPos)
     local Lbl = Instance.new("TextLabel", ScrollFrame)
@@ -221,8 +233,8 @@ local function createFeatureBtn(name, yPos)
     return Btn
 end
 
-local GiveBtn = createFeatureBtn("Teleport Tool:", 326)
-local FlyBtn = createFeatureBtn("Fly GUI:", 353)
+local GiveBtn = createFeatureBtn("Teleport Tool:", 375)
+local FlyBtn = createFeatureBtn("Fly GUI:", 402)
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -266,7 +278,6 @@ local isSmoothBoosting = false
 local isSmoothReversing = false
 local isSteerSettingActive = false
 
--- VARIABEL DATA P DAN D (GAME DEFAULT & CUSTOM)
 local defaultP = nil
 local defaultD = nil
 local activeBodyGyro = nil
@@ -337,7 +348,6 @@ SteerSettingToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- MENANGANI AUTO-FILL VALUE DARI PLAYER DAN KHUSUS JIKA VALUE DIHAPUS (AUTO-DEFAULT)
 SteerBoxP.FocusLost:Connect(function()
     local val = tonumber(SteerBoxP.Text)
     if not val and defaultP then
@@ -517,7 +527,7 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
                     task.wait(delayVal)
                 else
                     isSmoothReversing = false
-              SmoothReverseFloatBtn.Text = "🛑"
+                    SmoothReverseFloatBtn.Text = "🛑"
                     break
                 end
             end
@@ -540,7 +550,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA STEER BARU: MENGATUR PROPERTI P DAN D SECARA DIRECT PADA BODYGYRO DENGAN OVERRIDE
+-- LOGIKA TERBARU DENGAN PENCARIAN PRESISI BERBASIS USERNAME CAR MODEL
 RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
@@ -551,27 +561,29 @@ RunService.Stepped:Connect(function()
     if seat and seat:IsA("VehicleSeat") then
         local vel = seat.AssemblyLinearVelocity
         
-        -- Penyeimbang melompat/melayang
         if vel.Y > 8 or vel.Y < -15 then
             seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
         end
 
-        local model = seat:FindFirstAncestorOfClass("Model")
-        if model then
-            local gyro = model:FindFirstChildWhichIsA("BodyGyro", true)
+        -- Cari Model kendaraan pemain berdasarkan pola nama [Username]Car
+        local playerCarName = LocalPlayer.Name .. "Car"
+        local carModel = workspace:FindFirstChild(playerCarName) or seat:FindFirstAncestor(playerCarName) or seat.Parent.Parent
+        
+        if carModel then
+            CarLabel.Text = "Car: " .. carModel.Name
+            local gyro = carModel:FindFirstChild("LeanGyro", true)
+            
             if gyro then
-                -- BACA DATA DEFAULT GAME DARI MOTOR SAAT PERTAMA KALI DUDUK
                 if activeBodyGyro ~= gyro then
                     activeBodyGyro = gyro
                     defaultP = gyro.P
                     defaultD = gyro.D
                     
-                    -- Tulis nilai default game ke TextBox UI
+                    -- Masukkan nilai bawaan game ke TextBox P & D
                     SteerBoxP.Text = tostring(defaultP)
                     SteerBoxD.Text = tostring(defaultD)
                 end
 
-                -- APLIKASIKAN HANYA JIKA FITUR STEER SETTING TERTOGGLE ON
                 if isSteerSettingActive then
                     local targetP = tonumber(SteerBoxP.Text) or defaultP
                     local targetD = tonumber(SteerBoxD.Text) or defaultD
@@ -582,7 +594,7 @@ RunService.Stepped:Connect(function()
             end
         end
     else
-        -- KETIKA SUDAH TIDAK DUDUK
         activeBodyGyro = nil
+        CarLabel.Text = "Car: None"
     end
 end)
