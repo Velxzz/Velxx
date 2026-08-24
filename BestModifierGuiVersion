@@ -1,3 +1,4 @@
+-- Modifier Gui V3.0 24-8-2026
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -291,11 +292,11 @@ loadBoxRow.LayoutOrder = 11
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
-LoadBox.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+LoadBox.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 LoadBox.BorderSizePixel = 0
 LoadBox.PlaceholderText = "Paste Code Config Here..."
 LoadBox.Text = ""
-LoadBox.TextColor3 = Color3.fromRGB(30, 30, 30)
+LoadBox.TextColor3 = Color3.fromRGB(220, 220, 220)
 LoadBox.Font = Enum.Font.Gotham
 LoadBox.TextSize = 10
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
