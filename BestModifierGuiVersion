@@ -31,7 +31,7 @@ ScreenGui.Parent = parentContainer
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 300)
+MainFrame.Size = UDim2.new(0, 240, 0, 328)
 MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BackgroundTransparency = 0.2
@@ -46,7 +46,8 @@ UICornerMain.CornerRadius = UDim.new(0, 10)
 -- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 35)
-HeaderBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+HeaderBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+HeaderBar.BackgroundTransparency = 0.4
 HeaderBar.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner", HeaderBar)
@@ -55,7 +56,7 @@ HeaderCorner.CornerRadius = UDim.new(0, 10)
 local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "MODIFIER V1.0 PRO"
+Title.Text = "MODIFIER V3.0 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -74,7 +75,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 435)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -117,6 +118,7 @@ local activeFeatures = true
 local isRunning = false
 local floatFunctionActive = true
 local isLocked = false
+local showFloatButtons = true
 
 -- Toggle Active Features
 local _, ActiveFeaturesBtn = createToggleRow(ContentScroll, "Active Features", 1)
@@ -233,11 +235,16 @@ Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 -- Toggle Lock Button
 local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
 
+-- Toggle Show/Hide Float Buttons (Fitur Baru)
+local _, ShowFloatButtonsToggle = createToggleRow(ContentScroll, "Show Float Btn", 8)
+ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+ShowFloatButtonsToggle.Text = "ON"
+
 -- UI Config (Save & Load)
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
-configRow.LayoutOrder = 8
+configRow.LayoutOrder = 9
 
 local SaveConfigBtn = Instance.new("TextButton", configRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
@@ -260,11 +267,11 @@ LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 10
 Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
--- UI Update Config Row (Fitur Baru)
+-- UI Update Config Row
 local updateRow = Instance.new("Frame", ContentScroll)
 updateRow.Size = UDim2.new(1, -6, 0, 28)
 updateRow.BackgroundTransparency = 1
-updateRow.LayoutOrder = 9
+updateRow.LayoutOrder = 10
 
 local UpdateConfigBtn = Instance.new("TextButton", updateRow)
 UpdateConfigBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -280,7 +287,7 @@ Instance.new("UICorner", UpdateConfigBtn).CornerRadius = UDim.new(0, 4)
 local loadBoxRow = Instance.new("Frame", ContentScroll)
 loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
 loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 10
+loadBoxRow.LayoutOrder = 11
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
@@ -297,7 +304,7 @@ Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 11
+statusRow.LayoutOrder = 12
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -307,7 +314,7 @@ StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
 
--- Float Logo Menu
+-- Float Logo Menu Utama (Selalu Muncul)
 local MainFloatBtn = Instance.new("TextButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
 MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
@@ -328,7 +335,10 @@ MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Helper Float Button
+-- Array penampung seluruh tombol melayang fitur utama
+local featureFloatButtons = {}
+
+-- Helper Circular Float Button
 local function createCircularFloat(name, text, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = UDim2.new(0, 50, 0, 50)
@@ -341,6 +351,9 @@ local function createCircularFloat(name, text, customPos, callback)
     btn.TextSize = name == "Speed" and 12 or 10
     btn.BorderSizePixel = 0
     btn.Active = true
+    btn.Visible = showFloatButtons
+    
+    table.insert(featureFloatButtons, btn)
     
     local corner = Instance.new("UICorner", btn)
     corner.CornerRadius = UDim.new(1, 0)
@@ -383,6 +396,24 @@ local function createCircularFloat(name, text, customPos, callback)
     
     return btn
 end
+
+-- Logika Show/Hide Float Buttons
+ShowFloatButtonsToggle.MouseButton1Click:Connect(function()
+    showFloatButtons = not showFloatButtons
+    if showFloatButtons then
+        ShowFloatButtonsToggle.Text = "ON"
+        ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        ShowFloatButtonsToggle.Text = "OFF"
+        ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end
+    
+    for _, btn in ipairs(featureFloatButtons) do
+        if btn then
+            btn.Visible = showFloatButtons
+        end
+    end
+end)
 
 -- Variables Logic
 local spawnedBlocks = {}
@@ -573,7 +604,7 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE NEW CONFIG (Membuat File Baru)
+-- LOGIKA SAVE NEW CONFIG
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
@@ -608,7 +639,7 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA UPDATE CONFIG (Menimpa File Lama Sesuai Kode di TextBox)
+-- LOGIKA UPDATE CONFIG
 UpdateConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         StatusLabel.Text = "Spawn blocks first!"
@@ -623,7 +654,6 @@ UpdateConfigBtn.MouseButton1Click:Connect(function()
     
     local fileName = "ModifierConfigs/" .. codeToUpdate .. ".json"
     
-    -- Cek ketersediaan file lama
     if isfile and not isfile(fileName) then
         StatusLabel.Text = "Code file not found!"
         return
@@ -667,7 +697,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         
         local rawData = readfile(fileName)
         local success, decodedData = pcall(function()
-            return HttpService:JSONDecode(rawData)
+            return HttpService:JSONEncode(rawData)
         end)
         
         if success and type(decodedData) == "table" then
