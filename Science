@@ -10,7 +10,7 @@ if oldGui then oldGui:Destroy() end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BoostSystemGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999
+ScreenGui.DisplayOrder = 9
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MenuShortcut = Instance.new("TextButton", ScreenGui)
@@ -31,7 +31,6 @@ local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Color = Color3.fromRGB(0, 255, 220)
 MenuStroke.Thickness = 0.5
 
--- MainFrame diperlebar (dari 180 ke 220) dan diperpendek (dari 380 ke 300)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 220, 0, 300)
@@ -66,7 +65,7 @@ ScrollFrame.Size = UDim2.new(1, -8, 1, -36)
 ScrollFrame.Position = UDim2.new(0, 4, 0, 32)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 480)
 ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
@@ -150,8 +149,10 @@ local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 111, tr
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 138)
 local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
-local FastSteerToggleBtn = createToggle("Fast Steer :", 191)
-local SteerToggleBtn = createToggle("Better Steer :", 218)
+-- FITUR TUNGGAL STEER SETTING
+local SteerSettingToggleBtn = createToggle("Steer Setting :", 191)
+local SteerBoxP, SteerBoxD = createConfigRow("P & D Steer:", "-", "-", 218, true)
+
 local LockToggleBtn = createToggle("Lock button :", 245)
 
 ActiveFeaturesBtn.Text = "ON"
@@ -259,36 +260,16 @@ SmoothReverseFloatBtn.Active = true
 SmoothReverseFloatBtn.Draggable = true
 Instance.new("UICorner", SmoothReverseFloatBtn).CornerRadius = UDim.new(1, 0)
 
-local FastSteerFloatBtn = Instance.new("TextButton", ScreenGui)
-FastSteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-FastSteerFloatBtn.Position = UDim2.new(1, -180, 1, -345)
-FastSteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-FastSteerFloatBtn.BackgroundTransparency = 0.4
-FastSteerFloatBtn.Text = "⚡"
-FastSteerFloatBtn.TextSize = 20
-FastSteerFloatBtn.Visible = false
-FastSteerFloatBtn.Active = true
-FastSteerFloatBtn.Draggable = true
-Instance.new("UICorner", FastSteerFloatBtn).CornerRadius = UDim.new(1, 0)
-
-local SteerFloatBtn = Instance.new("TextButton", ScreenGui)
-SteerFloatBtn.Size = UDim2.new(0, 50, 0, 50)
-SteerFloatBtn.Position = UDim2.new(1, -125, 1, -345)
-SteerFloatBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-SteerFloatBtn.BackgroundTransparency = 0.4
-SteerFloatBtn.Text = "↔️"
-SteerFloatBtn.TextSize = 20
-SteerFloatBtn.Visible = false
-SteerFloatBtn.Active = true
-SteerFloatBtn.Draggable = true
-Instance.new("UICorner", SteerFloatBtn).CornerRadius = UDim.new(1, 0)
-
 local isFeaturesActive = true
 local isLocked = false
 local isSmoothBoosting = false
 local isSmoothReversing = false
-local isFastSteer = false
-local isBetterSteer = false
+local isSteerSettingActive = false
+
+-- VARIABEL DATA P DAN D (GAME DEFAULT & CUSTOM)
+local defaultP = nil
+local defaultD = nil
+local activeBodyGyro = nil
 
 local boundRightButton = nil
 local boundLeftButton = nil
@@ -308,10 +289,9 @@ ActiveFeaturesBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then
         isSmoothBoosting = false
         isSmoothReversing = false
-        isFastSteer = false
-        isBetterSteer = false
-        FastSteerFloatBtn.Text = "⚡"
-        SteerFloatBtn.Text = "↔️"
+        isSteerSettingActive = false
+        SteerSettingToggleBtn.Text = "OFF"
+        SteerSettingToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     end
 end)
 
@@ -346,40 +326,30 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-FastSteerToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not FastSteerFloatBtn.Visible
-    FastSteerFloatBtn.Visible = newState
-    FastSteerToggleBtn.Text = newState and "ON" or "OFF"
-    FastSteerToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+SteerSettingToggleBtn.MouseButton1Click:Connect(function()
+    isSteerSettingActive = not isSteerSettingActive
+    SteerSettingToggleBtn.Text = isSteerSettingActive and "ON" or "OFF"
+    SteerSettingToggleBtn.BackgroundColor3 = isSteerSettingActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
     
-    if not newState then
-        isFastSteer = false
-        FastSteerFloatBtn.Text = "⚡"
+    if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD then
+        activeBodyGyro.P = defaultP
+        activeBodyGyro.D = defaultD
     end
 end)
 
-FastSteerFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isFastSteer = not isFastSteer
-    FastSteerFloatBtn.Text = isFastSteer and "💨" or "⚡"
-end)
-
-SteerToggleBtn.MouseButton1Click:Connect(function()
-    local newState = not SteerFloatBtn.Visible
-    SteerFloatBtn.Visible = newState
-    SteerToggleBtn.Text = newState and "ON" or "OFF"
-    SteerToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    
-    if not newState then
-        isBetterSteer = false
-        SteerFloatBtn.Text = "↔️"
+-- MENANGANI AUTO-FILL VALUE DARI PLAYER DAN KHUSUS JIKA VALUE DIHAPUS (AUTO-DEFAULT)
+SteerBoxP.FocusLost:Connect(function()
+    local val = tonumber(SteerBoxP.Text)
+    if not val and defaultP then
+        SteerBoxP.Text = tostring(defaultP)
     end
 end)
 
-SteerFloatBtn.MouseButton1Click:Connect(function()
-    if not isFeaturesActive then return end
-    isBetterSteer = not isBetterSteer
-    SteerFloatBtn.Text = isBetterSteer and "🌀" or "↔️"
+SteerBoxD.FocusLost:Connect(function()
+    local val = tonumber(SteerBoxD.Text)
+    if not val and defaultD then
+        SteerBoxD.Text = tostring(defaultD)
+    end
 end)
 
 LockToggleBtn.MouseButton1Click:Connect(function()
@@ -389,8 +359,6 @@ LockToggleBtn.MouseButton1Click:Connect(function()
     FastFloatBtn.Draggable = not isLocked
     SmoothFloatBtn.Draggable = not isLocked
     SmoothReverseFloatBtn.Draggable = not isLocked
-    FastSteerFloatBtn.Draggable = not isLocked
-    SteerFloatBtn.Draggable = not isLocked
 end)
 
 RightSetBtn.MouseButton1Click:Connect(function()
@@ -441,7 +409,7 @@ UserInputService.InputBegan:Connect(function(input)
         local guiObjects = LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
         
         for _, gui in ipairs(guiObjects) do
-            if (gui:IsA("TextButton") or gui:IsA("ImageButton")) and gui ~= RightSetBtn and gui ~= LeftSetBtn and gui ~= SteerToggleBtn and gui ~= FastSteerToggleBtn and gui ~= MenuShortcut and gui ~= SteerFloatBtn and gui ~= FastSteerFloatBtn then
+            if (gui:IsA("TextButton") or gui:IsA("ImageButton")) and gui ~= RightSetBtn and gui ~= LeftSetBtn and gui ~= MenuShortcut then
                 
                 gui.MouseButton1Down:Connect(function()
                     if settingTarget == nil then
@@ -549,7 +517,7 @@ SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
                     task.wait(delayVal)
                 else
                     isSmoothReversing = false
-                    SmoothReverseFloatBtn.Text = "🛑"
+              SmoothReverseFloatBtn.Text = "🛑"
                     break
                 end
             end
@@ -572,8 +540,8 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- LOGIKA STEER + PEREDAM MELOMPAT/MELAYANG SAAT BELOK (BETTER STEER FIX)
-RunService.Stepped:Connect(function(dt)
+-- LOGIKA STEER BARU: MENGATUR PROPERTI P DAN D SECARA DIRECT PADA BODYGYRO DENGAN OVERRIDE
+RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
     local char = LocalPlayer.Character
@@ -583,49 +551,38 @@ RunService.Stepped:Connect(function(dt)
     if seat and seat:IsA("VehicleSeat") then
         local vel = seat.AssemblyLinearVelocity
         
+        -- Penyeimbang melompat/melayang
         if vel.Y > 8 or vel.Y < -15 then
             seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
         end
 
-        if not (isFastSteer or isBetterSteer) then return end
+        local model = seat:FindFirstAncestorOfClass("Model")
+        if model then
+            local gyro = model:FindFirstChildWhichIsA("BodyGyro", true)
+            if gyro then
+                -- BACA DATA DEFAULT GAME DARI MOTOR SAAT PERTAMA KALI DUDUK
+                if activeBodyGyro ~= gyro then
+                    activeBodyGyro = gyro
+                    defaultP = gyro.P
+                    defaultD = gyro.D
+                    
+                    -- Tulis nilai default game ke TextBox UI
+                    SteerBoxP.Text = tostring(defaultP)
+                    SteerBoxD.Text = tostring(defaultD)
+                end
 
-        local steerInput = 0
-        if isRightPressed then steerInput = 1 end
-        if isLeftPressed then steerInput = -1 end
-        
-        if steerInput == 0 then
-            steerInput = seat.SteerFloat
-        end
-        
-        if steerInput ~= 0 then
-            local speed = vel.Magnitude
-            local turnPower = -steerInput * 1.8
-            
-            if isBetterSteer then
-                if speed > 15 then
-                    local speedFactor = math.clamp(35 / speed, 0.12, 1.0)
-                    turnPower = turnPower * speedFactor
+                -- APLIKASIKAN HANYA JIKA FITUR STEER SETTING TERTOGGLE ON
+                if isSteerSettingActive then
+                    local targetP = tonumber(SteerBoxP.Text) or defaultP
+                    local targetD = tonumber(SteerBoxD.Text) or defaultD
+
+                    gyro.P = targetP
+                    gyro.D = targetD
                 end
             end
-            
-            local currentAngVel = seat.AssemblyAngularVelocity
-            local targetY = turnPower
-            
-            if isFastSteer then
-                local responsiveness = math.clamp(18 - (speed * 0.04), 4, 15)
-                targetY = currentAngVel.Y + (turnPower - currentAngVel.Y) * math.clamp(dt * responsiveness, 0, 1)
-            end
-            
-            seat.AssemblyAngularVelocity = Vector3.new(currentAngVel.X, targetY, currentAngVel.Z)
-
-            if speed > 35 and isBetterSteer then
-                local lookVector = seat.CFrame.LookVector
-                local forwardSpeed = vel:Dot(lookVector)
-                
-                local targetVel = (lookVector * forwardSpeed) + Vector3.new(0, math.clamp(vel.Y, -2, 2), 0)
-                local correctedVel = vel:Lerp(targetVel, 0.08)
-                seat.AssemblyLinearVelocity = correctedVel
-            end
         end
+    else
+        -- KETIKA SUDAH TIDAK DUDUK
+        activeBodyGyro = nil
     end
 end)
