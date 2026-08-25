@@ -33,7 +33,7 @@ MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 340)
+MainFrame.Size = UDim2.new(0, 220, 0, 360)
 MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.5
@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
 Title.Position = UDim2.new(0, 0, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.7 PRO"
+Title.Text = "BOOST V4.8 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
 
@@ -65,7 +65,7 @@ ScrollFrame.Size = UDim2.new(1, -8, 1, -36)
 ScrollFrame.Position = UDim2.new(0, 4, 0, 32)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 580)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 610)
 ScrollFrame.ScrollBarThickness = 3
 
 local function createToggle(name, yPos)
@@ -139,7 +139,7 @@ local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
     end
 end
 
-local function createFeatureBtn(name, yPos)
+local function createFeatureBtn(name, btnText, yPos, color)
     local Lbl = Instance.new("TextLabel", ScrollFrame)
     Lbl.Size = UDim2.new(0, 130, 0, 24)
     Lbl.Position = UDim2.new(0, 5, 0, yPos)
@@ -153,9 +153,9 @@ local function createFeatureBtn(name, yPos)
     local Btn = Instance.new("TextButton", ScrollFrame)
     Btn.Size = UDim2.new(0, 60, 0, 22)
     Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
-    Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    Btn.BackgroundColor3 = color or Color3.fromRGB(0, 170, 255)
     Btn.BackgroundTransparency = 0.3
-    Btn.Text = "EXEC"
+    Btn.Text = btnText or "EXEC"
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 9
@@ -173,7 +173,6 @@ local SmoothBox1, SmoothBox2 = createConfigRow("Smooth Bst:", 3.5, 0.03, 111, tr
 local SmoothReverseToggleBtn = createToggle("Smooth brake :", 138)
 local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
--- STEER SETTING WITH MAXTORQUE Z-AXIS INPUT
 local SteerSettingToggleBtn = createToggle("Steer Setting :", 191)
 
 local CarLabel = Instance.new("TextLabel", ScrollFrame)
@@ -189,55 +188,22 @@ CarLabel.TextSize = 9
 local SteerBoxP = createConfigRow("P (Power) :", "-", nil, 240, false)
 local SteerBoxD = createConfigRow("D (Dampening) :", "-", nil, 267, false)
 local SteerBoxTorque = createConfigRow("MaxTorque (Z) :", "-", nil, 294, false)
+local ResetSteerBtn = createFeatureBtn("Reset Steer:", "RESET", 321, Color3.fromRGB(255, 120, 0))
 
-local RemoveWheelieBtn = createFeatureBtn("Del Wheelie Data:", 321)
+local DensityBox = createConfigRow("Density :", "-", nil, 348, false)
+local ResetDensityBtn = createFeatureBtn("Reset Density:", "RESET", 375, Color3.fromRGB(255, 120, 0))
 
-local LockToggleBtn = createToggle("Lock button :", 348)
+local MaxFrictionBtn = createFeatureBtn("Max Friction:", "EXEC", 402, Color3.fromRGB(0, 170, 255))
+local ResetFrictionBtn = createFeatureBtn("Reset Friction:", "RESET", 429, Color3.fromRGB(255, 120, 0))
+
+local RemoveWheelieBtn = createFeatureBtn("Del Wheelie Data:", "EXEC", 456, Color3.fromRGB(0, 170, 255))
+local LockToggleBtn = createToggle("Lock button :", 483)
 
 ActiveFeaturesBtn.Text = "ON"
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 
-local function createTriggerRow(name, yPos)
-    local Label = Instance.new("TextLabel", ScrollFrame)
-    Label.Size = UDim2.new(0, 50, 0, 24)
-    Label.Position = UDim2.new(0, 5, 0, yPos)
-    Label.BackgroundTransparency = 1
-    Label.Text = name .. ":"
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 10
-
-    local SetBtn = Instance.new("TextButton", ScrollFrame)
-    SetBtn.Size = UDim2.new(0, 74, 0, 22)
-    SetBtn.Position = UDim2.new(0, 57, 0, yPos + 1)
-    SetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    SetBtn.BackgroundTransparency = 0.3
-    SetBtn.Text = "Set Trigger"
-    SetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SetBtn.Font = Enum.Font.GothamBold
-    SetBtn.TextSize = 8
-    Instance.new("UICorner", SetBtn).CornerRadius = UDim.new(0, 5)
-
-    local ResetBtn = Instance.new("TextButton", ScrollFrame)
-    ResetBtn.Size = UDim2.new(0, 60, 0, 22)
-    ResetBtn.Position = UDim2.new(0, 138, 0, yPos + 1)
-    ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    ResetBtn.BackgroundTransparency = 0.3
-    ResetBtn.Text = "Reset"
-    ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ResetBtn.Font = Enum.Font.GothamBold
-    ResetBtn.TextSize = 9
-    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 5)
-
-    return SetBtn, ResetBtn
-end
-
-local RightSetBtn, RightResetBtn = createTriggerRow("Kanan", 375)
-local LeftSetBtn, LeftResetBtn = createTriggerRow("Kiri", 402)
-
-local GiveBtn = createFeatureBtn("Teleport Tool:", 429)
-local FlyBtn = createFeatureBtn("Fly GUI:", 456)
+local GiveBtn = createFeatureBtn("Teleport Tool:", "EXEC", 510, Color3.fromRGB(0, 170, 255))
+local FlyBtn = createFeatureBtn("Fly GUI:", "EXEC", 537, Color3.fromRGB(0, 170, 255))
 
 local FastFloatBtn = Instance.new("TextButton", ScreenGui)
 FastFloatBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -281,16 +247,14 @@ local isSmoothBoosting = false
 local isSmoothReversing = false
 local isSteerSettingActive = false
 
+-- MEMORY DEFAULT VALUES
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
+local defaultDensity = nil
+local defaultFriction = nil
+local defaultFrictionWeight = nil
 local activeBodyGyro = nil
-
-local boundRightButton = nil
-local boundLeftButton = nil
-local settingTarget = nil
-local isRightPressed = false
-local isLeftPressed = false
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -353,28 +317,154 @@ SteerSettingToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- RESET STEER FEATURE
+ResetSteerBtn.MouseButton1Click:Connect(function()
+    if defaultP and defaultD and defaultTorqueZ then
+        SteerBoxP.Text = tostring(defaultP)
+        SteerBoxD.Text = tostring(defaultD)
+        SteerBoxTorque.Text = tostring(defaultTorqueZ)
+
+        if activeBodyGyro then
+            activeBodyGyro.P = defaultP
+            activeBodyGyro.D = defaultD
+            activeBodyGyro.MaxTorque = Vector3.new(0, 0, defaultTorqueZ)
+        end
+    end
+end)
+
 SteerBoxP.FocusLost:Connect(function()
     local val = tonumber(SteerBoxP.Text)
-    if not val and defaultP then
-        SteerBoxP.Text = tostring(defaultP)
-    end
+    if not val and defaultP then SteerBoxP.Text = tostring(defaultP) end
 end)
 
 SteerBoxD.FocusLost:Connect(function()
     local val = tonumber(SteerBoxD.Text)
-    if not val and defaultD then
-        SteerBoxD.Text = tostring(defaultD)
-    end
+    if not val and defaultD then SteerBoxD.Text = tostring(defaultD) end
 end)
 
 SteerBoxTorque.FocusLost:Connect(function()
     local val = tonumber(SteerBoxTorque.Text)
-    if not val and defaultTorqueZ then
-        SteerBoxTorque.Text = tostring(defaultTorqueZ)
+    if not val and defaultTorqueZ then SteerBoxTorque.Text = tostring(defaultTorqueZ) end
+end)
+
+-- DENSITY CONTROL & RESET DENSITY
+DensityBox.FocusLost:Connect(function()
+    local val = tonumber(DensityBox.Text)
+    if not val and defaultDensity then
+        DensityBox.Text = tostring(defaultDensity)
+        return
+    end
+
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+    if seat then
+        local carModel = seat:FindFirstAncestorOfClass("Model")
+        if carModel then
+            for _, part in ipairs(carModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                    part.CustomPhysicalProperties = PhysicalProperties.new(
+                        val,
+                        prop.Elasticity,
+                        prop.ElasticityWeight,
+                        prop.Friction,
+                        prop.FrictionWeight
+                    )
+                end
+            end
+        end
     end
 end)
 
--- FITUR PENGHAPUS DATA GAME (WHEELIE)
+ResetDensityBtn.MouseButton1Click:Connect(function()
+    if defaultDensity then
+        DensityBox.Text = tostring(defaultDensity)
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local seat = hum and hum.SeatPart
+        if seat then
+            local carModel = seat:FindFirstAncestorOfClass("Model")
+            if carModel then
+                for _, part in ipairs(carModel:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                        part.CustomPhysicalProperties = PhysicalProperties.new(
+                            defaultDensity,
+                            prop.Elasticity,
+                            prop.ElasticityWeight,
+                            prop.Friction,
+                            prop.FrictionWeight
+                        )
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- FRICTION CONTROL & RESET FRICTION
+MaxFrictionBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+
+    if seat then
+        local carModel = seat:FindFirstAncestorOfClass("Model")
+        if carModel then
+            for _, part in ipairs(carModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                    part.CustomPhysicalProperties = PhysicalProperties.new(
+                        prop.Density,
+                        prop.Elasticity,
+                        prop.ElasticityWeight,
+                        prop.Friction,
+                        100
+                    )
+                    part.CustomPhysicalProperties = PhysicalProperties.new(
+                        prop.Density,
+                        prop.Elasticity,
+                        prop.ElasticityWeight,
+                        2,
+                        100
+                    )
+                end
+            end
+            MaxFrictionBtn.Text = "APPLIED!"
+            MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            task.wait(1.5)
+            MaxFrictionBtn.Text = "EXEC"
+            MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        end
+    end
+end)
+
+ResetFrictionBtn.MouseButton1Click:Connect(function()
+    if defaultFriction and defaultFrictionWeight then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local seat = hum and hum.SeatPart
+        if seat then
+            local carModel = seat:FindFirstAncestorOfClass("Model")
+            if carModel then
+                for _, part in ipairs(carModel:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                        part.CustomPhysicalProperties = PhysicalProperties.new(
+                            prop.Density,
+                            prop.Elasticity,
+                            prop.ElasticityWeight,
+                            defaultFriction,
+                            defaultFrictionWeight
+                        )
+                    end
+                end
+            end
+        end
+    end
+end)
+
 RemoveWheelieBtn.MouseButton1Click:Connect(function()
     local playerCarName = LocalPlayer.Name .. "Car"
     local carModel = workspace:FindFirstChild(playerCarName)
@@ -411,93 +501,6 @@ LockToggleBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Draggable = not isLocked
 end)
 
-RightSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Right"
-    RightSetBtn.Text = "Setting..."
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-RightResetBtn.MouseButton1Click:Connect(function()
-    RightResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundRightButton = nil
-    isRightPressed = false
-    RightSetBtn.Text = "Set Trigger"
-    RightSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    RightResetBtn.Text = "Reset"
-end)
-
-LeftSetBtn.MouseButton1Click:Connect(function()
-    settingTarget = "Left"
-    LeftSetBtn.Text = "Setting..."
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-end)
-
-LeftResetBtn.MouseButton1Click:Connect(function()
-    LeftResetBtn.Text = "Reseting.."
-    task.wait(0.4)
-    boundLeftButton = nil
-    isLeftPressed = false
-    LeftSetBtn.Text = "Set Trigger"
-    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    LeftResetBtn.Text = "Reset"
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if not isFeaturesActive then return end
-    
-    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
-        isRightPressed = true
-    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
-        isLeftPressed = true
-    end
-
-    if not settingTarget then return end
-    
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local mousePos = UserInputService:GetMouseLocation()
-        local guiObjects = LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
-        
-        for _, gui in ipairs(guiObjects) do
-            if (gui:IsA("TextButton") or gui:IsA("ImageButton")) and gui ~= RightSetBtn and gui ~= LeftSetBtn and gui ~= MenuShortcut then
-                
-                gui.MouseButton1Down:Connect(function()
-                    if settingTarget == nil then
-                        if gui == boundRightButton then isRightPressed = true end
-                        if gui == boundLeftButton then isLeftPressed = true end
-                    end
-                end)
-                
-                gui.MouseButton1Up:Connect(function()
-                    if gui == boundRightButton then isRightPressed = false end
-                    if gui == boundLeftButton then isLeftPressed = false end
-                end)
-
-                if settingTarget == "Right" then
-                    boundRightButton = gui
-                    RightSetBtn.Text = "Saved!"
-                    RightSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                elseif settingTarget == "Left" then
-                    boundLeftButton = gui
-                    LeftSetBtn.Text = "Saved!"
-                    LeftSetBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-                end
-                
-                settingTarget = nil
-                break
-            end
-        end
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.Right then
-        isRightPressed = false
-    elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.Left then
-        isLeftPressed = false
-    end
-end)
-
 FastFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     local char = LocalPlayer.Character
@@ -514,7 +517,7 @@ end)
 SmoothFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     isSmoothBoosting = not isSmoothBoosting
-    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
+  SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
 
     if isSmoothBoosting then
         task.spawn(function()
@@ -590,7 +593,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- RUNSERVICE DENGAN AUTO-FILL DEFAULT MAXTORQUE (SUMBU Z) & OVERRIDE
 RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
@@ -610,8 +612,18 @@ RunService.Stepped:Connect(function()
         
         if carModel then
             CarLabel.Text = "Car: " .. carModel.Name
-            local gyro = carModel:FindFirstChild("LeanGyro", true)
             
+            -- TANGKAP DEFAULT DENSITY & FRICTION
+            if not defaultDensity or not defaultFriction then
+                local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
+                defaultDensity = currentProp.Density
+                defaultFriction = currentProp.Friction
+                defaultFrictionWeight = currentProp.FrictionWeight
+                DensityBox.Text = tostring(defaultDensity)
+            end
+
+            -- TANGKAP DEFAULT STEER (P, D, TORQUE Z)
+            local gyro = carModel:FindFirstChild("LeanGyro", true)
             if gyro then
                 if activeBodyGyro ~= gyro then
                     activeBodyGyro = gyro
@@ -619,7 +631,6 @@ RunService.Stepped:Connect(function()
                     defaultD = gyro.D
                     defaultTorqueZ = gyro.MaxTorque.Z
                     
-                    -- Masukkan nilai default ke UI
                     SteerBoxP.Text = tostring(defaultP)
                     SteerBoxD.Text = tostring(defaultD)
                     SteerBoxTorque.Text = tostring(defaultTorqueZ)
@@ -638,6 +649,9 @@ RunService.Stepped:Connect(function()
         end
     else
         activeBodyGyro = nil
+        defaultDensity = nil
+        defaultFriction = nil
+        defaultFrictionWeight = nil
         CarLabel.Text = "Car: None"
     end
 end)
