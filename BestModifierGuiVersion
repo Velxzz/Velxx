@@ -1,4 +1,4 @@
--- Modifier Gui V3.0 24-8-2026
+-- Modifier Gui V4.0 PRO 24-8-2026
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -57,7 +57,7 @@ HeaderCorner.CornerRadius = UDim.new(0, 10)
 local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "MODIFIER V3.0 PRO"
+Title.Text = "MODIFIER V4.0 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -236,7 +236,7 @@ Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 -- Toggle Lock Button
 local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
 
--- Toggle Show/Hide Float Buttons (Fitur Baru)
+-- Toggle Show/Hide Float Buttons
 local _, ShowFloatButtonsToggle = createToggleRow(ContentScroll, "Show Float Btn", 8)
 ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ShowFloatButtonsToggle.Text = "ON"
@@ -317,7 +317,7 @@ StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
 
--- Float Logo Menu Utama (Selalu Muncul)
+-- Float Logo Menu Utama
 local MainFloatBtn = Instance.new("TextButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
 MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
@@ -338,7 +338,7 @@ MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Array penampung seluruh tombol melayang fitur utama
+-- Array penampung seluruh tombol melayang
 local featureFloatButtons = {}
 
 -- Helper Circular Float Button
@@ -675,7 +675,7 @@ UpdateConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA LOAD CONFIG
+-- LOGIKA LOAD CONFIG (FIXED: JSONEncode -> JSONDecode)
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
@@ -684,7 +684,13 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
     
     local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
-    if readfile and pcall(readfile, fileName) then
+    if readfile and isfile and isfile(fileName) then
+        local successRead, rawData = pcall(readfile, fileName)
+        if not successRead or not rawData then
+            StatusLabel.Text = "Failed to read file!"
+            return
+        end
+
         for _, block in ipairs(spawnedBlocks) do
             if block then block:Destroy() end
         end
@@ -698,12 +704,12 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         startingCFrame = nil
         currentTransitionTime = 0
         
-        local rawData = readfile(fileName)
-        local success, decodedData = pcall(function()
-            return HttpService:JSONEncode(rawData)
+        -- Menggunakan JSONDecode untuk membaca String JSON kembali menjadi Table
+        local successDecode, decodedData = pcall(function()
+            return HttpService:JSONDecode(rawData)
         end)
         
-        if success and type(decodedData) == "table" then
+        if successDecode and type(decodedData) == "table" then
             for _, comps in ipairs(decodedData) do
                 local cf = CFrame.new(table.unpack(comps))
                 createVisualBlock(cf)
