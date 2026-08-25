@@ -51,7 +51,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
 Title.Position = UDim2.new(0, 0, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.8 PRO"
+Title.Text = "BOOST V5.0 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
 
@@ -251,7 +251,7 @@ local isSteerSettingActive = false
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
-local defaultDensity = 0.7 -- Set batas default aman agar tidak 0 / terbang
+local defaultDensity = 0.7
 local defaultFriction = nil
 local defaultFrictionWeight = nil
 local activeBodyGyro = nil
@@ -268,9 +268,7 @@ local function getVehicleTargetParts(seat)
 
     for _, part in ipairs(carModel:GetDescendants()) do
         if part:IsA("BasePart") then
-            -- Pastikan part bukan milik Karakter Pemain
             if not (char and part:IsDescendantOf(char)) then
-                -- Fokuskan perubahan ke Roda / Seat / Main Body
                 local name = part.Name:lower()
                 if name:find("wheel") or name:find("roda") or part == seat or part:IsA("MeshPart") then
                     table.insert(parts, part)
@@ -372,7 +370,7 @@ SteerBoxTorque.FocusLost:Connect(function()
     if not val and defaultTorqueZ then SteerBoxTorque.Text = tostring(defaultTorqueZ) end
 end)
 
--- DENSITY CONTROL & RESET DENSITY (FIXED)
+-- DENSITY CONTROL & RESET DENSITY
 DensityBox.FocusLost:Connect(function()
     local val = tonumber(DensityBox.Text)
     if not val then
@@ -380,7 +378,6 @@ DensityBox.FocusLost:Connect(function()
         return
     end
 
-    -- Batasi nilai density minimal 0.1 agar motor tidak melayang/terbang
     val = math.clamp(val, 0.1, 100)
     DensityBox.Text = tostring(val)
 
@@ -422,7 +419,11 @@ ResetDensityBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- FRICTION CONTROL & RESET FRICTION (FIXED)
+-- =================================================================
+-- LOGIKA MAX FRICTION & RESET FRICTION (PERBAIKAN LENGKAP)
+-- =================================================================
+
+-- LOGIKA TOMBOL MAX FRICTION (INJEKSI NILAI)
 MaxFrictionBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -431,12 +432,13 @@ MaxFrictionBtn.MouseButton1Click:Connect(function()
     if seat then
         for _, part in ipairs(getVehicleTargetParts(seat)) do
             local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+            -- Urutan Roblox: PhysicalProperties.new(Density, Elasticity, ElasticityWeight, Friction, FrictionWeight)
             part.CustomPhysicalProperties = PhysicalProperties.new(
                 prop.Density,
                 prop.Elasticity,
                 prop.ElasticityWeight,
-                2,
-                100
+                2,   -- Friction di-set ke 2
+                100  -- FrictionWeight di-set ke 100
             )
         end
         MaxFrictionBtn.Text = "APPLIED!"
@@ -447,23 +449,32 @@ MaxFrictionBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- LOGIKA TOMBOL RESET FRICTION (MENGEMBALIKAN NILAI DEFAULT)
 ResetFrictionBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
+
     if seat then
-        local targetFriction = defaultFriction or 0.7
-        local targetWeight = defaultFrictionWeight or 1
+        -- Fallback default sesuai Gambar 1 (Friction = 0.3, FrictionWeight = 1)
+        local targetFriction = defaultFriction or 0.3
+        local targetFrictionWeight = defaultFrictionWeight or 1
+
         for _, part in ipairs(getVehicleTargetParts(seat)) do
             local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
             part.CustomPhysicalProperties = PhysicalProperties.new(
                 prop.Density,
                 prop.Elasticity,
                 prop.ElasticityWeight,
-                targetFriction,
-                targetWeight
+                targetFriction,       -- Restore Friction ke 0.3
+                targetFrictionWeight -- Restore FrictionWeight ke 1
             )
         end
+        ResetFrictionBtn.Text = "RESET!"
+        ResetFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        task.wait(1.5)
+        ResetFrictionBtn.Text = "RESET"
+        ResetFrictionBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 0)
     end
 end)
 
@@ -526,7 +537,7 @@ SmoothFloatBtn.MouseButton1Click:Connect(function()
             while isSmoothBoosting and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
-          local seat = hum and hum.SeatPart
+                local seat = hum and hum.SeatPart
 
                 if seat and seat:IsA("BasePart") then
                     local addPower = tonumber(SmoothBox1.Text) or 3.5
@@ -595,6 +606,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
+-- PEREKAMAN DEFAULT PADA STEPPED (DIPERBAIKI)
 RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
@@ -615,12 +627,14 @@ RunService.Stepped:Connect(function()
         if carModel then
             CarLabel.Text = "Car: " .. carModel.Name
 
-            -- Dapatkan nilai default hanya sekali saat pertama kali duduk
-            if not defaultFriction then
+            -- Dapatkan nilai default hanya sekali saat pertama kali menduduki seat
+            if defaultFriction == nil then
                 local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
+                
                 if currentProp.Density > 0.05 then
                     defaultDensity = currentProp.Density
                 end
+                
                 defaultFriction = currentProp.Friction
                 defaultFrictionWeight = currentProp.FrictionWeight
                 DensityBox.Text = tostring(defaultDensity or 0.7)
@@ -654,5 +668,8 @@ RunService.Stepped:Connect(function()
     else
         activeBodyGyro = nil
         CarLabel.Text = "Car: None"
+        -- Reset perekaman variabel default saat turun dari kendaraan
+        defaultFriction = nil
+        defaultFrictionWeight = nil
     end
 end)
