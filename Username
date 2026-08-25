@@ -1,0 +1,349 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Destroy GUI lama jika ada
+local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("UsernameCheckerGui")
+if oldGui then oldGui:Destroy() end
+
+-- GUI Utama
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "UsernameCheckerGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Container Utama (Panel Abu-abu Transparansi 60% / BackgroundTransparency = 0.6)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 380, 0, 355)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -177)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.6
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+-- Left Side: Username Output Panel (Transparansi 100%)
+local OutputFrame = Instance.new("Frame", MainFrame)
+OutputFrame.Name = "OutputFrame"
+OutputFrame.Size = UDim2.new(0, 160, 1, 0)
+OutputFrame.Position = UDim2.new(0, 0, 0, 0)
+OutputFrame.BackgroundTransparency = 1
+
+local OutputTitle = Instance.new("TextLabel", OutputFrame)
+OutputTitle.Size = UDim2.new(1, 0, 0, 30)
+OutputTitle.BackgroundTransparency = 1
+OutputTitle.Text = "Username Output"
+OutputTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+OutputTitle.Font = Enum.Font.GothamBold
+OutputTitle.TextSize = 13
+
+local Divider = Instance.new("Frame", OutputFrame)
+Divider.Size = UDim2.new(0.9, 0, 0, 1)
+Divider.Position = UDim2.new(0.05, 0, 0, 30)
+Divider.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+Divider.BorderSizePixel = 0
+
+local ScrollOutput = Instance.new("ScrollingFrame", OutputFrame)
+ScrollOutput.Size = UDim2.new(1, -10, 1, -40)
+ScrollOutput.Position = UDim2.new(0, 5, 0, 35)
+ScrollOutput.BackgroundTransparency = 1
+ScrollOutput.BorderSizePixel = 0
+ScrollOutput.ScrollBarThickness = 3
+ScrollOutput.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local UIListLayout = Instance.new("UIListLayout", ScrollOutput)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 4)
+
+-- Auto-Scroll ke baris terbawah setiap ada teks baru
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollOutput.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+    ScrollOutput.CanvasPosition = Vector2.new(0, ScrollOutput.AbsoluteCanvasSize.Y)
+end)
+
+-- Right Side: Username Setting Panel
+local SettingFrame = Instance.new("Frame", MainFrame)
+SettingFrame.Name = "SettingFrame"
+SettingFrame.Size = UDim2.new(0, 220, 1, 0)
+SettingFrame.Position = UDim2.new(0, 160, 0, 0)
+SettingFrame.BackgroundTransparency = 1
+
+local function createLabel(text, yPos, xPos, sizeX)
+    local lbl = Instance.new("TextLabel", SettingFrame)
+    lbl.Size = UDim2.new(0, sizeX or 100, 0, 22)
+    lbl.Position = UDim2.new(0, xPos or 10, 0, yPos)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    return lbl
+end
+
+local function createInputBox(defaultVal, yPos)
+    local box = Instance.new("TextBox", SettingFrame)
+    box.Size = UDim2.new(0, 80, 0, 24)
+    box.Position = UDim2.new(0, 120, 0, yPos)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.Text = tostring(defaultVal)
+    box.Font = Enum.Font.GothamBold
+    box.TextSize = 12
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 10)
+    return box
+end
+
+-- Tombol Start/Stop
+local StartStopBtn = Instance.new("TextButton", SettingFrame)
+StartStopBtn.Size = UDim2.new(0, 190, 0, 26)
+StartStopBtn.Position = UDim2.new(0, 10, 0, 8)
+StartStopBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+StartStopBtn.Text = "STOP"
+StartStopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartStopBtn.Font = Enum.Font.GothamBold
+StartStopBtn.TextSize = 12
+Instance.new("UICorner", StartStopBtn).CornerRadius = UDim.new(0, 8)
+
+createLabel("Usn Digit :", 42)
+local DigitBox = createInputBox("5", 41)
+
+createLabel("Usn Type", 70)
+createLabel("Letter :", 98, 25)
+local LetterBox = createInputBox("4", 97)
+
+createLabel("Number :", 126, 25)
+local NumberBox = createInputBox("1", 125)
+
+-- Tombol Option Underscore [Yes / No]
+createLabel("Underscore :", 154, 25)
+local UnderscoreBtn = Instance.new("TextButton", SettingFrame)
+UnderscoreBtn.Size = UDim2.new(0, 80, 0, 24)
+UnderscoreBtn.Position = UDim2.new(0, 120, 0, 153)
+UnderscoreBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+UnderscoreBtn.Text = "No"
+UnderscoreBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+UnderscoreBtn.Font = Enum.Font.GothamBold
+UnderscoreBtn.TextSize = 12
+Instance.new("UICorner", UnderscoreBtn).CornerRadius = UDim.new(0, 10)
+
+createLabel("Available Usn", 182)
+
+-- Tombol Copy To Clipboard
+createLabel("Copy To :", 210, 25)
+local CopyBtn = Instance.new("TextButton", SettingFrame)
+CopyBtn.Size = UDim2.new(0, 80, 0, 24)
+CopyBtn.Position = UDim2.new(0, 120, 0, 209)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 230, 150)
+CopyBtn.Text = "Clipboard"
+CopyBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+CopyBtn.Font = Enum.Font.GothamBold
+CopyBtn.TextSize = 11
+Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 12)
+
+-- Tombol Save To File
+createLabel("Copy To :", 240, 25)
+local FileBtn = Instance.new("TextButton", SettingFrame)
+FileBtn.Size = UDim2.new(0, 80, 0, 24)
+FileBtn.Position = UDim2.new(0, 120, 0, 239)
+FileBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+FileBtn.Text = "File"
+FileBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+FileBtn.Font = Enum.Font.GothamBold
+FileBtn.TextSize = 11
+Instance.new("UICorner", FileBtn).CornerRadius = UDim.new(0, 12)
+
+-- Label Keterangan File Path
+local PathTitle = createLabel("#File Path is =", 270, 10, 200)
+PathTitle.Font = Enum.Font.GothamSemibold
+PathTitle.TextSize = 10
+PathTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+local PathText1 = createLabel("Storage/emulated/0/Delta/", 288, 10, 200)
+PathText1.Font = Enum.Font.Gotham
+PathText1.TextSize = 9
+PathText1.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+local PathText2 = createLabel("Workspace/AvailableUsername", 305, 10, 200)
+PathText2.Font = Enum.Font.Gotham
+PathText2.TextSize = 9
+PathText2.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+----------------------------------------------------
+-- LOGIKA UTAMA SCRIPT
+----------------------------------------------------
+local availableUsernames = {}
+local letters = "abcdefghijklmnopqrstuvwxyz"
+local numbers = "0123456789"
+local isRunning = false
+local useUnderscore = false
+local totalCheckedCount = 0
+
+-- Fitur Start / Stop Toggle
+StartStopBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    if isRunning then
+        StartStopBtn.Text = "START"
+        StartStopBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        StartStopBtn.Text = "STOP"
+        StartStopBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
+
+-- Toggle Options Underscore (Yes/No)
+UnderscoreBtn.MouseButton1Click:Connect(function()
+    useUnderscore = not useUnderscore
+    if useUnderscore then
+        UnderscoreBtn.Text = "Yes"
+        UnderscoreBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    else
+        UnderscoreBtn.Text = "No"
+        UnderscoreBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    end
+    
+    local numL = tonumber(LetterBox.Text) or 0
+    local numN = tonumber(NumberBox.Text) or 0
+    DigitBox.Text = tostring(numL + numN + (useUnderscore and 1 or 0))
+end)
+
+-- Update Total Digit Box
+local function updateDigitBox()
+    local numL = tonumber(LetterBox.Text) or 0
+    local numN = tonumber(NumberBox.Text) or 0
+    local extra = useUnderscore and 1 or 0
+    DigitBox.Text = tostring(numL + numN + extra)
+end
+
+LetterBox:GetPropertyChangedSignal("Text"):Connect(updateDigitBox)
+NumberBox:GetPropertyChangedSignal("Text"):Connect(updateDigitBox)
+
+-- Pengecekan Ketersediaan Username ke API Roblox
+local function checkUsername(username)
+    local success, result = pcall(function()
+        local url = "https://users.roblox.com/v1/usernames/users"
+        local body = HttpService:JSONEncode({
+            usernames = {username},
+            excludeBannedUsers = false
+        })
+        
+        local response
+        if request then
+            response = request({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = body})
+        elseif syn and syn.request then
+            response = syn.request({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = body})
+        elseif http_request then
+            response = http_request({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = body})
+        end
+        
+        if response and response.Body then
+            local data = HttpService:JSONDecode(response.Body)
+            return #data.data == 0
+        end
+        return false
+    end)
+    return success and result
+end
+
+-- Generator Acak (dengan logika Underscore aman)
+local function generateRandomUsername(numLetters, numNumbers, includeUnderscore)
+    local charTable = {}
+    for i = 1, numLetters do
+        local randIndex = math.random(1, #letters)
+        table.insert(charTable, string.sub(letters, randIndex, randIndex))
+    end
+    for i = 1, numNumbers do
+        local randIndex = math.random(1, #numbers)
+        table.insert(charTable, string.sub(numbers, randIndex, randIndex))
+    end
+    
+    -- Acak urutan alfanumerik terlebih dahulu
+    for i = #charTable, 2, -1 do
+        local j = math.random(i)
+        charTable[i], charTable[j] = charTable[j], charTable[i]
+    end
+    
+    -- Jika Underscore diaktifkan, sisipkan 1 underscore di tengah-tengah (bukan index awal/akhir)
+    if includeUnderscore and #charTable >= 2 then
+        local insertIndex = math.random(2, #charTable)
+        table.insert(charTable, insertIndex, "_")
+    end
+    
+    return table.concat(charTable)
+end
+
+-- Tambah Output Log ke UI
+local function addOutputLog(username, isAvailable)
+    totalCheckedCount = totalCheckedCount + 1
+    
+    local item = Instance.new("TextLabel", ScrollOutput)
+    item.Size = UDim2.new(1, 0, 0, 18)
+    item.BackgroundTransparency = 1
+    item.Font = Enum.Font.GothamBold
+    item.TextSize = 11
+    item.TextXAlignment = Enum.TextXAlignment.Left
+
+    if isAvailable then
+        item.Text = string.format("%d. %s - Available", totalCheckedCount, username)
+        item.TextColor3 = Color3.fromRGB(0, 255, 50)
+        table.insert(availableUsernames, username)
+    else
+        item.Text = string.format("%d. %s - Used", totalCheckedCount, username)
+        item.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end
+
+-- Simpan ke File (Appends ke baris paling bawah)
+local function saveToFile(username)
+    if appendfile then
+        appendfile("AvailableUsername.txt", username .. "\n")
+    elseif writefile and isfile then
+        if isfile("AvailableUsername.txt") then
+            local oldContent = readfile("AvailableUsername.txt")
+            writefile("AvailableUsername.txt", oldContent .. username .. "\n")
+        else
+            writefile("AvailableUsername.txt", username .. "\n")
+        end
+    end
+end
+
+-- Tombol Copy Clipboard
+CopyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(table.concat(availableUsernames, "\n"))
+        CopyBtn.Text = "Copied!"
+        task.wait(1.5)
+        CopyBtn.Text = "Clipboard"
+    end
+end)
+
+-- Tombol Manual Save File
+FileBtn.MouseButton1Click:Connect(function()
+    for _, usn in ipairs(availableUsernames) do
+        saveToFile(usn)
+    end
+    FileBtn.Text = "Saved!"
+    task.wait(1.5)
+    FileBtn.Text = "File"
+end)
+
+-- Loop Utama Pengecekan Otomatis
+task.spawn(function()
+    while true do
+        if isRunning then
+            local numL = tonumber(LetterBox.Text) or 4
+            local numN = tonumber(NumberBox.Text) or 1
+            
+            local generatedUsn = generateRandomUsername(numL, numN, useUnderscore)
+            local isAvailable = checkUsername(generatedUsn)
+            
+            addOutputLog(generatedUsn, isAvailable)
+            
+            if isAvailable then
+                saveToFile(generatedUsn)
+            end
+        end
+        task.wait(1.5)
+    end
+end)
