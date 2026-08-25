@@ -251,10 +251,35 @@ local isSteerSettingActive = false
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
-local defaultDensity = nil
+local defaultDensity = 0.7 -- Set batas default aman agar tidak 0 / terbang
 local defaultFriction = nil
 local defaultFrictionWeight = nil
 local activeBodyGyro = nil
+
+-- HELPER: Dapatkan part kendaraan saja (Abaikan Karakter)
+local function getVehicleTargetParts(seat)
+    local parts = {}
+    if not seat then return parts end
+
+    local carModel = seat:FindFirstAncestorOfClass("Model")
+    if not carModel then return parts end
+
+    local char = LocalPlayer.Character
+
+    for _, part in ipairs(carModel:GetDescendants()) do
+        if part:IsA("BasePart") then
+            -- Pastikan part bukan milik Karakter Pemain
+            if not (char and part:IsDescendantOf(char)) then
+                -- Fokuskan perubahan ke Roda / Seat / Main Body
+                local name = part.Name:lower()
+                if name:find("wheel") or name:find("roda") or part == seat or part:IsA("MeshPart") then
+                    table.insert(parts, part)
+                end
+            end
+        end
+    end
+    return parts
+end
 
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
@@ -309,7 +334,7 @@ SteerSettingToggleBtn.MouseButton1Click:Connect(function()
     isSteerSettingActive = not isSteerSettingActive
     SteerSettingToggleBtn.Text = isSteerSettingActive and "ON" or "OFF"
     SteerSettingToggleBtn.BackgroundColor3 = isSteerSettingActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    
+
     if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD and defaultTorqueZ then
         activeBodyGyro.P = defaultP
         activeBodyGyro.D = defaultD
@@ -347,120 +372,97 @@ SteerBoxTorque.FocusLost:Connect(function()
     if not val and defaultTorqueZ then SteerBoxTorque.Text = tostring(defaultTorqueZ) end
 end)
 
--- DENSITY CONTROL & RESET DENSITY
+-- DENSITY CONTROL & RESET DENSITY (FIXED)
 DensityBox.FocusLost:Connect(function()
     local val = tonumber(DensityBox.Text)
-    if not val and defaultDensity then
-        DensityBox.Text = tostring(defaultDensity)
+    if not val then
+        DensityBox.Text = tostring(defaultDensity or 0.7)
         return
     end
+
+    -- Batasi nilai density minimal 0.1 agar motor tidak melayang/terbang
+    val = math.clamp(val, 0.1, 100)
+    DensityBox.Text = tostring(val)
 
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
     if seat then
-        local carModel = seat:FindFirstAncestorOfClass("Model")
-        if carModel then
-            for _, part in ipairs(carModel:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                    part.CustomPhysicalProperties = PhysicalProperties.new(
-                        val,
-                        prop.Elasticity,
-                        prop.ElasticityWeight,
-                        prop.Friction,
-                        prop.FrictionWeight
-                    )
-                end
-            end
+        for _, part in ipairs(getVehicleTargetParts(seat)) do
+            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+            part.CustomPhysicalProperties = PhysicalProperties.new(
+                val,
+                prop.Elasticity,
+                prop.ElasticityWeight,
+                prop.Friction,
+                prop.FrictionWeight
+            )
         end
     end
 end)
 
 ResetDensityBtn.MouseButton1Click:Connect(function()
-    if defaultDensity then
-        DensityBox.Text = tostring(defaultDensity)
-        local char = LocalPlayer.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        local seat = hum and hum.SeatPart
-        if seat then
-            local carModel = seat:FindFirstAncestorOfClass("Model")
-            if carModel then
-                for _, part in ipairs(carModel:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                        part.CustomPhysicalProperties = PhysicalProperties.new(
-                            defaultDensity,
-                            prop.Elasticity,
-                            prop.ElasticityWeight,
-                            prop.Friction,
-                            prop.FrictionWeight
-                        )
-                    end
-                end
-            end
+    local targetDensity = defaultDensity or 0.7
+    DensityBox.Text = tostring(targetDensity)
+    
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+    if seat then
+        for _, part in ipairs(getVehicleTargetParts(seat)) do
+            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+            part.CustomPhysicalProperties = PhysicalProperties.new(
+                targetDensity,
+                prop.Elasticity,
+                prop.ElasticityWeight,
+                prop.Friction,
+                prop.FrictionWeight
+            )
         end
     end
 end)
 
--- FRICTION CONTROL & RESET FRICTION
+-- FRICTION CONTROL & RESET FRICTION (FIXED)
 MaxFrictionBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local seat = hum and hum.SeatPart
 
     if seat then
-        local carModel = seat:FindFirstAncestorOfClass("Model")
-        if carModel then
-            for _, part in ipairs(carModel:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                    part.CustomPhysicalProperties = PhysicalProperties.new(
-                        prop.Density,
-                        prop.Elasticity,
-                        prop.ElasticityWeight,
-                        prop.Friction,
-                        100
-                    )
-                    part.CustomPhysicalProperties = PhysicalProperties.new(
-                        prop.Density,
-                        prop.Elasticity,
-                        prop.ElasticityWeight,
-                        2,
-                        100
-                    )
-                end
-            end
-            MaxFrictionBtn.Text = "APPLIED!"
-            MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-            task.wait(1.5)
-            MaxFrictionBtn.Text = "EXEC"
-            MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        for _, part in ipairs(getVehicleTargetParts(seat)) do
+            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+            part.CustomPhysicalProperties = PhysicalProperties.new(
+                prop.Density,
+                prop.Elasticity,
+                prop.ElasticityWeight,
+                2,
+                100
+            )
         end
+        MaxFrictionBtn.Text = "APPLIED!"
+        MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        task.wait(1.5)
+        MaxFrictionBtn.Text = "EXEC"
+        MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     end
 end)
 
 ResetFrictionBtn.MouseButton1Click:Connect(function()
-    if defaultFriction and defaultFrictionWeight then
-        local char = LocalPlayer.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        local seat = hum and hum.SeatPart
-        if seat then
-            local carModel = seat:FindFirstAncestorOfClass("Model")
-            if carModel then
-                for _, part in ipairs(carModel:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                        part.CustomPhysicalProperties = PhysicalProperties.new(
-                            prop.Density,
-                            prop.Elasticity,
-                            prop.ElasticityWeight,
-                            defaultFriction,
-                            defaultFrictionWeight
-                        )
-                    end
-                end
-            end
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local seat = hum and hum.SeatPart
+    if seat then
+        local targetFriction = defaultFriction or 0.7
+        local targetWeight = defaultFrictionWeight or 1
+        for _, part in ipairs(getVehicleTargetParts(seat)) do
+            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+            part.CustomPhysicalProperties = PhysicalProperties.new(
+                prop.Density,
+                prop.Elasticity,
+                prop.ElasticityWeight,
+                targetFriction,
+                targetWeight
+            )
         end
     end
 end)
@@ -517,14 +519,14 @@ end)
 SmoothFloatBtn.MouseButton1Click:Connect(function()
     if not isFeaturesActive then return end
     isSmoothBoosting = not isSmoothBoosting
-  SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
+    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
 
     if isSmoothBoosting then
         task.spawn(function()
             while isSmoothBoosting and isFeaturesActive do
                 local char = LocalPlayer.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local seat = hum and hum.SeatPart
+          local seat = hum and hum.SeatPart
 
                 if seat and seat:IsA("BasePart") then
                     local addPower = tonumber(SmoothBox1.Text) or 3.5
@@ -602,24 +604,26 @@ RunService.Stepped:Connect(function()
 
     if seat and seat:IsA("VehicleSeat") then
         local vel = seat.AssemblyLinearVelocity
-        
+
         if vel.Y > 8 or vel.Y < -15 then
             seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
         end
 
         local playerCarName = LocalPlayer.Name .. "Car"
         local carModel = workspace:FindFirstChild(playerCarName) or seat:FindFirstAncestor(playerCarName) or seat.Parent.Parent
-        
+
         if carModel then
             CarLabel.Text = "Car: " .. carModel.Name
-            
-            -- TANGKAP DEFAULT DENSITY & FRICTION
-            if not defaultDensity or not defaultFriction then
+
+            -- Dapatkan nilai default hanya sekali saat pertama kali duduk
+            if not defaultFriction then
                 local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
-                defaultDensity = currentProp.Density
+                if currentProp.Density > 0.05 then
+                    defaultDensity = currentProp.Density
+                end
                 defaultFriction = currentProp.Friction
                 defaultFrictionWeight = currentProp.FrictionWeight
-                DensityBox.Text = tostring(defaultDensity)
+                DensityBox.Text = tostring(defaultDensity or 0.7)
             end
 
             -- TANGKAP DEFAULT STEER (P, D, TORQUE Z)
@@ -630,7 +634,7 @@ RunService.Stepped:Connect(function()
                     defaultP = gyro.P
                     defaultD = gyro.D
                     defaultTorqueZ = gyro.MaxTorque.Z
-                    
+
                     SteerBoxP.Text = tostring(defaultP)
                     SteerBoxD.Text = tostring(defaultD)
                     SteerBoxTorque.Text = tostring(defaultTorqueZ)
@@ -649,9 +653,6 @@ RunService.Stepped:Connect(function()
         end
     else
         activeBodyGyro = nil
-        defaultDensity = nil
-        defaultFriction = nil
-        defaultFrictionWeight = nil
         CarLabel.Text = "Car: None"
     end
 end)
