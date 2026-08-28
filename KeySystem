@@ -1,81 +1,174 @@
 -------------------------------------------------------------------------------
---! json library
---! cryptography library
+--! json library & cryptography library
+-------------------------------------------------------------------------------
 local a=2^32;local b=a-1;local function c(d,e)local f,g=0,1;while d~=0 or e~=0 do local h,i=d%2,e%2;local j=(h+i)%2;f=f+j*g;d=math.floor(d/2)e=math.floor(e/2)g=g*2 end;return f%a end;local function k(d,e,l,...)local m;if e then d=d%a;e=e%a;m=c(d,e)if l then m=k(m,l,...)end;return m elseif d then return d%a else return 0 end end;local function n(d,e,l,...)local m;if e then d=d%a;e=e%a;m=(d+e-c(d,e))/2;if l then m=n(m,l,...)end;return m elseif d then return d%a else return b end end;local function o(p)return b-p end;local function q(d,r)if r<0 then return lshift(d,-r)end;return math.floor(d%2^32/2^r)end;local function s(p,r)if r>31 or r<-31 then return 0 end;return q(p%a,r)end;local function lshift(d,r)if r<0 then return s(d,-r)end;return d*2^r%2^32 end;local function t(p,r)p=p%a;r=r%32;local u=n(p,2^r-1)return s(p,r)+lshift(u,32-r)end;local v={0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2}local function w(x)return string.gsub(x,".",function(l)return string.format("%02x",string.byte(l))end)end;local function y(z,A)local x=""for B=1,A do local C=z%256;x=string.char(C)..x;z=(z-C)/256 end;return x end;local function D(x,B)local A=0;for B=B,B+3 do A=A*256+string.byte(x,B)end;return A end;local function E(F,G)local H=64-(G+9)%64;G=y(8*G,8)F=F.."\128"..string.rep("\0",H)..G;assert(#F%64==0)return F end;local function I(J)J[1]=0x6a09e667;J[2]=0xbb67ae85;J[3]=0x3c6ef372;J[4]=0xa54ff53a;J[5]=0x510e527f;J[6]=0x9b05688c;J[7]=0x1f83d9ab;J[8]=0x5be0cd19;return J end;local function K(F,B,J)local L={}for M=1,16 do L[M]=D(F,B+(M-1)*4)end;for M=17,64 do local N=L[M-15]local O=k(t(N,7),t(N,18),s(N,3))N=L[M-2]L[M]=(L[M-16]+O+L[M-7]+k(t(N,17),t(N,19),s(N,10)))%a end;local d,e,l,P,Q,R,S,T=J[1],J[2],J[3],J[4],J[5],J[6],J[7],J[8]for B=1,64 do local O=k(t(d,2),t(d,13),t(d,22))local U=k(n(d,e),n(d,l),n(e,l))local V=(O+U)%a;local W=k(t(Q,6),t(Q,11),t(Q,25))local X=k(n(Q,R),n(o(Q),S))local Y=(T+W+X+v[B]+L[B])%a;T=S;S=R;R=Q;Q=(P+Y)%a;P=l;l=e;e=d;d=(Y+V)%a end;J[1]=(J[1]+d)%a;J[2]=(J[2]+e)%a;J[3]=(J[3]+l)%a;J[4]=(J[4]+P)%a;J[5]=(J[5]+Q)%a;J[6]=(J[6]+R)%a;J[7]=(J[7]+S)%a;J[8]=(J[8]+T)%a end;local function Z(F)F=E(F,#F)local J=I({})for B=1,#F,64 do K(F,B,J)end;return w(y(J[1],4)..y(J[2],4)..y(J[3],4)..y(J[4],4)..y(J[5],4)..y(J[6],4)..y(J[7],4)..y(J[8],4))end;local e;local l={["\\"]="\\",["\""]="\"",["\b"]="b",["\f"]="f",["\n"]="n",["\r"]="r",["\t"]="t"}local P={["/"]="/"}for Q,R in pairs(l)do P[R]=Q end;local S=function(T)return"\\"..(l[T]or string.format("u%04x",T:byte()))end;local B=function(M)return"null"end;local v=function(M,z)local _={}z=z or{}if z[M]then error("circular reference")end;z[M]=true;if rawget(M,1)~=nil or next(M)==nil then local A=0;for Q in pairs(M)do if type(Q)~="number"then error("invalid table: mixed or invalid key types")end;A=A+1 end;if A~=#M then error("invalid table: sparse array")end;for a0,R in ipairs(M)do table.insert(_,e(R,z))end;z[M]=nil;return"["..table.concat(_,",").."]"else for Q,R in pairs(M)do if type(Q)~="string"then error("invalid table: mixed or invalid key types")end;table.insert(_,e(Q,z)..":"..e(R,z))end;z[M]=nil;return"{"..table.concat(_,",").."}"end end;local g=function(M)return'"'..M:gsub('[%z\1-\31\\"]',S)..'"'end;local a1=function(M)if M~=M or M<=-math.huge or M>=math.huge then error("unexpected number value '"..tostring(M).."'")end;return string.format("%.14g",M)end;local j={["nil"]=B,["table"]=v,["string"]=g,["number"]=a1,["boolean"]=tostring}e=function(M,z)local x=type(M)local a2=j[x]if a2 then return a2(M,z)end;error("unexpected type '"..x.."'")end;local a3=function(M)return e(M)end;local a4;local N=function(...)local _={}for a0=1,select("#",...)do _[select(a0,...)]=true end;return _ end;local L=N(" ","\t","\r","\n")local p=N(" ","\t","\r","\n","]","}",",")local a5=N("\\","/",'"',"b","f","n","r","t","u")local m=N("true","false","null")local a6={["true"]=true,["false"]=false,["null"]=nil}local a7=function(a8,a9,aa,ab)for a0=a9,#a8 do if aa[a8:sub(a0,a0)]~=ab then return a0 end end;return#a8+1 end;local ac=function(a8,a9,J)local ad=1;local ae=1;for a0=1,a9-1 do ae=ae+1;if a8:sub(a0,a0)=="\n"then ad=ad+1;ae=1 end end;error(string.format("%s at line %d col %d",J,ad,ae))end;local af=function(A)local a2=math.floor;if A<=0x7f then return string.char(A)elseif A<=0x7ff then return string.char(a2(A/64)+192,A%64+128)elseif A<=0xffff then return string.char(a2(A/4096)+224,a2(A%4096/64)+128,A%64+128)elseif A<=0x10ffff then return string.char(a2(A/262144)+240,a2(A%262144/4096)+128,a2(A%4096/64)+128,A%64+128)end;error(string.format("invalid unicode codepoint '%x'",A))end;local ag=function(ah)local ai=tonumber(ah:sub(1,4),16)local aj=tonumber(ah:sub(7,10),16)if aj then return af((ai-0xd800)*0x400+aj-0xdc00+0x10000)else return af(ai)end end;local ak=function(a8,a0)local _=""local al=a0+1;local Q=al;while al<=#a8 do local am=a8:byte(al)if am<32 then ac(a8,al,"control character in string")elseif am==92 then _=_..a8:sub(Q,al-1)al=al+1;local T=a8:sub(al,al)if T=="u"then local an=a8:match("^[dD][89aAbB]%x%x\\u%x%x%x%x",al+1)or a8:match("^%x%x%x%x",al+1)or ac(a8,al-1,"invalid unicode escape in string")_=_..ag(an)al=al+#an else if not a5[T]then ac(a8,al-1,"invalid escape char '"..T.."' in string")end;_=_..P[T]end;Q=al+1 elseif am==34 then _=_..a8:sub(Q,al-1)return _,al+1 end;al=al+1 end;ac(a8,a0,"expected closing quote for string")end;local ao=function(a8,a0)local am=a7(a8,a0,p)local ah=a8:sub(a0,am-1)local A=tonumber(ah)if not A then ac(a8,a0,"invalid number '"..ah.."'")end;return A,am end;local ap=function(a8,a0)local am=a7(a8,a0,p)local aq=a8:sub(a0,am-1)if not m[aq]then ac(a8,a0,"invalid literal '"..aq.."'")end;return a6[aq],am end;local ar=function(a8,a0)local _={}local A=1;a0=a0+1;while 1 do local am;a0=a7(a8,a0,L,true)if a8:sub(a0,a0)=="]"then a0=a0+1;break end;am,a0=a4(a8,a0)_[A]=am;A=A+1;a0=a7(a8,a0,L,true)local as=a8:sub(a0,a0)a0=a0+1;if as=="]"then break end;if as~=","then ac(a8,a0,"expected ']' or ','")end end;return _,a0 end;local at=function(a8,a0)local _={}a0=a0+1;while 1 do local au,M;a0=a7(a8,a0,L,true)if a8:sub(a0,a0)=="}"then a0=a0+1;break end;if a8:sub(a0,a0)~='"'then ac(a8,a0,"expected string for key")end;au,a0=a4(a8,a0)a0=a7(a8,a0,L,true)if a8:sub(a0,a0)~=":"then ac(a8,a0,"expected ':' after key")end;a0=a7(a8,a0+1,L,true)M,a0=a4(a8,a0)_[au]=M;a0=a7(a8,a0,L,true)local as=a8:sub(a0,a0)a0=a0+1;if as=="}"then break end;if as~=","then ac(a8,a0,"expected '}' or ','")end end;return _,a0 end;local av={['"']=ak,["0"]=ao,["1"]=ao,["2"]=ao,["3"]=ao,["4"]=ao,["5"]=ao,["6"]=ao,["7"]=ao,["8"]=ao,["9"]=ao,["-"]=ao,["t"]=ap,["f"]=ap,["n"]=ap,["["]=ar,["{"]=at}a4=function(a8,a9)local as=a8:sub(a9,a9)local a2=av[as]if a2 then return a2(a8,a9)end;ac(a8,a9,"unexpected character '"..as.."'")end;local aw=function(a8)if type(a8)~="string"then error("expected argument of type string, got "..type(a8))end;local _,a9=a4(a8,a7(a8,1,L,true))a9=a7(a8,a9,L,true)if a9<=#a8 then ac(a8,a9,"trailing garbage")end;return _ end;
 local lEncode, lDecode, lDigest = a3, aw, Z;
--------------------------------------------------------------------------------
+
+--! Wait for game to load safely
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 
 -------------------------------------------------------------------------------
---! platoboost library
+--! UI CREATION (DIPINDAHKAN KE ATAS AGAR PASTI MUNCUL)
+-------------------------------------------------------------------------------
+-- Cari parent yang paling aman agar UI tidak terhapus anti-cheat
+local CoreGui = game:GetService("CoreGui")
+local ParentGui = nil
 
---! configuration
-local service = 30134;  -- your service id
-local secret = "7f0bc597-f40c-4952-93be-8003d9abdd3b";  -- secret key
-local useNonce = true;
-
---! callbacks
-local onMessage = function(message) end;
-
---! wait for game to load
-repeat task.wait(1) until game:IsLoaded();
-
---! functions
-local requestSending = false;
-local fSetClipboard, fRequest, fStringChar, fToString, fStringSub, fOsTime, fMathRandom, fMathFloor, fGetHwid = setclipboard or toclipboard, request or http_request or syn_request, string.char, tostring, string.sub, os.time, math.random, math.floor, gethwid or function() return game:GetService("Players").LocalPlayer.UserId end
-local cachedLink, cachedTime = "", 0;
-
---! pick host
-local host = "https://api.platoboost.com";
-local hostResponse = fRequest({
-    Url = host .. "/public/connectivity",
-    Method = "GET"
-});
-if hostResponse.StatusCode ~= 200 or hostResponse.StatusCode ~= 429 then
-    host = "https://api.platoboost.net";
+if gethui then
+    pcall(function() ParentGui = gethui() end)
 end
-
-function cacheLink()
-    if cachedTime + (10*60) < fOsTime() then
-        local response = fRequest({
-            Url = host .. "/public/start",
-            Method = "POST",
-            Body = lEncode({
-                service = service,
-                identifier = lDigest(fGetHwid())
-            }),
-            Headers = {
-                ["Content-Type"] = "application/json"
-            }
-        });
-
-        if response.StatusCode == 200 then
-            local decoded = lDecode(response.Body);
-
-            if decoded.success == true then
-                cachedLink = decoded.data.url;
-                cachedTime = fOsTime();
-                return true, cachedLink;
-            else
-                onMessage(decoded.message);
-                return false, decoded.message;
-            end
-        elseif response.StatusCode == 429 then
-            local msg = "you are being rate limited, please wait 20 seconds and try again.";
-            onMessage(msg);
-            return false, msg;
-        end
-
-        local msg = "Failed to cache link.";
-        onMessage(msg);
-        return false, msg;
+if not ParentGui then
+    if pcall(function() return CoreGui.Name end) then
+        ParentGui = CoreGui
     else
-        return true, cachedLink;
+        ParentGui = LocalPlayer:WaitForChild("PlayerGui")
     end
 end
 
-cacheLink();
+-- Bersihkan UI lama jika ada
+for _, v in pairs(ParentGui:GetChildren()) do
+    if v.Name == "PlatoboostKeyGui" or v.Name == "BoostSystemGui" then
+        v:Destroy()
+    end
+end
 
-local generateNonce = function()
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "PlatoboostKeyGui"
+KeyGui.ResetOnSpawn = false
+KeyGui.Parent = ParentGui
+
+local KeyFrame = Instance.new("Frame", KeyGui)
+KeyFrame.Name = "KeyFrame"
+KeyFrame.Size = UDim2.new(0, 320, 0, 200)
+KeyFrame.Position = UDim2.new(0.5, -160, 0.5, -100)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
+
+local TopButtonsFrame = Instance.new("Frame", KeyFrame)
+TopButtonsFrame.Size = UDim2.new(0, 36, 0, 16)
+TopButtonsFrame.Position = UDim2.new(1, -42, 0, 6)
+TopButtonsFrame.BackgroundTransparency = 1
+
+local MinimizeBtn = Instance.new("TextButton", TopButtonsFrame)
+MinimizeBtn.Size = UDim2.new(0, 16, 0, 16)
+MinimizeBtn.Position = UDim2.new(0, 0, 0, 0)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 12
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 3)
+
+local CloseBtn = Instance.new("TextButton", TopButtonsFrame)
+CloseBtn.Size = UDim2.new(0, 16, 0, 16)
+CloseBtn.Position = UDim2.new(0, 18, 0, 0)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 10
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 3)
+
+local KeyInput = Instance.new("TextBox", KeyFrame)
+KeyInput.Size = UDim2.new(0, 260, 0, 42)
+KeyInput.Position = UDim2.new(0.5, -130, 0, 30)
+KeyInput.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+KeyInput.Text = ""
+KeyInput.PlaceholderText = "Example : S_xxxxxxxxx"
+KeyInput.PlaceholderColor3 = Color3.fromRGB(180, 180, 180)
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.Font = Enum.Font.GothamSemibold
+KeyInput.TextSize = 13
+KeyInput.ClearTextOnFocus = false
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 12)
+
+local VerifyBtn = Instance.new("TextButton", KeyFrame)
+VerifyBtn.Size = UDim2.new(0, 90, 0, 32)
+VerifyBtn.Position = UDim2.new(0.5, -45, 0, 95)
+VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+VerifyBtn.Text = "Verify"
+VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyBtn.Font = Enum.Font.GothamBold
+VerifyBtn.TextSize = 14
+Instance.new("UICorner", VerifyBtn).CornerRadius = UDim.new(0, 8)
+
+local GetKeyBtn = Instance.new("TextButton", KeyFrame)
+GetKeyBtn.Size = UDim2.new(0, 100, 0, 32)
+GetKeyBtn.Position = UDim2.new(0.5, -50, 0, 140)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+GetKeyBtn.Text = "Get Key"
+GetKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.TextSize = 14
+Instance.new("UICorner", GetKeyBtn).CornerRadius = UDim.new(0, 8)
+
+-------------------------------------------------------------------------------
+--! PLATOBOOST LOGIC
+-------------------------------------------------------------------------------
+local service = 30134
+local secret = "7f0bc597-f40c-4952-93be-8003d9abdd3b"
+local useNonce = true
+
+local requestSending = false
+local fSetClipboard = setclipboard or toclipboard or function(text) 
+    VerifyBtn.Text = "Clipboard not supported"
+    task.wait(1.5)
+    VerifyBtn.Text = "Verify"
+end
+local fRequest = request or http_request or syn_request
+local fStringChar, fToString, fStringSub = string.char, tostring, string.sub
+local fOsTime, fMathRandom, fMathFloor = os.time, math.random, math.floor
+local fGetHwid = gethwid or function() return LocalPlayer.UserId end
+
+-- Check if request function exists
+if not fRequest then
+    KeyInput.PlaceholderText = "Request function missing in Executor!"
+    VerifyBtn.Text = "UNSUPPORTED"
+    VerifyBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+end
+
+local cachedLink, cachedTime = "", 0
+local host = "https://api.platoboost.com"
+
+local function cacheLink()
+    if not fRequest then return false, "Request function missing." end
+    if cachedTime + (10*60) < fOsTime() then
+        local success, response = pcall(function()
+            return fRequest({
+                Url = host .. "/public/start",
+                Method = "POST",
+                Body = lEncode({
+                    service = service,
+                    identifier = lDigest(fGetHwid())
+                }),
+                Headers = { ["Content-Type"] = "application/json" }
+            })
+        end)
+
+        if success and response and response.StatusCode == 200 then
+            local decoded = lDecode(response.Body)
+            if decoded.success == true then
+                cachedLink = decoded.data.url
+                cachedTime = fOsTime()
+                return true, cachedLink
+            else
+                return false, decoded.message
+            end
+        elseif success and response and response.StatusCode == 429 then
+            return false, "Rate limited, wait 20s"
+        end
+        return false, "Failed to cache link."
+    else
+        return true, cachedLink
+    end
+end
+
+local function generateNonce()
     local str = ""
     for _ = 1, 16 do
         str = str .. fStringChar(fMathFloor(fMathRandom() * (122 - 97 + 1)) + 97)
@@ -83,162 +176,101 @@ local generateNonce = function()
     return str
 end
 
-for _ = 1, 5 do
-    local oNonce = generateNonce();
-    task.wait(0.2)
-    if generateNonce() == oNonce then
-        local msg = "platoboost nonce error.";
-        onMessage(msg);
-        error(msg);
-    end
-end
-
 local copyLink = function()
-    local success, link = cacheLink();
+    VerifyBtn.Text = "Getting link..."
+    local success, link = cacheLink()
     
     if success then
-        fSetClipboard(link);
+        fSetClipboard(link)
+        VerifyBtn.Text = "Link Copied!"
+        task.wait(1)
+        VerifyBtn.Text = "Verify"
+    else
+        VerifyBtn.Text = "Error"
+        task.wait(1)
+        VerifyBtn.Text = "Verify"
     end
 end
 
 local redeemKey = function(key)
-    local nonce = generateNonce();
-    local endpoint = host .. "/public/redeem/" .. fToString(service);
+    local nonce = generateNonce()
+    local endpoint = host .. "/public/redeem/" .. fToString(service)
+    local body = { identifier = lDigest(fGetHwid()), key = key }
+    if useNonce then body.nonce = nonce end
 
-    local body = {
-        identifier = lDigest(fGetHwid()),
-        key = key
-    }
+    local success, response = pcall(function()
+        return fRequest({
+            Url = endpoint,
+            Method = "POST",
+            Body = lEncode(body),
+            Headers = { ["Content-Type"] = "application/json" }
+        })
+    end)
 
-    if useNonce then
-        body.nonce = nonce;
-    end
-
-    local response = fRequest({
-        Url = endpoint,
-        Method = "POST",
-        Body = lEncode(body),
-        Headers = {
-            ["Content-Type"] = "application/json"
-        }
-    });
-
-    if response.StatusCode == 200 then
-        local decoded = lDecode(response.Body);
-
-        if decoded.success == true then
-            if decoded.data.valid == true then
-                if useNonce then
-                    if decoded.data.hash == lDigest("true" .. "-" .. nonce .. "-" .. secret) then
-                        return true;
-                    else
-                        onMessage("failed to verify integrity.");
-                        return false;
-                    end    
-                else
-                    return true;
-                end
-            else
-                onMessage("key is invalid.");
-                return false;
+    if success and response.StatusCode == 200 then
+        local decoded = lDecode(response.Body)
+        if decoded.success == true and decoded.data.valid == true then
+            if useNonce then
+                return decoded.data.hash == lDigest("true" .. "-" .. nonce .. "-" .. secret)
             end
+            return true
         else
-            if fStringSub(decoded.message, 1, 27) == "unique constraint violation" then
-                onMessage("you already have an active key, please wait for it to expire before redeeming it.");
-                return false;
-            else
-                onMessage(decoded.message);
-                return false;
-            end
+            return false, decoded.message or "Invalid Key"
         end
-    elseif response.StatusCode == 429 then
-        onMessage("you are being rate limited, please wait 20 seconds and try again.");
-        return false;
-    else
-        onMessage("server returned an invalid status code, please try again later.");
-        return false;
     end
+    return false, "Redeem failed"
 end
 
 local verifyKey = function(key)
-    if requestSending == true then
-        onMessage("a request is already being sent, please slow down.");
-        return false;
-    else
-        requestSending = true;
-    end
+    if not fRequest then return false, "Executor unsupported" end
+    if requestSending == true then return false, "Wait..." end
+    requestSending = true
 
-    local nonce = generateNonce();
-    local endpoint = host .. "/public/whitelist/" .. fToString(service) .. "?identifier=" .. lDigest(fGetHwid()) .. "&key=" .. key;
+    local nonce = generateNonce()
+    local endpoint = host .. "/public/whitelist/" .. fToString(service) .. "?identifier=" .. lDigest(fGetHwid()) .. "&key=" .. key
+    if useNonce then endpoint = endpoint .. "&nonce=" .. nonce end
 
-    if useNonce then
-        endpoint = endpoint .. "&nonce=" .. nonce;
-    end
+    local success, response = pcall(function()
+        return fRequest({ Url = endpoint, Method = "GET" })
+    end)
+    
+    requestSending = false
 
-    local response = fRequest({
-        Url = endpoint,
-        Method = "GET",
-    });
-
-    requestSending = false;
-
-    if response.StatusCode == 200 then
-        local decoded = lDecode(response.Body);
-
+    if success and response.StatusCode == 200 then
+        local decoded = lDecode(response.Body)
         if decoded.success == true then
             if decoded.data.valid == true then
                 if useNonce then
-                    if decoded.data.hash == lDigest("true" .. "-" .. nonce .. "-" .. secret) then
-                        return true;
-                    else
-                        onMessage("failed to verify integrity.");
-                        return false;
-                    end
-                else
-                    return true;
+                    return decoded.data.hash == lDigest("true" .. "-" .. nonce .. "-" .. secret), "Integrity failed"
                 end
+                return true, "Success"
             else
                 if fStringSub(key, 1, 4) == "KEY_" then
-                    return redeemKey(key);
+                    return redeemKey(key)
                 else
-                    onMessage("key is invalid.");
-                    return false;
+                    return false, "Invalid Key"
                 end
             end
         else
-            onMessage(decoded.message);
-            return false;
+            return false, decoded.message
         end
-    elseif response.StatusCode == 429 then
-        onMessage("you are being rate limited, please wait 20 seconds and try again.");
-        return false;
-    else
-        onMessage("server returned an invalid status code, please try again later.");
-        return false;
     end
+    return false, "API Error"
 end
 
 -------------------------------------------------------------------------------
---! UI KEY SYSTEM INTERFACE (SESUAI SKETSA GAMBAR)
+--! MAIN SCRIPT (Akan dieksekusi setelah berhasil verify)
 -------------------------------------------------------------------------------
 local function LoadMainScript()
-    ---------------------------------------------------------------------------
-    --! SCRIPT SCIENCE / BOOST V4.8 PRO DI SINI
-    ---------------------------------------------------------------------------
-    local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
-    local LocalPlayer = Players.LocalPlayer
     local Mouse = LocalPlayer:GetMouse()
-
-    local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("BoostSystemGui")
-    if oldGui then oldGui:Destroy() end
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "BoostSystemGui"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.DisplayOrder = 9
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.Parent = ParentGui -- Menggunakan ParentGui yang sama
 
     local MenuShortcut = Instance.new("ImageButton", ScreenGui)
     MenuShortcut.Name = "MenuShortcut"
@@ -275,7 +307,6 @@ local function LoadMainScript()
         local cosmicPurple = Color3.fromRGB(138, 43, 226)
         local cosmicCyan = Color3.fromRGB(0, 255, 220)
         local animatedColor = cosmicPurple:Lerp(cosmicCyan, t)
-
         FrameStroke.Color = animatedColor
         MenuStroke.Color = animatedColor
     end)
@@ -308,31 +339,6 @@ local function LoadMainScript()
         Label.BackgroundTransparency = 1
         Label.Text = name
         Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Font = Enum.Font.GothamSemibold
-        Label.TextSize = 10
-
-        local Btn = Instance.new("TextButton", ScrollFrame)
-        Btn.Size = UDim2.new(0, 60, 0, 22)
-        Btn.Position = UDim2.new(0, 138, 0, yPos + 1)
-        Btn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        Btn.BackgroundTransparency = 0.3
-        Btn.Text = "OFF"
-        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Btn.Font = Enum.Font.GothamBold
-        Btn.TextSize = 10
-        Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
-
-        return Btn
-    end
-
-    local function createConfigRow(name, defaultVal1, defaultVal2, yPos, isDouble)
-        local Label = Instance.new("TextLabel", ScrollFrame)
-        Label.Size = UDim2.new(0, 130, 0, 24)
-        Label.Position = UDim2.new(0, 5, 0, yPos)
-        Label.BackgroundTransparency = 1
-        Label.Text = name
-        Label.TextColor3 = Color3.fromRGB(200, 200, 200)
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Font = Enum.Font.GothamSemibold
         Label.TextSize = 9
@@ -407,7 +413,6 @@ local function LoadMainScript()
     local BrakeBox1, BrakeBox2 = createConfigRow("Brake Brk:", 4, 0.0225, 164, true)
 
     local SteerSettingToggleBtn = createToggle("Steer Setting :", 191)
-
     local CarLabel = Instance.new("TextLabel", ScrollFrame)
     CarLabel.Size = UDim2.new(0, 190, 0, 20)
     CarLabel.Position = UDim2.new(0, 5, 0, 218)
@@ -491,28 +496,22 @@ local function LoadMainScript()
     local function getCurrentVehicle()
         local char = LocalPlayer.Character
         if not char then return nil, nil end
-
         local hum = char:FindFirstChildOfClass("Humanoid")
         if not hum then return nil, nil end
-
         local seat = hum.SeatPart
         if seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
             local carModel = seat:FindFirstAncestorOfClass("Model")
             return seat, carModel
         end
-
         return nil, nil
     end
 
     local function getVehicleTargetParts(seat)
         local parts = {}
         if not seat then return parts end
-
         local carModel = seat:FindFirstAncestorOfClass("Model")
         if not carModel then return parts end
-
         local char = LocalPlayer.Character
-
         for _, part in ipairs(carModel:GetDescendants()) do
             if part:IsA("BasePart") then
                 if not (char and part:IsDescendantOf(char)) then
@@ -534,7 +533,6 @@ local function LoadMainScript()
         isFeaturesActive = not isFeaturesActive
         ActiveFeaturesBtn.Text = isFeaturesActive and "ON" or "OFF"
         ActiveFeaturesBtn.BackgroundColor3 = isFeaturesActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
         if not isFeaturesActive then
             isSmoothBoosting = false
             isSmoothReversing = false
@@ -556,7 +554,6 @@ local function LoadMainScript()
         SmoothFloatBtn.Visible = newState
         SmoothToggleBtn.Text = newState and "ON" or "OFF"
         SmoothToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-        
         if not newState then
             isSmoothBoosting = false
             SmoothFloatBtn.Text = "⚡"
@@ -568,7 +565,6 @@ local function LoadMainScript()
         SmoothReverseFloatBtn.Visible = newState
         SmoothReverseToggleBtn.Text = newState and "ON" or "OFF"
         SmoothReverseToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
         if not newState then
             isSmoothReversing = false
             SmoothReverseFloatBtn.Text = "🛑"
@@ -579,7 +575,6 @@ local function LoadMainScript()
         isSteerSettingActive = not isSteerSettingActive
         SteerSettingToggleBtn.Text = isSteerSettingActive and "ON" or "OFF"
         SteerSettingToggleBtn.BackgroundColor3 = isSteerSettingActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
         if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD and defaultTorqueZ then
             activeBodyGyro.P = defaultP
             activeBodyGyro.D = defaultD
@@ -592,7 +587,6 @@ local function LoadMainScript()
             SteerBoxP.Text = tostring(defaultP)
             SteerBoxD.Text = tostring(defaultD)
             SteerBoxTorque.Text = tostring(defaultTorqueZ)
-
             if activeBodyGyro then
                 activeBodyGyro.P = defaultP
                 activeBodyGyro.D = defaultD
@@ -603,23 +597,15 @@ local function LoadMainScript()
 
     SteerBoxP.FocusLost:Connect(function()
         local val = tonumber(SteerBoxP.Text)
-        if (not val or val <= 0) and defaultP then
-            SteerBoxP.Text = tostring(defaultP)
-        end
+        if (not val or val <= 0) and defaultP then SteerBoxP.Text = tostring(defaultP) end
     end)
-
     SteerBoxD.FocusLost:Connect(function()
         local val = tonumber(SteerBoxD.Text)
-        if (not val or val <= 0) and defaultD then
-            SteerBoxD.Text = tostring(defaultD)
-        end
+        if (not val or val <= 0) and defaultD then SteerBoxD.Text = tostring(defaultD) end
     end)
-
     SteerBoxTorque.FocusLost:Connect(function()
         local val = tonumber(SteerBoxTorque.Text)
-        if (not val or val <= 0) and defaultTorqueZ then
-            SteerBoxTorque.Text = tostring(defaultTorqueZ)
-        end
+        if (not val or val <= 0) and defaultTorqueZ then SteerBoxTorque.Text = tostring(defaultTorqueZ) end
     end)
 
     DensityBox.FocusLost:Connect(function()
@@ -628,21 +614,13 @@ local function LoadMainScript()
             DensityBox.Text = tostring(defaultDensity or 0.1)
             return
         end
-
         val = math.clamp(val, 0.1, 100)
         DensityBox.Text = tostring(val)
-
         local seat = getCurrentVehicle()
         if seat then
             for _, part in ipairs(getVehicleTargetParts(seat)) do
                 local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                part.CustomPhysicalProperties = PhysicalProperties.new(
-                    val,
-                    prop.Friction,
-                    prop.Elasticity,
-                    prop.FrictionWeight,
-                    prop.ElasticityWeight
-                )
+                part.CustomPhysicalProperties = PhysicalProperties.new(val, prop.Friction, prop.Elasticity, prop.FrictionWeight, prop.ElasticityWeight)
             end
         end
     end)
@@ -650,35 +628,21 @@ local function LoadMainScript()
     ResetDensityBtn.MouseButton1Click:Connect(function()
         local targetDensity = defaultDensity or 0.7
         DensityBox.Text = tostring(targetDensity)
-
         local seat = getCurrentVehicle()
         if seat then
             for _, part in ipairs(getVehicleTargetParts(seat)) do
                 local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                part.CustomPhysicalProperties = PhysicalProperties.new(
-                    targetDensity,
-                    prop.Friction,
-                    prop.Elasticity,
-                    prop.FrictionWeight,
-                    prop.ElasticityWeight
-                )
+                part.CustomPhysicalProperties = PhysicalProperties.new(targetDensity, prop.Friction, prop.Elasticity, prop.FrictionWeight, prop.ElasticityWeight)
             end
         end
     end)
 
     MaxFrictionBtn.MouseButton1Click:Connect(function()
         local seat = getCurrentVehicle()
-
         if seat then
             for _, part in ipairs(getVehicleTargetParts(seat)) do
                 local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                part.CustomPhysicalProperties = PhysicalProperties.new(
-                    prop.Density,
-                    2,
-                    prop.Elasticity,
-                    100,
-                    prop.ElasticityWeight
-                )
+                part.CustomPhysicalProperties = PhysicalProperties.new(prop.Density, 2, prop.Elasticity, 100, prop.ElasticityWeight)
             end
             MaxFrictionBtn.Text = "APPLIED!"
             MaxFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -690,20 +654,12 @@ local function LoadMainScript()
 
     ResetFrictionBtn.MouseButton1Click:Connect(function()
         local seat = getCurrentVehicle()
-
         if seat then
             local targetFriction = defaultFrictionVal or 0.3
             local targetFrictionWeight = defaultFrictionWeightVal or 1
-
             for _, part in ipairs(getVehicleTargetParts(seat)) do
                 local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-                part.CustomPhysicalProperties = PhysicalProperties.new(
-                    prop.Density,
-                    targetFriction,
-                    prop.Elasticity,
-                    targetFrictionWeight,
-                    prop.ElasticityWeight
-                )
+                part.CustomPhysicalProperties = PhysicalProperties.new(prop.Density, targetFriction, prop.Elasticity, targetFrictionWeight, prop.ElasticityWeight)
             end
             ResetFrictionBtn.Text = "RESET!"
             ResetFrictionBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -716,7 +672,6 @@ local function LoadMainScript()
     RemoveWheelieBtn.MouseButton1Click:Connect(function()
         local _, carModel = getCurrentVehicle()
         local deletedCount = 0
-
         if carModel then
             for _, item in ipairs(carModel:GetDescendants()) do
                 if item.Name:lower():find("wheelie") then
@@ -725,7 +680,6 @@ local function LoadMainScript()
                 end
             end
         end
-
         if deletedCount > 0 then
             RemoveWheelieBtn.Text = "DEL ("..deletedCount..")"
             RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -733,7 +687,6 @@ local function LoadMainScript()
             RemoveWheelieBtn.Text = "NOT FOUND"
             RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
         end
-
         task.wait(1.5)
         RemoveWheelieBtn.Text = "EXEC"
         RemoveWheelieBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
@@ -763,12 +716,10 @@ local function LoadMainScript()
         if not isFeaturesActive then return end
         isSmoothBoosting = not isSmoothBoosting
         SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
-
         if isSmoothBoosting then
             task.spawn(function()
                 while isSmoothBoosting and isFeaturesActive do
                     local seat = getCurrentVehicle()
-
                     if seat and seat:IsA("BasePart") then
                         local addPower = tonumber(SmoothBox1.Text) or 3.5
                         local delayVal = tonumber(SmoothBox2.Text) or 0.03
@@ -789,19 +740,15 @@ local function LoadMainScript()
         if not isFeaturesActive then return end
         isSmoothReversing = not isSmoothReversing
         SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-
         if isSmoothReversing then
             task.spawn(function()
                 while isSmoothReversing and isFeaturesActive do
                     local seat = getCurrentVehicle()
-
                     if seat and seat:IsA("BasePart") then
                         local brakePower = tonumber(BrakeBox1.Text) or 4
                         local delayVal = tonumber(BrakeBox2.Text) or 0.0225
-
                         local currentVel = seat.AssemblyLinearVelocity
                         local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
-
                         if forwardSpeed > 0 then
                             local newVel = currentVel - (seat.CFrame.LookVector * brakePower)
                             seat.AssemblyLinearVelocity = Vector3.new(newVel.X, math.clamp(newVel.Y, -5, 3), newVel.Z)
@@ -836,30 +783,20 @@ local function LoadMainScript()
 
     RunService.Stepped:Connect(function()
         if not isFeaturesActive then return end
-
         local seat, carModel = getCurrentVehicle()
-
         if seat and carModel then
             local vel = seat.AssemblyLinearVelocity
-
             if vel.Y > 8 or vel.Y < -15 then
                 seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
             end
-
             CarLabel.Text = "Car: " .. carModel.Name
-
             if defaultFrictionVal == nil then
                 local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
-
-                if currentProp.Density > 0.05 then
-                    defaultDensity = currentProp.Density
-     end
-
+                if currentProp.Density > 0.05 then defaultDensity = currentProp.Density end
                 defaultFrictionVal = currentProp.Friction
                 defaultFrictionWeightVal = currentProp.FrictionWeight
                 DensityBox.Text = tostring(defaultDensity or 0.1)
             end
-
             local gyro = carModel:FindFirstChild("LeanGyro", true)
             if gyro then
                 if activeBodyGyro ~= gyro then
@@ -867,26 +804,17 @@ local function LoadMainScript()
                     if gyro.P > 0 then defaultP = gyro.P end
                     if gyro.D > 0 then defaultD = gyro.D end
                     if gyro.MaxTorque.Z > 0 then defaultTorqueZ = gyro.MaxTorque.Z end
-
                     SteerBoxP.Text = tostring(defaultP or gyro.P)
                     SteerBoxD.Text = tostring(defaultD or gyro.D)
                     SteerBoxTorque.Text = tostring(defaultTorqueZ or gyro.MaxTorque.Z)
                 end
-
                 if isSteerSettingActive then
                     local targetP = tonumber(SteerBoxP.Text)
                     local targetD = tonumber(SteerBoxD.Text)
                     local targetTorqueZ = tonumber(SteerBoxTorque.Text)
-
-                    if targetP and targetP > 0 then
-                        gyro.P = targetP
-                    end
-                    if targetD and targetD > 0 then
-                        gyro.D = targetD
-                    end
-                    if targetTorqueZ and targetTorqueZ > 0 then
-                        gyro.MaxTorque = Vector3.new(0, 0, targetTorqueZ)
-                    end
+                    if targetP and targetP > 0 then gyro.P = targetP end
+                    if targetD and targetD > 0 then gyro.D = targetD end
+                    if targetTorqueZ and targetTorqueZ > 0 then gyro.MaxTorque = Vector3.new(0, 0, targetTorqueZ) end
                 end
             end
         else
@@ -898,101 +826,11 @@ local function LoadMainScript()
     end)
 end
 
--- Desain UI Key System Sesuai Sketsa Gambar
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local oldKeyGui = PlayerGui:FindFirstChild("PlatoboostKeyGui")
-if oldKeyGui then oldKeyGui:Destroy() end
-
-local KeyGui = Instance.new("ScreenGui")
-KeyGui.Name = "PlatoboostKeyGui"
-KeyGui.ResetOnSpawn = false
-KeyGui.Parent = PlayerGui
-
-local KeyFrame = Instance.new("Frame", KeyGui)
-KeyFrame.Name = "KeyFrame"
-KeyFrame.Size = UDim2.new(0, 320, 0, 200)
-KeyFrame.Position = UDim2.new(0.5, -160, 0.5, -100)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-KeyFrame.Active = true
-KeyFrame.Draggable = true
-Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
-
--- Top Control Buttons (Minimize & Close)
-local TopButtonsFrame = Instance.new("Frame", KeyFrame)
-TopButtonsFrame.Size = UDim2.new(0, 36, 0, 16)
-TopButtonsFrame.Position = UDim2.new(1, -42, 0, 6)
-TopButtonsFrame.BackgroundTransparency = 1
-
-local MinimizeBtn = Instance.new("TextButton", TopButtonsFrame)
-MinimizeBtn.Size = UDim2.new(0, 16, 0, 16)
-MinimizeBtn.Position = UDim2.new(0, 0, 0, 0)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-MinimizeBtn.Text = "-"
-MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextSize = 12
-Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 3)
-
-local CloseBtn = Instance.new("TextButton", TopButtonsFrame)
-CloseBtn.Size = UDim2.new(0, 16, 0, 16)
-CloseBtn.Position = UDim2.new(0, 18, 0, 0)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 10
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 3)
-
--- Input Key Box
-local KeyInput = Instance.new("TextBox", KeyFrame)
-KeyInput.Size = UDim2.new(0, 260, 0, 42)
-KeyInput.Position = UDim2.new(0.5, -130, 0, 30)
-KeyInput.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-KeyInput.Text = ""
-KeyInput.PlaceholderText = "Example : S_xxxxxxxxx"
-KeyInput.PlaceholderColor3 = Color3.fromRGB(180, 180, 180)
-KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-KeyInput.Font = Enum.Font.GothamSemibold
-KeyInput.TextSize = 13
-KeyInput.ClearTextOnFocus = false
-Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 12)
-
--- Verify Button
-local VerifyBtn = Instance.new("TextButton", KeyFrame)
-VerifyBtn.Size = UDim2.new(0, 90, 0, 32)
-VerifyBtn.Position = UDim2.new(0.5, -45, 0, 95)
-VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-VerifyBtn.Text = "Verify"
-VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-VerifyBtn.Font = Enum.Font.GothamBold
-VerifyBtn.TextSize = 14
-Instance.new("UICorner", VerifyBtn).CornerRadius = UDim.new(0, 8)
-
--- Get Key Button
-local GetKeyBtn = Instance.new("TextButton", KeyFrame)
-GetKeyBtn.Size = UDim2.new(0, 100, 0, 32)
-GetKeyBtn.Position = UDim2.new(0.5, -50, 0, 140)
-GetKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-GetKeyBtn.Text = "Get Key"
-GetKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-GetKeyBtn.Font = Enum.Font.GothamBold
-GetKeyBtn.TextSize = 14
-Instance.new("UICorner", GetKeyBtn).CornerRadius = UDim.new(0, 8)
-
--- Logika Interaksi UI
-onMessage = function(msg)
-    VerifyBtn.Text = msg
-    task.wait(2)
-    VerifyBtn.Text = "Verify"
-end
-
+-------------------------------------------------------------------------------
+--! HUBUNGKAN TOMBOL UI DENGAN LOGIKA
+-------------------------------------------------------------------------------
 GetKeyBtn.MouseButton1Click:Connect(function()
     copyLink()
-    GetKeyBtn.Text = "Copied!"
-    task.wait(1.5)
-    GetKeyBtn.Text = "Get Key"
 end)
 
 VerifyBtn.MouseButton1Click:Connect(function()
@@ -1005,13 +843,20 @@ VerifyBtn.MouseButton1Click:Connect(function()
     end
 
     VerifyBtn.Text = "Checking..."
-    local success = verifyKey(userKey)
+    local success, msg = verifyKey(userKey)
 
     if success then
         VerifyBtn.Text = "Success!"
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         task.wait(1)
         KeyGui:Destroy()
         LoadMainScript()
+    else
+        VerifyBtn.Text = msg or "Failed"
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        task.wait(2)
+        VerifyBtn.Text = "Verify"
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     end
 end)
 
