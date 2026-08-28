@@ -18,17 +18,16 @@ MenuShortcut.Name = "MenuShortcut"
 MenuShortcut.Size = UDim2.new(0, 45, 0, 45)
 MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MenuShortcut.BackgroundTransparency = 0.2
-MenuShortcut.TextColor3 = Color3.fromRGB(0, 255, 220)
-MenuShortcut.Text = "MENU"
-MenuShortcut.Font = Enum.Font.GothamSemibold
-MenuShortcut.TextSize = 11
+MenuShortcut.BackgroundTransparency = 1
+
+MenuShortcut.Image = "rbxassetid://130705104438925"
+
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
-Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
-MenuStroke.Color = Color3.fromRGB(0, 255, 220)
+MenuStroke.Color = Color3.fromRGB(152, 88, 255)
 MenuStroke.Thickness = 0.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -43,8 +42,8 @@ MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
 local FrameStroke = Instance.new("UIStroke", MainFrame)
-FrameStroke.Color = Color3.fromRGB(255, 255, 255)
-FrameStroke.Transparency = 0.8
+FrameStroke.Color = Color3.fromRGB(138, 43, 226)
+FrameStroke.Transparency = 0.5
 FrameStroke.Thickness = 1.2
 
 local Title = Instance.new("TextLabel", MainFrame)
