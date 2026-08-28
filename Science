@@ -13,12 +13,12 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 9
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local MenuShortcut = Instance.new("TextButton", ScreenGui)
+local MenuShortcut = Instance.new("ImageButton", ScreenGui)
 MenuShortcut.Name = "MenuShortcut"
 MenuShortcut.Size = UDim2.new(0, 45, 0, 45)
 MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MenuShortcut.BackgroundTransparency = 1
+MenuShortcut.BackgroundTransparency = 0.3
 MenuShortcut.Image = "rbxassetid://130705104438925"
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
@@ -33,7 +33,7 @@ MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 220, 0, 360)
 MainFrame.Position = UDim2.new(0, 15, 0, 70)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BackgroundTransparency = 0.5
+MainFrame.BackgroundTransparency = 0.3
 MainFrame.Visible = true
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -256,7 +256,7 @@ local isSteerSettingActive = false
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
-local defaultDensity = 0.1
+local defaultDensity = 0.7
 local defaultFrictionVal = nil
 local defaultFrictionWeightVal = nil
 local activeBodyGyro = nil
@@ -299,6 +299,7 @@ local function getVehicleTargetParts(seat)
     return parts
 end
 
+-- KONTROL BUKA / TUTUP MENU
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
 end)
@@ -398,7 +399,7 @@ end)
 DensityBox.FocusLost:Connect(function()
     local val = tonumber(DensityBox.Text)
     if not val then
-        DensityBox.Text = tostring(defaultDensity or 0.1)
+        DensityBox.Text = tostring(defaultDensity or 0.7)
         return
     end
 
@@ -421,7 +422,7 @@ DensityBox.FocusLost:Connect(function()
 end)
 
 ResetDensityBtn.MouseButton1Click:Connect(function()
-    local targetDensity = defaultDensity or 0.1
+    local targetDensity = defaultDensity or 0.7
     DensityBox.Text = tostring(targetDensity)
 
     local seat = getCurrentVehicle()
@@ -630,7 +631,7 @@ RunService.Stepped:Connect(function()
 
             defaultFrictionVal = currentProp.Friction
             defaultFrictionWeightVal = currentProp.FrictionWeight
-            DensityBox.Text = tostring(defaultDensity or 0.1)
+            DensityBox.Text = tostring(defaultDensity or 0.7)
         end
 
         local gyro = carModel:FindFirstChild("LeanGyro", true)
