@@ -19,16 +19,14 @@ MenuShortcut.Size = UDim2.new(0, 45, 0, 45)
 MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuShortcut.BackgroundTransparency = 1
-
 MenuShortcut.Image = "rbxassetid://130705104438925"
-
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
 Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
-MenuStroke.Color = Color3.fromRGB(152, 88, 255)
-MenuStroke.Thickness = 0.5
+MenuStroke.Thickness = 1.2
+MenuStroke.Transparency = 0
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
@@ -42,9 +40,18 @@ MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
 local FrameStroke = Instance.new("UIStroke", MainFrame)
-FrameStroke.Color = Color3.fromRGB(138, 43, 226)
-FrameStroke.Transparency = 0.5
-FrameStroke.Thickness = 1.2
+FrameStroke.Thickness = 1.5
+FrameStroke.Transparency = 0
+
+RunService.RenderStepped:Connect(function()
+    local t = math.sin(tick() * 2) * 0.5 + 0.5
+    local cosmicPurple = Color3.fromRGB(138, 43, 226)
+    local cosmicCyan = Color3.fromRGB(0, 255, 220)
+    local animatedColor = cosmicPurple:Lerp(cosmicCyan, t)
+    
+    FrameStroke.Color = animatedColor
+    MenuStroke.Color = animatedColor
+end)
 
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
@@ -246,11 +253,10 @@ local isSmoothBoosting = false
 local isSmoothReversing = false
 local isSteerSettingActive = false
 
--- MEMORY DEFAULT VALUES
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
-local defaultDensity = 0.7
+local defaultDensity = 0.1
 local defaultFrictionVal = nil
 local defaultFrictionWeightVal = nil
 local activeBodyGyro = nil
@@ -335,7 +341,7 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Visible = newState
     SmoothReverseToggleBtn.Text = newState and "ON" or "OFF"
     SmoothReverseToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-
+    
     if not newState then
         isSmoothReversing = false
         SmoothReverseFloatBtn.Text = "🛑"
@@ -354,7 +360,6 @@ SteerSettingToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- RESET & VALIDASI STEER BOX (DENGAN PROTEKSI NILAI INVALID/ZERO)
 ResetSteerBtn.MouseButton1Click:Connect(function()
     if defaultP and defaultD and defaultTorqueZ then
         SteerBoxP.Text = tostring(defaultP)
@@ -393,7 +398,7 @@ end)
 DensityBox.FocusLost:Connect(function()
     local val = tonumber(DensityBox.Text)
     if not val then
-        DensityBox.Text = tostring(defaultDensity or 0.7)
+        DensityBox.Text = tostring(defaultDensity or 0.1)
         return
     end
 
@@ -416,7 +421,7 @@ DensityBox.FocusLost:Connect(function()
 end)
 
 ResetDensityBtn.MouseButton1Click:Connect(function()
-    local targetDensity = defaultDensity or 0.7
+    local targetDensity = defaultDensity or 0.1
     DensityBox.Text = tostring(targetDensity)
 
     local seat = getCurrentVehicle()
@@ -434,13 +439,6 @@ ResetDensityBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- =================================================================
--- LOGIKA UNIVERSAL MAX FRICTION & RESET FRICTION (AKURAT)
--- PhysicalProperties.new(Density, Friction, Elasticity, FrictionWeight, ElasticityWeight)
--- Posisi 2 = Friction (Nilai 2)
--- Posisi 4 = FrictionWeight (Nilai 100)
--- =================================================================
-
 MaxFrictionBtn.MouseButton1Click:Connect(function()
     local seat = getCurrentVehicle()
 
@@ -448,11 +446,11 @@ MaxFrictionBtn.MouseButton1Click:Connect(function()
         for _, part in ipairs(getVehicleTargetParts(seat)) do
             local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
             part.CustomPhysicalProperties = PhysicalProperties.new(
-                prop.Density,          -- Posisi 1: Density
-                2,                     -- Posisi 2: Injeksi Friction = 2
-                prop.Elasticity,       -- Posisi 3: Elasticity
-                100,                   -- Posisi 4: Injeksi FrictionWeight = 100
-                prop.ElasticityWeight  -- Posisi 5: Preservasi ElasticityWeight
+                prop.Density,
+                2,
+                prop.Elasticity,
+                100,
+                prop.ElasticityWeight
             )
         end
         MaxFrictionBtn.Text = "APPLIED!"
@@ -473,11 +471,11 @@ ResetFrictionBtn.MouseButton1Click:Connect(function()
         for _, part in ipairs(getVehicleTargetParts(seat)) do
             local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
             part.CustomPhysicalProperties = PhysicalProperties.new(
-                prop.Density,          -- Posisi 1: Density
-                targetFriction,        -- Posisi 2: Reset Friction ke Default UI
-                prop.Elasticity,       -- Posisi 3: Elasticity
-                targetFrictionWeight,  -- Posisi 4: Reset FrictionWeight ke Default UI
-                prop.ElasticityWeight  -- Posisi 5: Preservasi ElasticityWeight
+                prop.Density,
+                targetFriction,
+                prop.Elasticity,
+                targetFrictionWeight,
+                prop.ElasticityWeight
             )
         end
         ResetFrictionBtn.Text = "RESET!"
@@ -609,7 +607,6 @@ FlyBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly' .. '?t=' .. tick()))()
 end)
 
--- DETEKSI UNIVERSAL & PROTEKSI STEER TERTIMPA 0
 RunService.Stepped:Connect(function()
     if not isFeaturesActive then return end
 
@@ -624,7 +621,6 @@ RunService.Stepped:Connect(function()
 
         CarLabel.Text = "Car: " .. carModel.Name
 
-        -- Perekaman Nilai Default Friction yang Tepat
         if defaultFrictionVal == nil then
             local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
 
@@ -632,12 +628,11 @@ RunService.Stepped:Connect(function()
                 defaultDensity = currentProp.Density
             end
 
-            defaultFrictionVal = currentProp.Friction            -- Mengambil Posisi 2 (Friction UI)
-            defaultFrictionWeightVal = currentProp.FrictionWeight -- Mengambil Posisi 4 (FrictionWeight UI)
-            DensityBox.Text = tostring(defaultDensity or 0.7)
+            defaultFrictionVal = currentProp.Friction
+            defaultFrictionWeightVal = currentProp.FrictionWeight
+            DensityBox.Text = tostring(defaultDensity or 0.1)
         end
 
-        -- TANGKAP DAN TERAPKAN STEER SETTING DENGAN PROTEKSI VAL > 0
         local gyro = carModel:FindFirstChild("LeanGyro", true)
         if gyro then
             if activeBodyGyro ~= gyro then
@@ -656,7 +651,6 @@ RunService.Stepped:Connect(function()
                 local targetD = tonumber(SteerBoxD.Text)
                 local targetTorqueZ = tonumber(SteerBoxTorque.Text)
 
-                -- Hanya perbarui jika angka valid dan lebih dari 0
                 if targetP and targetP > 0 then
                     gyro.P = targetP
                 end
