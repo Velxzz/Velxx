@@ -33,7 +33,7 @@ ScreenGui.Parent = parentContainer
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 360)
-MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+MainFrame.Position = UDim2.new(0.1, 0, 0.2, 25)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BackgroundTransparency = 0.2
 MainFrame.BorderSizePixel = 0
