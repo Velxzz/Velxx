@@ -48,7 +48,7 @@ RunService.RenderStepped:Connect(function()
     local cosmicPurple = Color3.fromRGB(138, 43, 226)
     local cosmicCyan = Color3.fromRGB(0, 255, 220)
     local animatedColor = cosmicPurple:Lerp(cosmicCyan, t)
-    
+
     FrameStroke.Color = animatedColor
     MenuStroke.Color = animatedColor
 end)
@@ -57,7 +57,7 @@ local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
 Title.Position = UDim2.new(0, 0, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "BOOST V4.8 PRO"
+Title.Text = "BOOST V4.9 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
 
@@ -256,7 +256,7 @@ local isSteerSettingActive = false
 local defaultP = nil
 local defaultD = nil
 local defaultTorqueZ = nil
-local defaultDensity = 0.7
+local defaultDensity = 0.1 -- Diubah default density jadi 0.1
 local defaultFrictionVal = nil
 local defaultFrictionWeightVal = nil
 local activeBodyGyro = nil
@@ -290,7 +290,8 @@ local function getVehicleTargetParts(seat)
         if part:IsA("BasePart") then
             if not (char and part:IsDescendantOf(char)) then
                 local name = part.Name:lower()
-                if name:find("wheel") or name:find("roda") or part == seat or part:IsA("MeshPart") then
+                -- Hanya ambil bagian roda atau seat saja agar bodi utama tidak ikut-ikutan berat/lengket
+                if name:find("wheel") or name:find("roda") or part == seat then
                     table.insert(parts, part)
                 end
             end
@@ -299,7 +300,6 @@ local function getVehicleTargetParts(seat)
     return parts
 end
 
--- KONTROL BUKA / TUTUP MENU
 MenuShortcut.MouseButton1Click:Connect(function() 
     MainFrame.Visible = not MainFrame.Visible 
 end)
@@ -342,7 +342,7 @@ SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
     SmoothReverseFloatBtn.Visible = newState
     SmoothReverseToggleBtn.Text = newState and "ON" or "OFF"
     SmoothReverseToggleBtn.BackgroundColor3 = newState and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
-    
+
     if not newState then
         isSmoothReversing = false
         SmoothReverseFloatBtn.Text = "🛑"
@@ -399,43 +399,47 @@ end)
 DensityBox.FocusLost:Connect(function()
     local val = tonumber(DensityBox.Text)
     if not val then
-        DensityBox.Text = tostring(defaultDensity or 0.7)
+        DensityBox.Text = tostring(defaultDensity or 0.1)
         return
     end
 
-    val = math.clamp(val, 0.1, 100)
+    val = math.clamp(val, 0.01, 100)
     DensityBox.Text = tostring(val)
 
-    local seat = getCurrentVehicle()
-    if seat then
-        for _, part in ipairs(getVehicleTargetParts(seat)) do
-            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-            part.CustomPhysicalProperties = PhysicalProperties.new(
-                val,
-                prop.Friction,
-                prop.Elasticity,
-                prop.FrictionWeight,
-                prop.ElasticityWeight
-            )
+    local seat, carModel = getCurrentVehicle()
+    if carModel then
+        for _, part in ipairs(carModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                part.CustomPhysicalProperties = PhysicalProperties.new(
+                    val,
+                    prop.Friction,
+                    prop.Elasticity,
+                    prop.FrictionWeight,
+                    prop.ElasticityWeight
+                )
+            end
         end
     end
 end)
 
 ResetDensityBtn.MouseButton1Click:Connect(function()
-    local targetDensity = defaultDensity or 0.7
+    local targetDensity = defaultDensity or 0.1
     DensityBox.Text = tostring(targetDensity)
 
-    local seat = getCurrentVehicle()
-    if seat then
-        for _, part in ipairs(getVehicleTargetParts(seat)) do
-            local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
-            part.CustomPhysicalProperties = PhysicalProperties.new(
-                targetDensity,
-                prop.Friction,
-                prop.Elasticity,
-                prop.FrictionWeight,
-                prop.ElasticityWeight
-            )
+    local seat, carModel = getCurrentVehicle()
+    if carModel then
+        for _, part in ipairs(carModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
+                part.CustomPhysicalProperties = PhysicalProperties.new(
+                    targetDensity,
+                    prop.Friction,
+                    prop.Elasticity,
+                    prop.FrictionWeight,
+                    prop.ElasticityWeight
+                )
+            end
         end
     end
 end)
@@ -444,13 +448,14 @@ MaxFrictionBtn.MouseButton1Click:Connect(function()
     local seat = getCurrentVehicle()
 
     if seat then
+        -- Hanya terapkan max friction pada bagian roda/seat agar bodi tidak tergencet
         for _, part in ipairs(getVehicleTargetParts(seat)) do
             local prop = part.CustomPhysicalProperties or PhysicalProperties.new(part.Material)
             part.CustomPhysicalProperties = PhysicalProperties.new(
                 prop.Density,
-                2,
+                1.5, -- Diturunkan sedikit dari 2 ke 1.5 agar tidak terlalu ekstrem mencengkeram
                 prop.Elasticity,
-                100,
+                10,  -- FrictionWeight diturunkan dari 100 ke 10 agar bodi motor tidak berat/ambles di tanjakan
                 prop.ElasticityWeight
             )
         end
@@ -625,13 +630,13 @@ RunService.Stepped:Connect(function()
         if defaultFrictionVal == nil then
             local currentProp = seat.CustomPhysicalProperties or PhysicalProperties.new(seat.Material)
 
-            if currentProp.Density > 0.05 then
+            if currentProp.Density > 0.01 then
                 defaultDensity = currentProp.Density
             end
 
             defaultFrictionVal = currentProp.Friction
             defaultFrictionWeightVal = currentProp.FrictionWeight
-            DensityBox.Text = tostring(defaultDensity or 0.7)
+            DensityBox.Text = tostring(defaultDensity or 0.1)
         end
 
         local gyro = carModel:FindFirstChild("LeanGyro", true)
