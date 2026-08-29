@@ -1,4 +1,4 @@
--- Modifier Gui V4.0 PRO 24-8-2026
+-- Modifier Gui V4.1 PRO (Universal Remove Tire & Live Vehicle Status)
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -32,7 +32,7 @@ ScreenGui.Parent = parentContainer
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 328)
+MainFrame.Size = UDim2.new(0, 240, 0, 360)
 MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BackgroundTransparency = 0.2
@@ -41,8 +41,7 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = true
 
-local UICornerMain = Instance.new("UICorner", MainFrame)
-UICornerMain.CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 -- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
@@ -50,20 +49,17 @@ HeaderBar.Size = UDim2.new(1, 0, 0, 35)
 HeaderBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 HeaderBar.BackgroundTransparency = 0.4
 HeaderBar.BorderSizePixel = 0
-
-local HeaderCorner = Instance.new("UICorner", HeaderBar)
-HeaderCorner.CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", HeaderBar).CornerRadius = UDim.new(0, 10)
 
 local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "MODIFIER V4.0 PRO"
+Title.Text = "MODIFIER V4.1 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
--- Title RGB
 RunService.RenderStepped:Connect(function()
     local hue = (tick() % 5) / 5
     Title.TextColor3 = Color3.fromHSV(hue, 1, 1)
@@ -76,7 +72,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 435)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 480)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -88,7 +84,7 @@ local function createToggleRow(parent, labelText, order)
     row.Size = UDim2.new(1, -6, 0, 28)
     row.BackgroundTransparency = 1
     row.LayoutOrder = order
-    
+
     local label = Instance.new("TextLabel", row)
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Text = labelText .. " :"
@@ -97,7 +93,7 @@ local function createToggleRow(parent, labelText, order)
     label.TextSize = 10
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
-    
+
     local btn = Instance.new("TextButton", row)
     btn.Size = UDim2.new(0, 75, 0, 22)
     btn.Position = UDim2.new(1, -75, 0.5, -11)
@@ -107,10 +103,8 @@ local function createToggleRow(parent, labelText, order)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 10
-    
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0, 4)
-    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
     return row, btn
 end
 
@@ -120,13 +114,13 @@ local isRunning = false
 local floatFunctionActive = true
 local isLocked = false
 local showFloatButtons = true
+local customStatusText = nil
 
--- Toggle Active Features
+-- Toggles
 local _, ActiveFeaturesBtn = createToggleRow(ContentScroll, "Active Features", 1)
 ActiveFeaturesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ActiveFeaturesBtn.Text = "ON"
 
--- Toggle Start
 local _, StartToggleBtn = createToggleRow(ContentScroll, "Start Modifier", 2)
 
 -- UI Speed
@@ -233,11 +227,35 @@ ResetBtn.Font = Enum.Font.GothamBold
 ResetBtn.TextSize = 9
 Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 4)
 
--- Toggle Lock Button
-local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 7)
+-- UI Remove Tire
+local removeTireRow = Instance.new("Frame", ContentScroll)
+removeTireRow.Size = UDim2.new(1, -6, 0, 28)
+removeTireRow.BackgroundTransparency = 1
+removeTireRow.LayoutOrder = 7
 
--- Toggle Show/Hide Float Buttons
-local _, ShowFloatButtonsToggle = createToggleRow(ContentScroll, "Show Float Btn", 8)
+local removeTireLabel = Instance.new("TextLabel", removeTireRow)
+removeTireLabel.Size = UDim2.new(0.6, 0, 1, 0)
+removeTireLabel.Text = "Remove Tire :"
+removeTireLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+removeTireLabel.Font = Enum.Font.GothamBold
+removeTireLabel.TextSize = 10
+removeTireLabel.TextXAlignment = Enum.TextXAlignment.Left
+removeTireLabel.BackgroundTransparency = 1
+
+local RemoveTireBtn = Instance.new("TextButton", removeTireRow)
+RemoveTireBtn.Size = UDim2.new(0, 75, 0, 22)
+RemoveTireBtn.Position = UDim2.new(1, -75, 0.5, -11)
+RemoveTireBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 180)
+RemoveTireBtn.BorderSizePixel = 0
+RemoveTireBtn.Text = "REMOVE"
+RemoveTireBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RemoveTireBtn.Font = Enum.Font.GothamBold
+RemoveTireBtn.TextSize = 9
+Instance.new("UICorner", RemoveTireBtn).CornerRadius = UDim.new(0, 4)
+
+-- Toggle Lock Button & Show Float
+local _, LockButtonToggle = createToggleRow(ContentScroll, "Lock Button", 8)
+local _, ShowFloatButtonsToggle = createToggleRow(ContentScroll, "Show Float Btn", 9)
 ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ShowFloatButtonsToggle.Text = "ON"
 
@@ -245,7 +263,7 @@ ShowFloatButtonsToggle.Text = "ON"
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
-configRow.LayoutOrder = 9
+configRow.LayoutOrder = 10
 
 local SaveConfigBtn = Instance.new("TextButton", configRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
@@ -272,7 +290,7 @@ Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 local updateRow = Instance.new("Frame", ContentScroll)
 updateRow.Size = UDim2.new(1, -6, 0, 28)
 updateRow.BackgroundTransparency = 1
-updateRow.LayoutOrder = 10
+updateRow.LayoutOrder = 11
 
 local UpdateConfigBtn = Instance.new("TextButton", updateRow)
 UpdateConfigBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -288,7 +306,7 @@ Instance.new("UICorner", UpdateConfigBtn).CornerRadius = UDim.new(0, 4)
 local loadBoxRow = Instance.new("Frame", ContentScroll)
 loadBoxRow.Size = UDim2.new(1, -6, 0, 28)
 loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 11
+loadBoxRow.LayoutOrder = 12
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
@@ -303,19 +321,50 @@ LoadBox.Font = Enum.Font.Gotham
 LoadBox.TextSize = 10
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 
--- Status Text
+-- Status Text Real-time
 local statusRow = Instance.new("Frame", ContentScroll)
 statusRow.Size = UDim2.new(1, -6, 0, 20)
 statusRow.BackgroundTransparency = 1
-statusRow.LayoutOrder = 12
+statusRow.LayoutOrder = 13
 
 local StatusLabel = Instance.new("TextLabel", statusRow)
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
-StatusLabel.Text = ""
-StatusLabel.TextColor3 = Color3.fromRGB(0, 150, 0)
+StatusLabel.Text = "Car: None"
+StatusLabel.TextColor3 = Color3.fromRGB(0, 220, 100)
 StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
+
+-- Helper Function untuk memunculkan notifikasi sementara di status
+local function setTemporaryStatus(msg, duration)
+    customStatusText = msg
+    task.delay(duration or 2, function()
+        if customStatusText == msg then
+            customStatusText = nil
+        end
+    end)
+end
+
+-- Realtime Status Loop (Detect Current Vehicle)
+RunService.Heartbeat:Connect(function()
+    if customStatusText then
+        StatusLabel.Text = customStatusText
+        return
+    end
+
+    local char = LocalPlayer.Character
+    if char then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.SeatPart then
+            local vehicleModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
+            if vehicleModel then
+                StatusLabel.Text = "Car: " .. vehicleModel.Name
+                return
+            end
+        end
+    end
+    StatusLabel.Text = "Car: None"
+end)
 
 -- Float Logo Menu Utama
 local MainFloatBtn = Instance.new("TextButton", ScreenGui)
@@ -330,18 +379,15 @@ MainFloatBtn.TextSize = 18
 MainFloatBtn.BorderSizePixel = 0
 MainFloatBtn.Active = true
 MainFloatBtn.Draggable = true
-
-local UICornerMainFloat = Instance.new("UICorner", MainFloatBtn)
-UICornerMainFloat.CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", MainFloatBtn).CornerRadius = UDim.new(1, 0)
 
 MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Array penampung seluruh tombol melayang
+-- Floating Buttons System
 local featureFloatButtons = {}
 
--- Helper Circular Float Button
 local function createCircularFloat(name, text, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = UDim2.new(0, 50, 0, 50)
@@ -355,27 +401,25 @@ local function createCircularFloat(name, text, customPos, callback)
     btn.BorderSizePixel = 0
     btn.Active = true
     btn.Visible = showFloatButtons
-    
+
     table.insert(featureFloatButtons, btn)
-    
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(1, 0)
-    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+
     btn.MouseButton1Click:Connect(function()
         if activeFeatures and floatFunctionActive then
             callback()
         end
     end)
-    
+
     local dragging = false
     local dragInput, dragStart, startPos
-    
+
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = btn.Position
-            
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -383,24 +427,24 @@ local function createCircularFloat(name, text, customPos, callback)
             end)
         end
     end)
-    
+
     btn.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
-    
+
     game:GetService("UserInputService").InputChanged:Connect(function(input)
         if input == dragInput and dragging and not isLocked then
             local delta = input.Position - dragStart
             btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    
+
     return btn
 end
 
--- Logika Show/Hide Float Buttons
+-- Toggle Show/Hide Float
 ShowFloatButtonsToggle.MouseButton1Click:Connect(function()
     showFloatButtons = not showFloatButtons
     if showFloatButtons then
@@ -410,11 +454,9 @@ ShowFloatButtonsToggle.MouseButton1Click:Connect(function()
         ShowFloatButtonsToggle.Text = "OFF"
         ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     end
-    
+
     for _, btn in ipairs(featureFloatButtons) do
-        if btn then
-            btn.Visible = showFloatButtons
-        end
+        if btn then btn.Visible = showFloatButtons end
     end
 end)
 
@@ -437,7 +479,6 @@ end
 
 local FastSteerFloatBtn
 
--- Logika Speed
 local function updateSpeedUI()
     local val = getSpeedValue()
     SpeedBtn.Text = tostring(val)
@@ -466,18 +507,18 @@ local function createVisualBlock(cf)
     block.Transparency = 0.5
     block.Material = Enum.Material.SmoothPlastic
     block.Color = Color3.fromRGB(255, 255, 255)
-    
+
     local texture = Instance.new("Texture")
     texture.Face = Enum.NormalId.Top
     texture.Texture = "rbxassetid://620583021"
     texture.Parent = block
-    
+
     block.Parent = workspace
     table.insert(spawnedBlocks, block)
     return block
 end
 
--- Logika Spawn
+-- Spawn
 local function spawnBlockAtPlayer()
     if not activeFeatures then return end
     local char = LocalPlayer.Character
@@ -485,18 +526,18 @@ local function spawnBlockAtPlayer()
     local rootPart = char:FindFirstChild("HumanoidRootPart")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
-    
+
     if targetPart then
         local currentPos = targetPart.Position
         local finalCFrame
-        
+
         if lastPos then
             local moveDir = currentPos - lastPos
             if moveDir.Magnitude > 0.01 then
                 local forwardVector = moveDir.Unit
                 local upVector = targetPart.CFrame.UpVector
                 local rightVector = forwardVector:Cross(upVector).Unit
-                
+
                 upVector = rightVector:Cross(forwardVector).Unit
                 finalCFrame = CFrame.fromMatrix(currentPos, rightVector, upVector, -forwardVector)
             else
@@ -505,21 +546,20 @@ local function spawnBlockAtPlayer()
         else
             finalCFrame = targetPart.CFrame
         end
-        
+
         lastPos = currentPos
         createVisualBlock(finalCFrame)
-        StatusLabel.Text = "Block Spawned!"
+        setTemporaryStatus("Block Spawned!", 1.5)
     end
 end
 
--- Logika Undo
+-- Undo
 local function undoLastBlock()
     if not activeFeatures then return end
     if #spawnedBlocks > 0 then
         local lastBlock = table.remove(spawnedBlocks, #spawnedBlocks)
-        if lastBlock then
-            lastBlock:Destroy()
-        end
+        if lastBlock then lastBlock:Destroy() end
+        
         if currentIndex > #spawnedBlocks then
             currentIndex = math.max(1, #spawnedBlocks)
         end
@@ -528,15 +568,15 @@ local function undoLastBlock()
         else
             lastPos = nil
         end
-        StatusLabel.Text = "Last Block Removed!"
+        setTemporaryStatus("Last Block Removed!", 1.5)
     else
-        StatusLabel.Text = "No blocks to undo!"
+        setTemporaryStatus("No blocks to undo!", 1.5)
     end
 end
 
 local FloatStart
 
--- Logika Start/Pause
+-- Start/Pause
 local function toggleStart()
     if not activeFeatures or #spawnedBlocks == 0 then return end
     isRunning = not isRunning
@@ -553,7 +593,7 @@ local function toggleStart()
     end
 end
 
--- Logika Reset
+-- Reset
 local function resetAll()
     if not activeFeatures then return end
     isRunning = false
@@ -568,21 +608,75 @@ local function resetAll()
         if block then block:Destroy() end
     end
     spawnedBlocks = {}
-    StatusLabel.Text = "Reseted!"
+    setTemporaryStatus("Reseted!", 1.5)
 end
 
--- Posisi Float Buttons
+-- LOGIKA REMOVE TIRE (UNIVERSAL UNTUK MOTOR SIAPA SAJA)
+local function removeTire()
+    if not activeFeatures then return end
+    
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid or not humanoid.SeatPart then
+        setTemporaryStatus("Sit on a bike first!", 2)
+        return
+    end
+
+    -- Otomatis ambil Model Motor yang diduduki
+    local carModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
+    if not carModel then
+        setTemporaryStatus("Bike model not found!", 2)
+        return
+    end
+
+    local bodyFolder = carModel:FindFirstChild("Body")
+    if not bodyFolder then
+        setTemporaryStatus("Body folder not found!", 2)
+        return
+    end
+
+    -- Hapus komponen target tanpa menghapus Weight dan bal
+    local targets = {
+        "RearSuspensionBase",
+        "RearSuspensionBaseHinge",
+        "SwingArmHinge"
+    }
+
+    for _, name in ipairs(targets) do
+        local obj = bodyFolder:FindFirstChild(name)
+        if obj then
+            obj:Destroy()
+        end
+    end
+
+    -- Khusus SteeringHinge, hanya hapus file Attachment-nya
+    local steeringHinge = bodyFolder:FindFirstChild("SteeringHinge")
+    if steeringHinge then
+        local att = steeringHinge:FindFirstChild("Attachment")
+        if att then
+            att:Destroy()
+        end
+    end
+
+    setTemporaryStatus("Tire Removed from " .. carModel.Name .. "!", 2.5)
+end
+
+-- Setup Float Buttons
 FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
 local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
+local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -170, 1, -345), removeTire)
 FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
 
--- Event UI
+-- Event Bindings
 StartToggleBtn.MouseButton1Click:Connect(toggleStart)
 SpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
 UndoBtn.MouseButton1Click:Connect(undoLastBlock)
 ResetBtn.MouseButton1Click:Connect(resetAll)
+RemoveTireBtn.MouseButton1Click:Connect(removeTire)
 
 ActiveFeaturesBtn.MouseButton1Click:Connect(function()
     activeFeatures = not activeFeatures
@@ -607,87 +701,87 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIKA SAVE NEW CONFIG
+-- Save Config
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
-        StatusLabel.Text = "Spawn blocks first!"
+        setTemporaryStatus("Spawn blocks first!", 2)
         return
     end
-    
+
     local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     local randomCode = "C_"
     local rng = Random.new()
-    
+
     for i = 1, 13 do
         local randIndex = rng:NextInteger(1, #chars)
         randomCode = randomCode .. chars:sub(randIndex, randIndex)
     end
-    
+
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
         local cf = block.CFrame
         table.insert(dataToSave, {cf:GetComponents()})
     end
-    
+
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
         writefile("ModifierConfigs/" .. randomCode .. ".json", encodedData)
     end
-    
+
     if setclipboard then
         setclipboard(randomCode)
-        StatusLabel.Text = "Saved & Copied!"
+        setTemporaryStatus("Saved & Copied!", 2)
     else
-        StatusLabel.Text = "Saved Code: " .. randomCode
+        setTemporaryStatus("Saved: " .. randomCode, 2)
     end
 end)
 
--- LOGIKA UPDATE CONFIG
+-- Update Config
 UpdateConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
-        StatusLabel.Text = "Spawn blocks first!"
+        setTemporaryStatus("Spawn blocks first!", 2)
         return
     end
-    
+
     local codeToUpdate = LoadBox.Text:gsub("%s+", "")
     if codeToUpdate == "" then
-        StatusLabel.Text = "Enter code to update!"
+        setTemporaryStatus("Enter code to update!", 2)
         return
     end
-    
+
     local fileName = "ModifierConfigs/" .. codeToUpdate .. ".json"
-    
+
     if isfile and not isfile(fileName) then
-        StatusLabel.Text = "Code file not found!"
+        setTemporaryStatus("Code file not found!", 2)
         return
     end
-    
+
     local dataToSave = {}
     for _, block in ipairs(spawnedBlocks) do
         local cf = block.CFrame
         table.insert(dataToSave, {cf:GetComponents()})
     end
-    
+
     if writefile then
         local encodedData = HttpService:JSONEncode(dataToSave)
         writefile(fileName, encodedData)
-        StatusLabel.Text = "Updated: " .. codeToUpdate
+        setTemporaryStatus("Updated: " .. codeToUpdate, 2)
     end
 end)
 
--- LOGIKA LOAD CONFIG (FIXED: JSONEncode -> JSONDecode)
+-- Load Config
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
-        StatusLabel.Text = "Enter code first!"
+        setTemporaryStatus("Enter code first!", 2)
         return
     end
-    
+
     local fileName = "ModifierConfigs/" .. codeToLoad .. ".json"
     if readfile and isfile and isfile(fileName) then
         local successRead, rawData = pcall(readfile, fileName)
         if not successRead or not rawData then
-            StatusLabel.Text = "Failed to read file!"
+            setTemporaryStatus("Failed to read file!", 2)
             return
         end
 
@@ -703,52 +797,51 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
         lastPos = nil
         startingCFrame = nil
         currentTransitionTime = 0
-        
-        -- Menggunakan JSONDecode untuk membaca String JSON kembali menjadi Table
+
         local successDecode, decodedData = pcall(function()
             return HttpService:JSONDecode(rawData)
         end)
-        
+
         if successDecode and type(decodedData) == "table" then
             for _, comps in ipairs(decodedData) do
                 local cf = CFrame.new(table.unpack(comps))
                 createVisualBlock(cf)
             end
-            
+
             if #spawnedBlocks > 0 then
                 lastPos = spawnedBlocks[#spawnedBlocks].Position
             end
-            StatusLabel.Text = "Loaded Successfully!"
+            setTemporaryStatus("Loaded Successfully!", 2)
         else
-            StatusLabel.Text = "Invalid Config Format!"
+            setTemporaryStatus("Invalid Config Format!", 2)
         end
     else
-        StatusLabel.Text = "Code not found!"
+        setTemporaryStatus("Code not found!", 2)
     end
 end)
 
--- Loop Heartbeat Teleport
+-- Heartbeat Loop (Teleport / Speed Logic)
 RunService.Heartbeat:Connect(function(dt)
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
-    
+
     local speedVal = getSpeedValue()
     local char = LocalPlayer.Character
     if not char then return end
-    
+
     local rootPart = char:FindFirstChild("HumanoidRootPart")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
-    
+
     if targetPart then
         if targetPart:IsA("BasePart") then
             targetPart.AssemblyLinearVelocity = Vector3.zero
             targetPart.AssemblyAngularVelocity = Vector3.zero
         end
-        
+
         local targetBlock = spawnedBlocks[currentIndex]
         if targetBlock then
             local targetCFrame = targetBlock.CFrame
-            
+
             if speedVal == 0 then
                 targetPart.CFrame = targetCFrame
                 currentIndex = currentIndex + 1
@@ -761,11 +854,10 @@ RunService.Heartbeat:Connect(function(dt)
                     startingCFrame = targetPart.CFrame
                     currentTransitionTime = 0
                 end
-                
+
                 currentTransitionTime = currentTransitionTime + dt
-                local alpha = currentTransitionTime / speedVal
-                
-                if alpha >= 1 then
+
+                if currentTransitionTime >= speedVal then
                     targetPart.CFrame = targetCFrame
                     currentIndex = currentIndex + 1
                     if currentIndex > #spawnedBlocks then
@@ -773,6 +865,7 @@ RunService.Heartbeat:Connect(function(dt)
                     end
                     startingCFrame = nil
                 else
+                    local alpha = currentTransitionTime / speedVal
                     targetPart.CFrame = startingCFrame:Lerp(targetCFrame, alpha)
                 end
             end
