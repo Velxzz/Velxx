@@ -1,4 +1,4 @@
--- Combined Script: Modifier Gui + Boost Speed V5.0 PRO
+-- Combined Script: Modifier Gui + Boost Speed V5.0 PRO (Fixed & Updated)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
@@ -43,12 +43,12 @@ MenuShortcut.BackgroundTransparency = 0.3
 MenuShortcut.Image = "rbxassetid://113467230333515"
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
-Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12) -- Squircle
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Thickness = 1.5
 
--- Frame Utama UI (Horizontal Melebar 520x300)
+-- Frame Utama UI
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 520, 0, 300)
@@ -195,7 +195,7 @@ tabButtons["Home"].BackgroundColor3 = Color3.fromRGB(0, 140, 240)
 tabButtons["Home"].TextColor3 = Color3.fromRGB(255, 255, 255)
 
 --------------------------------------------------------------------------------
--- TAB 1: HOME PAGE (Vertikal & Tengah)
+-- TAB 1: HOME PAGE (Vertikal & Tengah) - FIXED YIELDING
 --------------------------------------------------------------------------------
 local HomeCenterFrame = Instance.new("Frame", HomePage)
 HomeCenterFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -207,10 +207,11 @@ HomeList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 HomeList.VerticalAlignment = Enum.VerticalAlignment.Center
 HomeList.Padding = UDim.new(0, 5)
 
+-- Using rbxthumb for instant load without yielding UI
 local userAvatar = Instance.new("ImageLabel", HomeCenterFrame)
 userAvatar.Size = UDim2.new(0, 70, 0, 70)
 userAvatar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-userAvatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+userAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 userAvatar.LayoutOrder = 1
 Instance.new("UICorner", userAvatar).CornerRadius = UDim.new(1, 0)
 
@@ -229,18 +230,26 @@ end
 
 addCenteredText("Username: " .. LocalPlayer.Name, 2)
 addCenteredText("User Id      : " .. LocalPlayer.UserId, 3)
-addCenteredText("Acc Age   : " .. LocalPlayer.AccountAge .. " Days", 4)
 
-local joinTimestamp = os.time() - (LocalPlayer.AccountAge * 86400)
-addCenteredText("Join Date : " .. os.date("%d %b %Y", joinTimestamp), 5)
+local accAge = "0"
+pcall(function() accAge = tostring(LocalPlayer.AccountAge) end)
+addCenteredText("Acc Age   : " .. accAge .. " Days", 4)
 
--- Fetch Game Name
-local gameName = "Unknown Game"
 pcall(function()
-    local info = MarketService:GetProductInfo(game.PlaceId)
-    if info and info.Name then gameName = info.Name end
+    local joinTimestamp = os.time() - (tonumber(accAge) * 86400)
+    addCenteredText("Join Date : " .. os.date("%d %b %Y", joinTimestamp), 5)
 end)
-addCenteredText("Game       : " .. gameName, 6)
+
+-- Fetch Game Name Asynchronously
+local gameNameLbl = addCenteredText("Game       : Loading...", 6)
+task.spawn(function()
+    pcall(function()
+        local info = MarketService:GetProductInfo(game.PlaceId)
+        if info and info.Name then 
+            gameNameLbl.Text = "Game       : " .. info.Name 
+        end
+    end)
+end)
 
 --------------------------------------------------------------------------------
 -- HELPER CREATORS
@@ -372,6 +381,13 @@ local lastPos = nil
 local startingCFrame = nil
 local currentTransitionTime = 0
 
+local function setTemporaryStatus(msg, duration)
+    customStatusText = msg
+    task.delay(duration or 2, function()
+        if customStatusText == msg then customStatusText = nil end
+    end)
+end
+
 -- Mod Main Controls
 local _, ModActiveBtn = createToggleRow(ModMainPage, "Active Features:", 1)
 ModActiveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -482,7 +498,7 @@ Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 local _, UpdateConfigBtn = createActionRow(ModConfigsPage, "Update Config:", "UPDATE", 2, Color3.fromRGB(130, 60, 200))
 
 local loadBoxRow = Instance.new("Frame", ModConfigsPage)
-loadBoxRow.Size = UDim2.new(1, -6, 0, 26)
+loadBoxRow.Size = UDim2.new(1, -6, 0, 50)
 loadBoxRow.BackgroundTransparency = 1
 loadBoxRow.LayoutOrder = 3
 
@@ -490,14 +506,90 @@ local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
 LoadBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 LoadBox.BorderSizePixel = 0
-LoadBox.PlaceholderText = "Paste Code Config Here..."
+LoadBox.PlaceholderText = "Paste Code Config / Click Built-in Below..."
 LoadBox.Text = ""
 LoadBox.TextColor3 = Color3.fromRGB(220, 220, 220)
 LoadBox.Font = Enum.Font.Gotham
 LoadBox.TextSize = 9
+LoadBox.TextWrapped = true
+LoadBox.ClearTextOnFocus = false
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 
--- Floating Action Buttons Modifier (Emoji & Shifts Left 60px)
+-- NEW BUILT-IN CONFIGS SECTION
+local function createBuiltInHeader(titleText, order)
+    local lbl = Instance.new("TextLabel", ModConfigsPage)
+    lbl.Size = UDim2.new(1, -6, 0, 20)
+    lbl.Text = titleText
+    lbl.TextColor3 = Color3.fromRGB(0, 255, 220)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 9
+    lbl.BackgroundTransparency = 1
+    lbl.LayoutOrder = order
+end
+
+local function addBuiltInBtnRow(name1, url1, name2, url2, order)
+    local row = Instance.new("Frame", ModConfigsPage)
+    row.Size = UDim2.new(1, -6, 0, 24)
+    row.BackgroundTransparency = 1
+    row.LayoutOrder = order
+
+    local btn1 = Instance.new("TextButton", row)
+    btn1.Size = UDim2.new(0.48, 0, 1, 0)
+    btn1.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    btn1.Text = name1
+    btn1.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn1.Font = Enum.Font.GothamSemibold
+    btn1.TextSize = 9
+    Instance.new("UICorner", btn1).CornerRadius = UDim.new(0, 4)
+
+    btn1.MouseButton1Click:Connect(function()
+        LoadBox.Text = "Loading " .. name1 .. "..."
+        task.spawn(function()
+            local s, r = pcall(function() return game:HttpGet(url1) end)
+            if s then
+                LoadBox.Text = r
+                setTemporaryStatus(name1 .. " Loaded! Click UPDATE", 2)
+            else
+                LoadBox.Text = "Failed to load " .. name1
+            end
+        end)
+    end)
+
+    if name2 and url2 then
+        local btn2 = Instance.new("TextButton", row)
+        btn2.Size = UDim2.new(0.48, 0, 1, 0)
+        btn2.Position = UDim2.new(0.52, 0, 0, 0)
+        btn2.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        btn2.Text = name2
+        btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn2.Font = Enum.Font.GothamSemibold
+        btn2.TextSize = 9
+        Instance.new("UICorner", btn2).CornerRadius = UDim.new(0, 4)
+
+        btn2.MouseButton1Click:Connect(function()
+            LoadBox.Text = "Loading " .. name2 .. "..."
+            task.spawn(function()
+                local s, r = pcall(function() return game:HttpGet(url2) end)
+                if s then
+                    LoadBox.Text = r
+                    setTemporaryStatus(name2 .. " Loaded! Click UPDATE", 2)
+                else
+                    LoadBox.Text = "Failed to load " .. name2
+                end
+            end)
+        end)
+    end
+end
+
+createBuiltInHeader("--- BUILT-IN CONFIGS ---", 4)
+createBuiltInHeader("[ Sirkuit ]", 5)
+addBuiltInBtnRow("Southern100", "https://pastebin.com/raw/bVP3PhyW", "Mandalika", "https://pastebin.com/raw/ePCXtCmD", 6)
+addBuiltInBtnRow("Sentul", "https://pastebin.com/raw/uVHft5gJ", nil, nil, 7)
+createBuiltInHeader("[ Street Race ]", 8)
+addBuiltInBtnRow("Around The Map", "https://pastebin.com/raw/65Z54PjK", "Speed Fest", "https://pastebin.com/raw/t3RR02d9", 9)
+addBuiltInBtnRow("Drag", "https://pastebin.com/raw/z7zm3Yp9", "Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ", 10)
+
+-- Floating Action Buttons Modifier
 local modFloatButtons = {}
 
 local function createModFloat(name, emojiText, customPos, callback)
@@ -507,6 +599,7 @@ local function createModFloat(name, emojiText, customPos, callback)
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.BackgroundTransparency = 0.3
     btn.Text = emojiText
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255) -- FIXED: WHITE TEXT COLOR
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 16
     btn.BorderSizePixel = 0
@@ -517,9 +610,7 @@ local function createModFloat(name, emojiText, customPos, callback)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
 
     btn.MouseButton1Click:Connect(function()
-        if modActive and floatModActive then
-            callback()
-        end
+        if modActive and floatModActive then callback() end
     end)
 
     local dragging = false
@@ -533,7 +624,7 @@ local function createModFloat(name, emojiText, customPos, callback)
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then dragging = false end
-           end)
+            end)
         end
     end)
 
@@ -572,13 +663,6 @@ local function createVisualBlock(cf)
     block.Parent = workspace
     table.insert(spawnedBlocks, block)
     return block
-end
-
-local function setTemporaryStatus(msg, duration)
-    customStatusText = msg
-    task.delay(duration or 2, function()
-        if customStatusText == msg then customStatusText = nil end
-    end)
 end
 
 local function clearAllBlocks()
@@ -699,7 +783,7 @@ MinusSpeedBtn.MouseButton1Click:Connect(function()
     if currentSpeedIndex > 1 then currentSpeedIndex = currentSpeedIndex - 1; updateSpeedUI() end
 end)
 
--- Float Mod Position shifted ~60px LEFT
+-- Float Mod Position
 FloatModStart = createModFloat("Start", "◀️", UDim2.new(1, -305, 1, -270), toggleStartMod)
 local FloatModSpawn = createModFloat("Spawn", "🆕", UDim2.new(1, -280, 1, -195), spawnBlockAtPlayer)
 local FloatModUndo = createModFloat("Undo", "↩️", UDim2.new(1, -280, 1, -120), undoLastBlock)
@@ -749,8 +833,6 @@ local isSmoothReversing = false
 local isSteerSettingActive = false
 
 local defaultP, defaultD, defaultTorqueZ
-local defaultDensity = 0.1
-local defaultFrictionVal, defaultFrictionWeightVal
 local activeBodyGyro = nil
 
 -- Boost Main Page
@@ -834,24 +916,6 @@ local function getCurrentVehicle()
         return seat, seat:FindFirstAncestorOfClass("Model")
     end
     return nil, nil
-end
-
-local function getVehicleTargetParts(seat)
-    local parts = {}
-    if not seat then return parts end
-    local carModel = seat:FindFirstAncestorOfClass("Model")
-    if not carModel then return parts end
-    local char = LocalPlayer.Character
-
-    for _, part in ipairs(carModel:GetDescendants()) do
-        if part:IsA("BasePart") and not (char and part:IsDescendantOf(char)) then
-            local name = part.Name:lower()
-            if name:find("wheel") or name:find("roda") or part == seat then
-                table.insert(parts, part)
-            end
-        end
-    end
-    return parts
 end
 
 -- Connect Boost Controls
