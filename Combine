@@ -1,4 +1,4 @@
--- Modifier Gui Pro (Standalone with Misc, Settings, Auto-Execute & Data Persistence)
+-- Modifier Gui Pro (Fixed: Direct Built-in Exec, 5 Floating Buttons, Aligned Layout & Cosmic Outline)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,14 +21,13 @@ if writefile and not isfolder("ModifierConfigs") then
     makefolder("ModifierConfigs")
 end
 
--- Default Settings & Configuration Table
 local Settings = {
     MainWidth = 520,
     MainHeight = 300,
-    FloatSize = 45,
+    FloatSize = 42,
     ShortcutSize = 45,
-    MainTransparency = 15, -- 0 to 100 (%)
-    FloatTransparency = 30, -- 0 to 100 (%)
+    MainTransparency = 15,
+    FloatTransparency = 30,
     AutoExecuteEnabled = false,
     AutoExecuteTarget = ""
 }
@@ -36,26 +35,16 @@ local Settings = {
 local settingsFileName = "ModifierConfigs/UserSettings.json"
 local function saveSettings()
     if writefile then
-        local success, encoded = pcall(function()
-            return HttpService:JSONEncode(Settings)
-        end)
-        if success then
-            writefile(settingsFileName, encoded)
-        end
+        local success, encoded = pcall(function() return HttpService:JSONEncode(Settings) end)
+        if success then writefile(settingsFileName, encoded) end
     end
 end
 
 local function loadSettings()
     if readfile and isfile(settingsFileName) then
-        local success, decoded = pcall(function()
-            return HttpService:JSONDecode(readfile(settingsFileName))
-        end)
+        local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(settingsFileName)) end)
         if success and type(decoded) == "table" then
-            for k, v in pairs(decoded) do
-                if Settings[k] ~= nil then
-                    Settings[k] = v
-                end
-            end
+            for k, v in pairs(decoded) do if Settings[k] ~= nil then Settings[k] = v end end
         end
     end
 end
@@ -67,22 +56,21 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 9
 ScreenGui.Parent = parentContainer
 
--- Shortcut Logo Menu
 local MenuShortcut = Instance.new("ImageButton", ScreenGui)
 MenuShortcut.Name = "MenuShortcut"
 MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
-MenuShortcut.Position = UDim2.new(0, 70, 0, 70)
+MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuShortcut.BackgroundTransparency = 0.3
-MenuShortcut.Image = "rbxassetid://113467230333515"
+MenuShortcut.Image = "rbxassetid://130705104438925"
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
 Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Thickness = 1.5
+MenuStroke.Transparency = 0
 
--- Main Frame
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
@@ -95,7 +83,9 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local FrameStroke = Instance.new("UIStroke", MainFrame)
 FrameStroke.Thickness = 1.5
+FrameStroke.Transparency = 0
 
+-- Cosmic Purple ke Cosmic Cyan Outline Animasi
 RunService.RenderStepped:Connect(function()
     local t = math.sin(tick() * 2) * 0.5 + 0.5
     local cosmicPurple = Color3.fromRGB(138, 43, 226)
@@ -290,13 +280,12 @@ end
 
 local modActive = true
 local modRunning = false
-local floatModActive = true
 local showModFloat = true
 local customStatusText = nil
 local spawnedBlocks = {}
 local currentIndex = 1
 local lastPos = nil
-local startingCFrame = nil
+local modifierSpeed = 1
 
 local function setTemporaryStatus(msg, duration)
     customStatusText = msg
@@ -305,12 +294,107 @@ local function setTemporaryStatus(msg, duration)
     end)
 end
 
--- Mod Main Page Controls
+local ModStartBtn, SpeedDisplayLabel
+
+local function spawnBlockAtPlayer()
+    if not modActive then return end
+    local char = LocalPlayer.Character
+    local targetPart = (char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or (char and char:FindFirstChild("HumanoidRootPart"))
+    if targetPart then
+        local currentPos = targetPart.Position
+        local finalCFrame = lastPos and CFrame.fromMatrix(currentPos, (currentPos - lastPos).Unit:Cross(targetPart.CFrame.UpVector).Unit, targetPart.CFrame.UpVector, -(currentPos - lastPos).Unit) or targetPart.CFrame
+        lastPos = currentPos
+        local block = Instance.new("Part")
+        block.Size = Vector3.new(1, 10, 1)
+        block.CFrame = finalCFrame
+        block.Anchored = true
+        block.CanCollide = false
+        block.Transparency = 0.5
+        block.Color = Color3.fromRGB(255, 255, 255)
+        local tex = Instance.new("Texture", block)
+        tex.Face = Enum.NormalId.Top
+        tex.Texture = "rbxassetid://620583021"
+        block.Parent = workspace
+        table.insert(spawnedBlocks, block)
+        setTemporaryStatus("Spawned!", 1)
+    end
+end
+
+local function undoLastBlock()
+    if #spawnedBlocks > 0 then
+        table.remove(spawnedBlocks, #spawnedBlocks):Destroy()
+        lastPos = #spawnedBlocks > 0 and spawnedBlocks[#spawnedBlocks].Position or nil
+    end
+end
+
+local function resetModAll()
+    modRunning = false
+    if ModStartBtn then
+        ModStartBtn.Text = "OFF"
+        ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end
+    for _, b in ipairs(spawnedBlocks) do if b then b:Destroy() end end
+    spawnedBlocks = {}
+    lastPos = nil
+end
+
+local function removeTireFunc()
+    local char = LocalPlayer.Character
+    local seatPart = char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart
+    local carModel = seatPart and seatPart:FindFirstAncestorOfClass("Model")
+    if carModel then
+        local removedCount = 0
+        for _, descendant in ipairs(carModel:GetDescendants()) do
+            if descendant:IsA("BasePart") and (string.lower(descendant.Name):find("tire") or string.lower(descendant.Name):find("wheel")) then
+                descendant:Destroy()
+                removedCount = removedCount + 1
+            end
+        end
+        setTemporaryStatus("Removed " .. removedCount .. " tires/wheels!", 2)
+    else
+        setTemporaryStatus("Not in a vehicle!", 2)
+    end
+end
+
+local function loadConfigFromString(codeStr)
+    resetModAll()
+    local success, func = pcall(function() return loadstring(codeStr) end)
+    if success and type(func) == "function" then
+        local ok, res = pcall(func)
+        if ok and type(res) == "table" then
+            for _, posData in ipairs(res) do
+                local cf = posData
+                if typeof(posData) == "CFrame" then
+                    cf = posData
+                elseif type(posData) == "table" then
+                    cf = CFrame.new(unpack(posData))
+                end
+                if typeof(cf) == "CFrame" then
+                    local block = Instance.new("Part")
+                    block.Size = Vector3.new(1, 10, 1)
+                    block.CFrame = cf
+                    block.Anchored = true
+                    block.CanCollide = false
+                    block.Transparency = 0.5
+                    block.Color = Color3.fromRGB(255, 255, 255)
+                    local tex = Instance.new("Texture", block)
+                    tex.Face = Enum.NormalId.Top
+                    tex.Texture = "rbxassetid://620583021"
+                    block.Parent = workspace
+                    table.insert(spawnedBlocks, block)
+                end
+            end
+            setTemporaryStatus("Config Loaded (" .. #spawnedBlocks .. " blocks)", 3)
+        end
+    end
+end
+
+-- Mod Main Page
 local _, ModActiveBtn = createToggleRow(ModMainPage, "Active Features:", 1)
 ModActiveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ModActiveBtn.Text = "ON"
 
-local _, ModStartBtn = createToggleRow(ModMainPage, "Start Modifier:", 2)
+_, ModStartBtn = createToggleRow(ModMainPage, "Start Modifier:", 2)
 
 local speedRow = Instance.new("Frame", ModMainPage)
 speedRow.Size = UDim2.new(1, -6, 0, 26)
@@ -339,12 +423,12 @@ MinusSpeedBtn.Text = "-"
 MinusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", MinusSpeedBtn).CornerRadius = UDim.new(0, 4)
 
-local SpeedDisplayLabel = Instance.new("TextLabel", speedControl)
+SpeedDisplayLabel = Instance.new("TextLabel", speedControl)
 SpeedDisplayLabel.Size = UDim2.new(0, 40, 1, 0)
 SpeedDisplayLabel.Position = UDim2.new(0, 25, 0, 0)
 SpeedDisplayLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 SpeedDisplayLabel.BorderSizePixel = 0
-SpeedDisplayLabel.Text = "1"
+SpeedDisplayLabel.Text = tostring(modifierSpeed)
 SpeedDisplayLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedDisplayLabel.Font = Enum.Font.GothamBold
 SpeedDisplayLabel.TextSize = 9
@@ -358,6 +442,15 @@ PlusSpeedBtn.BorderSizePixel = 0
 PlusSpeedBtn.Text = "+"
 PlusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", PlusSpeedBtn).CornerRadius = UDim.new(0, 4)
+
+PlusSpeedBtn.MouseButton1Click:Connect(function()
+    modifierSpeed = math.clamp(modifierSpeed + 1, 1, 10)
+    SpeedDisplayLabel.Text = tostring(modifierSpeed)
+end)
+MinusSpeedBtn.MouseButton1Click:Connect(function()
+    modifierSpeed = math.clamp(modifierSpeed - 1, 1, 10)
+    SpeedDisplayLabel.Text = tostring(modifierSpeed)
+end)
 
 local _, ModSpawnBtn = createActionRow(ModMainPage, "Spawn Block:", "SPAWN", 4, Color3.fromRGB(0, 140, 240))
 local _, ModUndoBtn = createActionRow(ModMainPage, "Undo Last Block:", "UNDO", 5, Color3.fromRGB(230, 140, 0))
@@ -466,7 +559,7 @@ local function addBuiltInBtnRow(name1, url1, name2, url2, order)
             local s, r = pcall(function() return game:HttpGet(url1) end)
             if s then 
                 LoadBox.Text = r 
-                setTemporaryStatus(name1 .. " Loaded!", 2) 
+                loadConfigFromString(r)
                 if Settings.AutoExecuteEnabled then
                     Settings.AutoExecuteTarget = name1
                     selectedAutoConfigName = name1
@@ -495,7 +588,7 @@ local function addBuiltInBtnRow(name1, url1, name2, url2, order)
                 local s, r = pcall(function() return game:HttpGet(url2) end)
                 if s then 
                     LoadBox.Text = r 
-                    setTemporaryStatus(name2 .. " Loaded!", 2) 
+                    loadConfigFromString(r)
                     if Settings.AutoExecuteEnabled then
                         Settings.AutoExecuteTarget = name2
                         selectedAutoConfigName = name2
@@ -534,7 +627,6 @@ ToggleBuiltInBtn.MouseButton1Click:Connect(function()
     dropdownContainer.Size = isOpen and UDim2.new(1, -6, 0, dropLayout.AbsoluteContentSize.Y + 5) or UDim2.new(1, -6, 0, 0)
 end)
 
--- Auto Execute URL Map Reference for Auto Runner
 local builtInUrls = {
     ["Southern100"] = "https://pastebin.com/raw/bVP3PhyW",
     ["Mandalika"] = "https://pastebin.com/raw/ePCXtCmD",
@@ -550,12 +642,13 @@ if Settings.AutoExecuteEnabled and Settings.AutoExecuteTarget ~= "" and builtInU
         local s, r = pcall(function() return game:HttpGet(builtInUrls[Settings.AutoExecuteTarget]) end)
         if s then
             LoadBox.Text = r
+            loadConfigFromString(r)
             setTemporaryStatus("Auto-executed: " .. Settings.AutoExecuteTarget, 3)
         end
     end)
 end
 
--- Misc Page (Fly, Btools, Teleport Tool)
+-- Misc Page
 local _, TeleportToolBtn = createActionRow(ModMiscPage, "Teleport Tool:", "GIVE", 1, Color3.fromRGB(0, 140, 240))
 local _, FlyGuiBtn = createActionRow(ModMiscPage, "Fly GUI:", "EXEC", 2, Color3.fromRGB(0, 140, 240))
 local _, BToolsBtn = createActionRow(ModMiscPage, "BTools:", "EXEC", 3, Color3.fromRGB(0, 140, 240))
@@ -582,7 +675,7 @@ BToolsBtn.MouseButton1Click:Connect(function()
     setTemporaryStatus("BTools Loaded!", 2)
 end)
 
--- Settings Page Controls
+-- Settings Page
 local WidthBox = createConfigRow(ModSettingsPage, "Menu Width:", Settings.MainWidth, 1)
 local HeightBox = createConfigRow(ModSettingsPage, "Menu Height:", Settings.MainHeight, 2)
 local FloatSizeBox = createConfigRow(ModSettingsPage, "Float Size:", Settings.FloatSize, 3)
@@ -610,82 +703,54 @@ end)
 
 -- Floating Buttons
 local modFloatButtons = {}
-local function createModFloat(emojiText, customPos, callback)
+local function createCircularFloat(name, text, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
+    btn.Name = name
     btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
     btn.Position = customPos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.BackgroundTransparency = Settings.FloatTransparency / 100
-    btn.Text = emojiText
+    btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 16
+    btn.TextSize = 11
     btn.Active = true
     btn.Visible = showModFloat
     table.insert(modFloatButtons, btn)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    btn.MouseButton1Click:Connect(function() if modActive and floatModActive then callback() end end)
+    btn.MouseButton1Click:Connect(function() if modActive then callback() end end)
     return btn
 end
 
-local FloatModStart
-local function toggleStartMod()
+local FloatStart
+local function toggleStart()
     if not modActive or #spawnedBlocks == 0 then return end
     modRunning = not modRunning
     ModStartBtn.Text = modRunning and "ON" or "OFF"
     ModStartBtn.BackgroundColor3 = modRunning and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if FloatModStart then FloatModStart.Text = modRunning and "⏸️" or "◀️" end
-    startingCFrame = nil
+    if FloatStart then FloatStart.Text = modRunning and "Pause" or "Start" end
 end
 
-local function spawnBlockAtPlayer()
-    if not modActive then return end
-    local char = LocalPlayer.Character
-    local targetPart = (char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or (char and char:FindFirstChild("HumanoidRootPart"))
-    if targetPart then
-        local currentPos = targetPart.Position
-        local finalCFrame = lastPos and CFrame.fromMatrix(currentPos, (currentPos - lastPos).Unit:Cross(targetPart.CFrame.UpVector).Unit, targetPart.CFrame.UpVector, -(currentPos - lastPos).Unit) or targetPart.CFrame
-        lastPos = currentPos
-        local block = Instance.new("Part")
-        block.Size = Vector3.new(1, 10, 1)
-        block.CFrame = finalCFrame
-        block.Anchored = true
-        block.CanCollide = false
-        block.Transparency = 0.5
-        block.Color = Color3.fromRGB(255, 255, 255)
-        local tex = Instance.new("Texture", block)
-        tex.Face = Enum.NormalId.Top
-        tex.Texture = "rbxassetid://620583021"
-        block.Parent = workspace
-        table.insert(spawnedBlocks, block)
-        setTemporaryStatus("Spawned!", 1)
-    end
+local FastSteerFloatBtn
+local function cycleSpeedFloat()
+    modifierSpeed = modifierSpeed >= 5 and 1 or (modifierSpeed + 1)
+    if SpeedDisplayLabel then SpeedDisplayLabel.Text = tostring(modifierSpeed) end
+    if FastSteerFloatBtn then FastSteerFloatBtn.Text = tostring(modifierSpeed) end
+    setTemporaryStatus("Speed: " .. modifierSpeed, 1)
 end
 
-local function undoLastBlock()
-    if #spawnedBlocks > 0 then
-        table.remove(spawnedBlocks, #spawnedBlocks):Destroy()
-        lastPos = #spawnedBlocks > 0 and spawnedBlocks[#spawnedBlocks].Position or nil
-    end
-end
+FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
+local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTireFunc)
+local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetModAll)
+FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeedFloat)
 
-local function resetModAll()
-    modRunning = false
-    ModStartBtn.Text = "OFF"
-    ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    for _, b in ipairs(spawnedBlocks) do if b then b:Destroy() end end
-    spawnedBlocks = {}
-    if FloatModStart then FloatModStart.Text = "◀️" end
-end
-
-FloatModStart = createModFloat("◀️", UDim2.new(1, -75, 0.5, -90), toggleStartMod)
-createModFloat("🆕", UDim2.new(1, -75, 0.5, -35), spawnBlockAtPlayer)
-createModFloat("↩️", UDim2.new(1, -75, 0.5, 20), undoLastBlock)
-
-ModStartBtn.MouseButton1Click:Connect(toggleStartMod)
+ModStartBtn.MouseButton1Click:Connect(toggleStart)
 ModSpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
 ModUndoBtn.MouseButton1Click:Connect(undoLastBlock)
 ModResetBtn.MouseButton1Click:Connect(resetModAll)
+ModRemoveTireBtn.MouseButton1Click:Connect(removeTireFunc)
 
 ModActiveBtn.MouseButton1Click:Connect(function()
     modActive = not modActive
@@ -709,7 +774,6 @@ SaveSettingsBtn.MouseButton1Click:Connect(function()
     Settings.FloatTransparency = tonumber(FloatAlphaBox.Text) or Settings.FloatTransparency
     Settings.AutoExecuteTarget = AutoExecTargetBox.Text
 
-    -- Apply live changes
     MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
     MainFrame.BackgroundTransparency = math.clamp(Settings.MainTransparency, 0, 100) / 100
     MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
@@ -722,6 +786,12 @@ SaveSettingsBtn.MouseButton1Click:Connect(function()
     setTemporaryStatus("Settings Saved!", 2)
 end)
 
+LoadConfigBtn.MouseButton1Click:Connect(function()
+    if LoadBox.Text ~= "" then
+        loadConfigFromString(LoadBox.Text)
+    end
+end)
+
 RunService.Heartbeat:Connect(function()
     if customStatusText then ModStatusLabel.Text = customStatusText; return end
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -729,7 +799,7 @@ RunService.Heartbeat:Connect(function()
     ModStatusLabel.Text = car and ("Car: " .. car.Name) or "Car: None"
 end)
 
-RunService.Heartbeat:Connect(function(dt)
+RunService.Heartbeat:Connect(function()
     if not modActive or not modRunning or #spawnedBlocks == 0 then return end
     local char = LocalPlayer.Character
     local targetPart = (char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or (char and char:FindFirstChild("HumanoidRootPart"))
@@ -737,7 +807,7 @@ RunService.Heartbeat:Connect(function(dt)
         local targetBlock = spawnedBlocks[currentIndex]
         if targetBlock then
             targetPart.CFrame = targetBlock.CFrame
-            currentIndex = currentIndex + 1
+            currentIndex = currentIndex + modifierSpeed
             if currentIndex > #spawnedBlocks then currentIndex = 1 end
         end
     end
