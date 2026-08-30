@@ -123,14 +123,14 @@ ActiveFeaturesBtn.Text = "ON"
 
 local _, StartToggleBtn = createToggleRow(ContentScroll, "Start Modifier", 2)
 
--- UI Speed
+-- UI Speed (Dengan Tombol - dan +)
 local speedRow = Instance.new("Frame", ContentScroll)
 speedRow.Size = UDim2.new(1, -6, 0, 28)
 speedRow.BackgroundTransparency = 1
 speedRow.LayoutOrder = 3
 
 local speedLabel = Instance.new("TextLabel", speedRow)
-speedLabel.Size = UDim2.new(0.6, 0, 1, 0)
+speedLabel.Size = UDim2.new(0.5, 0, 1, 0)
 speedLabel.Text = "Modifier Speed :"
 speedLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 speedLabel.Font = Enum.Font.GothamBold
@@ -138,16 +138,43 @@ speedLabel.TextSize = 10
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.BackgroundTransparency = 1
 
-local SpeedBtn = Instance.new("TextButton", speedRow)
-SpeedBtn.Size = UDim2.new(0, 75, 0, 22)
-SpeedBtn.Position = UDim2.new(1, -75, 0.5, -11)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-SpeedBtn.BorderSizePixel = 0
-SpeedBtn.Text = "1"
-SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.TextSize = 10
-Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 4)
+local speedControlFrame = Instance.new("Frame", speedRow)
+speedControlFrame.Size = UDim2.new(0, 95, 0, 22)
+speedControlFrame.Position = UDim2.new(1, -95, 0.5, -11)
+speedControlFrame.BackgroundTransparency = 1
+
+local MinusSpeedBtn = Instance.new("TextButton", speedControlFrame)
+MinusSpeedBtn.Size = UDim2.new(0, 22, 1, 0)
+MinusSpeedBtn.Position = UDim2.new(0, 0, 0, 0)
+MinusSpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+MinusSpeedBtn.BorderSizePixel = 0
+MinusSpeedBtn.Text = "-"
+MinusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinusSpeedBtn.Font = Enum.Font.GothamBold
+MinusSpeedBtn.TextSize = 12
+Instance.new("UICorner", MinusSpeedBtn).CornerRadius = UDim.new(0, 4)
+
+local SpeedDisplayLabel = Instance.new("TextLabel", speedControlFrame)
+SpeedDisplayLabel.Size = UDim2.new(0, 43, 1, 0)
+SpeedDisplayLabel.Position = UDim2.new(0, 26, 0, 0)
+SpeedDisplayLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SpeedDisplayLabel.BorderSizePixel = 0
+SpeedDisplayLabel.Text = "1"
+SpeedDisplayLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedDisplayLabel.Font = Enum.Font.GothamBold
+SpeedDisplayLabel.TextSize = 10
+Instance.new("UICorner", SpeedDisplayLabel).CornerRadius = UDim.new(0, 4)
+
+local PlusSpeedBtn = Instance.new("TextButton", speedControlFrame)
+PlusSpeedBtn.Size = UDim2.new(0, 22, 1, 0)
+PlusSpeedBtn.Position = UDim2.new(0, 73, 0, 0)
+PlusSpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+PlusSpeedBtn.BorderSizePixel = 0
+PlusSpeedBtn.Text = "+"
+PlusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlusSpeedBtn.Font = Enum.Font.GothamBold
+PlusSpeedBtn.TextSize = 12
+Instance.new("UICorner", PlusSpeedBtn).CornerRadius = UDim.new(0, 4)
 
 -- UI Spawn
 local spawnRow = Instance.new("Frame", ContentScroll)
@@ -335,6 +362,18 @@ StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
 
+-- Helper Function Sensor Nama Kendaraan (Menyamarkan Karakter Tengah)
+local function sensorCarName(name)
+    local len = #name
+    if len <= 2 then
+        return string.sub(name, 1, 1) .. "*"
+    elseif len <= 4 then
+        return string.sub(name, 1, 1) .. "**" .. string.sub(name, len, len)
+    else
+        return string.sub(name, 1, 1) .. "***" .. string.sub(name, len - 2, len)
+    end
+end
+
 -- Helper Function untuk memunculkan notifikasi sementara di status
 local function setTemporaryStatus(msg, duration)
     customStatusText = msg
@@ -345,7 +384,7 @@ local function setTemporaryStatus(msg, duration)
     end)
 end
 
--- Realtime Status Loop (Detect Current Vehicle)
+-- Realtime Status Loop (Detect Current Vehicle with Sensor)
 RunService.Heartbeat:Connect(function()
     if customStatusText then
         StatusLabel.Text = customStatusText
@@ -358,7 +397,7 @@ RunService.Heartbeat:Connect(function()
         if humanoid and humanoid.SeatPart then
             local vehicleModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
             if vehicleModel then
-                StatusLabel.Text = "Car: " .. vehicleModel.Name
+                StatusLabel.Text = "Car: " .. sensorCarName(vehicleModel.Name)
                 return
             end
         end
@@ -481,13 +520,30 @@ local FastSteerFloatBtn
 
 local function updateSpeedUI()
     local val = getSpeedValue()
-    SpeedBtn.Text = tostring(val)
+    SpeedDisplayLabel.Text = tostring(val)
     if FastSteerFloatBtn then
         FastSteerFloatBtn.Text = tostring(val)
     end
 end
 
-local function cycleSpeed()
+-- Kecepatan Naik (+)
+local function increaseSpeed()
+    if currentSpeedIndex < #speedValues then
+        currentSpeedIndex = currentSpeedIndex + 1
+        updateSpeedUI()
+    end
+end
+
+-- Kecepatan Turun (-)
+local function decreaseSpeed()
+    if currentSpeedIndex > 1 then
+        currentSpeedIndex = currentSpeedIndex - 1
+        updateSpeedUI()
+    end
+end
+
+-- Cycle Kecepatan untuk Floating Button (Speed)
+local function cycleSpeedFloat()
     currentSpeedIndex = currentSpeedIndex - 1
     if currentSpeedIndex < 1 then
         currentSpeedIndex = #speedValues
@@ -495,7 +551,8 @@ local function cycleSpeed()
     updateSpeedUI()
 end
 
-SpeedBtn.MouseButton1Click:Connect(cycleSpeed)
+PlusSpeedBtn.MouseButton1Click:Connect(increaseSpeed)
+MinusSpeedBtn.MouseButton1Click:Connect(decreaseSpeed)
 
 -- Logika Block
 local function createVisualBlock(cf)
@@ -559,7 +616,7 @@ local function undoLastBlock()
     if #spawnedBlocks > 0 then
         local lastBlock = table.remove(spawnedBlocks, #spawnedBlocks)
         if lastBlock then lastBlock:Destroy() end
-        
+
         if currentIndex > #spawnedBlocks then
             currentIndex = math.max(1, #spawnedBlocks)
         end
@@ -614,7 +671,7 @@ end
 -- LOGIKA REMOVE TIRE (UNIVERSAL UNTUK MOTOR SIAPA SAJA)
 local function removeTire()
     if not activeFeatures then return end
-    
+
     local char = LocalPlayer.Character
     if not char then return end
 
@@ -660,16 +717,16 @@ local function removeTire()
         end
     end
 
-    setTemporaryStatus("Tire Removed from " .. carModel.Name .. "!", 2.5)
+    setTemporaryStatus("Tire Removed from " .. sensorCarName(carModel.Name) .. "!", 2.5)
 end
 
--- Setup Float Buttons
+-- Setup Float Buttons (Posisi Float RemoveTire sekarang berada DI ATAS Float Reset)
 FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTire) -- Di atas Reset
 local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
-local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -170, 1, -345), removeTire)
-FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeed)
+FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeedFloat)
 
 -- Event Bindings
 StartToggleBtn.MouseButton1Click:Connect(toggleStart)
