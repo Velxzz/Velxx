@@ -1,4 +1,4 @@
--- Modifier Gui V4.1 PRO (Universal Remove Tire & Live Vehicle Status)
+-- Modifier Gui V4.1 PRO (Universal Remove Tire & Built-In Config Dropdown)
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -32,7 +32,7 @@ ScreenGui.Parent = parentContainer
 
 -- Frame Utama
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 240, 0, 360)
+MainFrame.Size = UDim2.new(0, 240, 0, 380)
 MainFrame.Position = UDim2.new(0.1, 0, 0.2, -50)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BackgroundTransparency = 0.2
@@ -72,7 +72,7 @@ ContentScroll.Position = UDim2.new(0, 5, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
 ContentScroll.ScrollBarThickness = 4
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 480)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 800)
 
 local UIListLayout = Instance.new("UIListLayout", ContentScroll)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -286,7 +286,7 @@ local _, ShowFloatButtonsToggle = createToggleRow(ContentScroll, "Show Float Btn
 ShowFloatButtonsToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ShowFloatButtonsToggle.Text = "ON"
 
--- UI Config (Save & Load)
+-- UI Config (Save & Load Local)
 local configRow = Instance.new("Frame", ContentScroll)
 configRow.Size = UDim2.new(1, -6, 0, 32)
 configRow.BackgroundTransparency = 1
@@ -307,7 +307,7 @@ LoadConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
 LoadConfigBtn.Position = UDim2.new(0.52, 0, 0, 0)
 LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
 LoadConfigBtn.BorderSizePixel = 0
-LoadConfigBtn.Text = "Load Config"
+LoadConfigBtn.Text = "Load Local"
 LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 10
@@ -362,7 +362,196 @@ StatusLabel.Font = Enum.Font.GothamSemibold
 StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
 
--- Helper Function Sensor Nama Kendaraan (Menyamarkan Karakter Tengah)
+-- FITUR DROPDOWN CONFIG BAWAAN (PASTEBIN INTEGRATION)
+local presetData = {
+    ["Sirkuit"] = {
+        {"Southern100", "https://pastebin.com/raw/bVP3PhyW"},
+        {"Mandalika", "https://pastebin.com/raw/ePCXtCmD"},
+        {"Sentul", "https://pastebin.com/raw/uVHft5gJ"}
+    },
+    ["Street Race"] = {
+        {"Around The Map", "https://pastebin.com/raw/65Z54PjK"},
+        {"Speed Fest", nil},
+        {"Drag", "https://pastebin.com/raw/z7zm3Yp9"},
+        {"Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ"}
+    }
+}
+
+-- Forward Declaration untuk Fungsi Clear/Create Block
+local spawnedBlocks = {}
+local currentIndex = 1
+local lastPos = nil
+local startingCFrame = nil
+local currentTransitionTime = 0
+
+local function createVisualBlock(cf)
+    local block = Instance.new("Part")
+    block.Size = Vector3.new(1, 10, 1)
+    block.CFrame = cf
+    block.Anchored = true
+    block.CanCollide = false
+    block.Transparency = 0.5
+    block.Material = Enum.Material.SmoothPlastic
+    block.Color = Color3.fromRGB(255, 255, 255)
+
+    local texture = Instance.new("Texture")
+    texture.Face = Enum.NormalId.Top
+    texture.Texture = "rbxassetid://620583021"
+    texture.Parent = block
+
+    block.Parent = workspace
+    table.insert(spawnedBlocks, block)
+    return block
+end
+
+local function setTemporaryStatus(msg, duration)
+    customStatusText = msg
+    task.delay(duration or 2, function()
+        if customStatusText == msg then
+            customStatusText = nil
+        end
+    end)
+end
+
+local function clearAllBlocks()
+    isRunning = false
+    StartToggleBtn.Text = "OFF"
+    StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    currentIndex = 1
+    lastPos = nil
+    startingCFrame = nil
+    currentTransitionTime = 0
+    for _, block in ipairs(spawnedBlocks) do
+        if block then block:Destroy() end
+    end
+    spawnedBlocks = {}
+end
+
+local function loadPresetFromUrl(url, trackName)
+    if not url then
+        setTemporaryStatus("Config " .. trackName .. " belum dibuat!", 2)
+        return
+    end
+
+    setTemporaryStatus("Loading " .. trackName .. "...", 5)
+
+    task.spawn(function()
+        local success, result = pcall(function()
+            return game:HttpGet(url)
+        end)
+
+        if success and result then
+            local successDecode, decodedData = pcall(function()
+                return HttpService:JSONDecode(result)
+            end)
+
+            if successDecode and type(decodedData) == "table" then
+                clearAllBlocks()
+
+                for _, comps in ipairs(decodedData) do
+                    local cf = CFrame.new(table.unpack(comps))
+                    createVisualBlock(cf)
+                end
+
+                if #spawnedBlocks > 0 then
+                    lastPos = spawnedBlocks[#spawnedBlocks].Position
+                end
+                setTemporaryStatus("Loaded " .. trackName .. " (" .. #spawnedBlocks .. " Blocks)", 2.5)
+            else
+                setTemporaryStatus("Failed to parse JSON data!", 2)
+            end
+        else
+            setTemporaryStatus("Failed to download config!", 2)
+        end
+    end)
+end
+
+-- Helper Dropdown Generator
+local currentLayoutOrder = 14
+local function createDropdownCategory(categoryName, items)
+    local dropHeader = Instance.new("Frame", ContentScroll)
+    dropHeader.Size = UDim2.new(1, -6, 0, 26)
+    dropHeader.BackgroundTransparency = 1
+    dropHeader.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
+
+    local headerBtn = Instance.new("TextButton", dropHeader)
+    headerBtn.Size = UDim2.new(1, 0, 1, 0)
+    headerBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    headerBtn.BorderSizePixel = 0
+    headerBtn.Text = " ▶  " .. categoryName
+    headerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    headerBtn.Font = Enum.Font.GothamBold
+    headerBtn.TextSize = 10
+    headerBtn.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", headerBtn).CornerRadius = UDim.new(0, 4)
+
+    local container = Instance.new("Frame", ContentScroll)
+    container.Size = UDim2.new(1, -6, 0, 0)
+    container.BackgroundTransparency = 1
+    container.ClipsDescendants = true
+    container.Visible = false
+    container.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
+
+    local containerLayout = Instance.new("UIListLayout", container)
+    containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    containerLayout.Padding = UDim.new(0, 4)
+
+    local isExpanded = false
+
+    for idx, item in ipairs(items) do
+        local name, url = item[1], item[2]
+
+        local trackRow = Instance.new("Frame", container)
+        trackRow.Size = UDim2.new(1, 0, 0, 24)
+        trackRow.BackgroundTransparency = 1
+        trackRow.LayoutOrder = idx
+
+        local nameLabel = Instance.new("TextLabel", trackRow)
+        nameLabel.Size = UDim2.new(0.6, -5, 1, 0)
+        nameLabel.Position = UDim2.new(0, 5, 0, 0)
+        nameLabel.Text = name
+        nameLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 9
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.BackgroundTransparency = 1
+
+        local execBtn = Instance.new("TextButton", trackRow)
+        execBtn.Size = UDim2.new(0, 75, 0, 20)
+        execBtn.Position = UDim2.new(1, -75, 0.5, -10)
+        execBtn.BackgroundColor3 = url and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(80, 80, 80)
+        execBtn.BorderSizePixel = 0
+        execBtn.Text = url and "EXECUTE" or "NIL"
+        execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        execBtn.Font = Enum.Font.GothamBold
+        execBtn.TextSize = 8
+        Instance.new("UICorner", execBtn).CornerRadius = UDim.new(0, 4)
+
+        execBtn.MouseButton1Click:Connect(function()
+            loadPresetFromUrl(url, name)
+        end)
+    end
+
+    headerBtn.MouseButton1Click:Connect(function()
+        isExpanded = not isExpanded
+        if isExpanded then
+            headerBtn.Text = " ▼  " .. categoryName
+            container.Visible = true
+            container.Size = UDim2.new(1, -6, 0, (#items * 28))
+        else
+            headerBtn.Text = " ▶  " .. categoryName
+            container.Visible = false
+            container.Size = UDim2.new(1, -6, 0, 0)
+        end
+    end)
+end
+
+createDropdownCategory("Built-in: Sirkuit", presetData["Sirkuit"])
+createDropdownCategory("Built-in: Street Race", presetData["Street Race"])
+
+-- Helper Function Sensor Nama Kendaraan
 local function sensorCarName(name)
     local len = #name
     if len <= 2 then
@@ -374,17 +563,7 @@ local function sensorCarName(name)
     end
 end
 
--- Helper Function untuk memunculkan notifikasi sementara di status
-local function setTemporaryStatus(msg, duration)
-    customStatusText = msg
-    task.delay(duration or 2, function()
-        if customStatusText == msg then
-            customStatusText = nil
-        end
-    end)
-end
-
--- Realtime Status Loop (Detect Current Vehicle with Sensor)
+-- Realtime Status Loop
 RunService.Heartbeat:Connect(function()
     if customStatusText then
         StatusLabel.Text = customStatusText
@@ -500,12 +679,7 @@ ShowFloatButtonsToggle.MouseButton1Click:Connect(function()
 end)
 
 -- Variables Logic
-local spawnedBlocks = {}
-local currentIndex = 1
 local currentSpeedIndex = 11
-local lastPos = nil
-local startingCFrame = nil
-local currentTransitionTime = 0
 
 local speedValues = {
     0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
@@ -526,7 +700,6 @@ local function updateSpeedUI()
     end
 end
 
--- Kecepatan Naik (+)
 local function increaseSpeed()
     if currentSpeedIndex < #speedValues then
         currentSpeedIndex = currentSpeedIndex + 1
@@ -534,7 +707,6 @@ local function increaseSpeed()
     end
 end
 
--- Kecepatan Turun (-)
 local function decreaseSpeed()
     if currentSpeedIndex > 1 then
         currentSpeedIndex = currentSpeedIndex - 1
@@ -542,7 +714,6 @@ local function decreaseSpeed()
     end
 end
 
--- Cycle Kecepatan untuk Floating Button (Speed)
 local function cycleSpeedFloat()
     currentSpeedIndex = currentSpeedIndex - 1
     if currentSpeedIndex < 1 then
@@ -553,27 +724,6 @@ end
 
 PlusSpeedBtn.MouseButton1Click:Connect(increaseSpeed)
 MinusSpeedBtn.MouseButton1Click:Connect(decreaseSpeed)
-
--- Logika Block
-local function createVisualBlock(cf)
-    local block = Instance.new("Part")
-    block.Size = Vector3.new(1, 10, 1)
-    block.CFrame = cf
-    block.Anchored = true
-    block.CanCollide = false
-    block.Transparency = 0.5
-    block.Material = Enum.Material.SmoothPlastic
-    block.Color = Color3.fromRGB(255, 255, 255)
-
-    local texture = Instance.new("Texture")
-    texture.Face = Enum.NormalId.Top
-    texture.Texture = "rbxassetid://620583021"
-    texture.Parent = block
-
-    block.Parent = workspace
-    table.insert(spawnedBlocks, block)
-    return block
-end
 
 -- Spawn
 local function spawnBlockAtPlayer()
@@ -653,22 +803,12 @@ end
 -- Reset
 local function resetAll()
     if not activeFeatures then return end
-    isRunning = false
-    StartToggleBtn.Text = "OFF"
-    StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    clearAllBlocks()
     if FloatStart then FloatStart.Text = "Start" end
-    currentIndex = 1
-    lastPos = nil
-    startingCFrame = nil
-    currentTransitionTime = 0
-    for _, block in ipairs(spawnedBlocks) do
-        if block then block:Destroy() end
-    end
-    spawnedBlocks = {}
     setTemporaryStatus("Reseted!", 1.5)
 end
 
--- LOGIKA REMOVE TIRE (UNIVERSAL UNTUK MOTOR SIAPA SAJA)
+-- Remove Tire Logic
 local function removeTire()
     if not activeFeatures then return end
 
@@ -681,7 +821,6 @@ local function removeTire()
         return
     end
 
-    -- Otomatis ambil Model Motor yang diduduki
     local carModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
     if not carModel then
         setTemporaryStatus("Bike model not found!", 2)
@@ -694,7 +833,6 @@ local function removeTire()
         return
     end
 
-    -- Hapus komponen target tanpa menghapus Weight dan bal
     local targets = {
         "RearSuspensionBase",
         "RearSuspensionBaseHinge",
@@ -708,7 +846,6 @@ local function removeTire()
         end
     end
 
-    -- Khusus SteeringHinge, hanya hapus file Attachment-nya
     local steeringHinge = bodyFolder:FindFirstChild("SteeringHinge")
     if steeringHinge then
         local att = steeringHinge:FindFirstChild("Attachment")
@@ -720,11 +857,11 @@ local function removeTire()
     setTemporaryStatus("Tire Removed from " .. sensorCarName(carModel.Name) .. "!", 2.5)
 end
 
--- Setup Float Buttons (Posisi Float RemoveTire sekarang berada DI ATAS Float Reset)
+-- Setup Float Buttons
 FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
-local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTire) -- Di atas Reset
+local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTire)
 local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
 FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeedFloat)
 
@@ -758,7 +895,7 @@ LockButtonToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- Save Config
+-- Save Local Config
 SaveConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         setTemporaryStatus("Spawn blocks first!", 2)
@@ -793,7 +930,7 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Update Config
+-- Update Local Config
 UpdateConfigBtn.MouseButton1Click:Connect(function()
     if #spawnedBlocks == 0 then
         setTemporaryStatus("Spawn blocks first!", 2)
@@ -826,7 +963,7 @@ UpdateConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Load Config
+-- Load Local Config
 LoadConfigBtn.MouseButton1Click:Connect(function()
     local codeToLoad = LoadBox.Text:gsub("%s+", "")
     if codeToLoad == "" then
@@ -842,18 +979,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
             return
         end
 
-        for _, block in ipairs(spawnedBlocks) do
-            if block then block:Destroy() end
-        end
-        spawnedBlocks = {}
-        isRunning = false
-        StartToggleBtn.Text = "OFF"
-        StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatStart then FloatStart.Text = "Start" end
-        currentIndex = 1
-        lastPos = nil
-        startingCFrame = nil
-        currentTransitionTime = 0
+        clearAllBlocks()
 
         local successDecode, decodedData = pcall(function()
             return HttpService:JSONDecode(rawData)
@@ -877,7 +1003,7 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Heartbeat Loop (Teleport / Speed Logic)
+-- Heartbeat Loop
 RunService.Heartbeat:Connect(function(dt)
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
 
