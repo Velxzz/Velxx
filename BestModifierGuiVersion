@@ -371,7 +371,7 @@ local presetData = {
     },
     ["Street Race"] = {
         {"Around The Map", "https://pastebin.com/raw/65Z54PjK"},
-        {"Speed Fest", nil},
+        {"Speed Fest", "https://pastebin.com/raw/t3RR02d9"},
         {"Drag", "https://pastebin.com/raw/z7zm3Yp9"},
         {"Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ"}
     }
