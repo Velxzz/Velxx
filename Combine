@@ -744,24 +744,24 @@ local function toggleStart()
     modRunning = not modRunning
     ModStartBtn.Text = modRunning and "ON" or "OFF"
     ModStartBtn.BackgroundColor3 = modRunning and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if FloatStart then FloatStart.Text = modRunning and "◀️" or "⏸️" end
+    if FloatStart then FloatStart.Text = modRunning and "▶️" or "⏸️" end
 end
 
 local FastSteerFloatBtn
 local function cycleSpeedFloat()
     modifierSpeed = modifierSpeed >= 5 and 1 or (modifierSpeed + 1)
     if SpeedDisplayLabel then SpeedDisplayLabel.Text = tostring(modifierSpeed) end
-    if FastSteerFloatBtn then FastSteerFloatBtn.Text = .. tostring(modifierSpeed) end
+    if FastSteerFloatBtn then FastSteerFloatBtn.Text = "⚡" .. tostring(modifierSpeed) end
     setTemporaryStatus("Speed: " .. modifierSpeed, 1)
 end
 
 -- Floating Buttons dengan Logo Emoji
-FloatStart = createCircularFloat("Start", "◀️", UDim2.new(1, -260, 1, -270), toggleStart)
+FloatStart = createCircularFloat("Start", "▶️", UDim2.new(1, -260, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "➕", UDim2.new(1, -200, 1, -270), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "↩️", UDim2.new(1, -140, 1, -270), undoLastBlock)
 local FloatRemoveTire = createCircularFloat("RemoveTire", "🛠️", UDim2.new(1, -200, 1, -200), removeTireFunc)
 local FloatReset = createCircularFloat("Reset", "🔄", UDim2.new(1, -140, 1, -200), resetModAll)
-FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -260, 1, -200), cycleSpeedFloat)
+FastSteerFloatBtn = createCircularFloat("Speed", "⚡1", UDim2.new(1, -260, 1, -200), cycleSpeedFloat)
 
 ModStartBtn.MouseButton1Click:Connect(toggleStart)
 ModSpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
