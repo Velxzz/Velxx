@@ -1,13 +1,11 @@
--- Combined Script: Modifier Gui + Boost Speed V5.0 PRO (Fixed & Updated)
+-- Modifier Gui Pro (Standalone with Misc, Settings, Auto-Execute & Data Persistence)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local MarketService = game:GetService("MarketplaceService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- Safe GUI Container
 local parentContainer
 if gethui then
     parentContainer = gethui()
@@ -16,19 +14,55 @@ else
     parentContainer = (success and core) or LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Cleanup Old GUIs
-for _, name in ipairs({"CombinedSystemGui", "ModifierGui", "BoostSystemGui"}) do
-    local old = parentContainer:FindFirstChild(name)
-    if old then old:Destroy() end
-end
+local old = parentContainer:FindFirstChild("ModifierSystemGui")
+if old then old:Destroy() end
 
 if writefile and not isfolder("ModifierConfigs") then
     makefolder("ModifierConfigs")
 end
 
--- ScreenGui Principal
+-- Default Settings & Configuration Table
+local Settings = {
+    MainWidth = 520,
+    MainHeight = 300,
+    FloatSize = 45,
+    ShortcutSize = 45,
+    MainTransparency = 15, -- 0 to 100 (%)
+    FloatTransparency = 30, -- 0 to 100 (%)
+    AutoExecuteEnabled = false,
+    AutoExecuteTarget = ""
+}
+
+local settingsFileName = "ModifierConfigs/UserSettings.json"
+local function saveSettings()
+    if writefile then
+        local success, encoded = pcall(function()
+            return HttpService:JSONEncode(Settings)
+        end)
+        if success then
+            writefile(settingsFileName, encoded)
+        end
+    end
+end
+
+local function loadSettings()
+    if readfile and isfile(settingsFileName) then
+        local success, decoded = pcall(function()
+            return HttpService:JSONDecode(readfile(settingsFileName))
+        end)
+        if success and type(decoded) == "table" then
+            for k, v in pairs(decoded) do
+                if Settings[k] ~= nil then
+                    Settings[k] = v
+                end
+            end
+        end
+    end
+end
+loadSettings()
+
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CombinedSystemGui"
+ScreenGui.Name = "ModifierSystemGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 9
 ScreenGui.Parent = parentContainer
@@ -36,25 +70,25 @@ ScreenGui.Parent = parentContainer
 -- Shortcut Logo Menu
 local MenuShortcut = Instance.new("ImageButton", ScreenGui)
 MenuShortcut.Name = "MenuShortcut"
-MenuShortcut.Size = UDim2.new(0, 45, 0, 45)
-MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
+MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
+MenuShortcut.Position = UDim2.new(0, 70, 0, 70)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuShortcut.BackgroundTransparency = 0.3
 MenuShortcut.Image = "rbxassetid://113467230333515"
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
-Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12) -- Squircle
+Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Thickness = 1.5
 
--- Frame Utama UI
+-- Main Frame
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 300)
-MainFrame.Position = UDim2.new(0.2, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
+MainFrame.Position = UDim2.new(0.2, 0, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BackgroundTransparency = 0.15
+MainFrame.BackgroundTransparency = Settings.MainTransparency / 100
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
@@ -62,7 +96,6 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local FrameStroke = Instance.new("UIStroke", MainFrame)
 FrameStroke.Thickness = 1.5
 
--- Animasi Glow Stroke
 RunService.RenderStepped:Connect(function()
     local t = math.sin(tick() * 2) * 0.5 + 0.5
     local cosmicPurple = Color3.fromRGB(138, 43, 226)
@@ -72,7 +105,6 @@ RunService.RenderStepped:Connect(function()
     MenuStroke.Color = animatedColor
 end)
 
--- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
 HeaderBar.Size = UDim2.new(1, 0, 0, 30)
 HeaderBar.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
@@ -82,7 +114,7 @@ Instance.new("UICorner", HeaderBar).CornerRadius = UDim.new(0, 10)
 local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "SYSTEM V5.0 PRO (MODIFIER & BOOST)"
+Title.Text = "MODIFIER SYSTEM PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 11
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -96,14 +128,13 @@ MenuShortcut.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Sidebar Laci Menu (Kiri)
 local Sidebar = Instance.new("ScrollingFrame", MainFrame)
 Sidebar.Size = UDim2.new(0, 130, 1, -30)
 Sidebar.Position = UDim2.new(0, 0, 0, 30)
 Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
 Sidebar.BorderSizePixel = 0
 Sidebar.ScrollBarThickness = 2
-Sidebar.CanvasSize = UDim2.new(0, 0, 0, 310)
+Sidebar.CanvasSize = UDim2.new(0, 0, 0, 200)
 
 local SidebarLayout = Instance.new("UIListLayout", Sidebar)
 SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -114,26 +145,13 @@ SidebarPadding.PaddingTop = UDim.new(0, 6)
 SidebarPadding.PaddingLeft = UDim.new(0, 6)
 SidebarPadding.PaddingRight = UDim.new(0, 6)
 
--- Area Konten Utama (Kanan)
 local ContentContainer = Instance.new("Frame", MainFrame)
 ContentContainer.Size = UDim2.new(1, -130, 1, -30)
 ContentContainer.Position = UDim2.new(0, 130, 0, 30)
 ContentContainer.BackgroundTransparency = 1
 
--- Sistem Tab Management
 local tabs = {}
 local tabButtons = {}
-
-local function createSidebarSectionHeader(text, order)
-    local lbl = Instance.new("TextLabel", Sidebar)
-    lbl.Size = UDim2.new(1, 0, 0, 18)
-    lbl.Text = " - " .. text .. " - "
-    lbl.TextColor3 = Color3.fromRGB(0, 255, 220)
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 9
-    lbl.BackgroundTransparency = 1
-    lbl.LayoutOrder = order
-end
 
 local function createTab(name, order)
     local btn = Instance.new("TextButton", Sidebar)
@@ -177,83 +195,15 @@ local function createTab(name, order)
     return page
 end
 
--- Kategori Laci Sidebar
-local HomePage = createTab("Home", 1)
+local ModMainPage = createTab("Mod Main", 1)
+local ModConfigsPage = createTab("Mod Configs", 2)
+local ModMiscPage = createTab("Misc", 3)
+local ModSettingsPage = createTab("Settings", 4)
 
-createSidebarSectionHeader("Modifier Gui", 2)
-local ModMainPage = createTab("Mod Main", 3)
-local ModConfigsPage = createTab("Mod Configs", 4)
+ModMainPage.Visible = true
+tabButtons["Mod Main"].BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+tabButtons["Mod Main"].TextColor3 = Color3.fromRGB(255, 255, 255)
 
-createSidebarSectionHeader("Boost Speed", 5)
-local BoostMainPage = createTab("Boost Main", 6)
-local BoostSteerPage = createTab("Steer Setting", 7)
-local BoostMiscPage = createTab("Misc", 8)
-
--- Tab Default Focus
-HomePage.Visible = true
-tabButtons["Home"].BackgroundColor3 = Color3.fromRGB(0, 140, 240)
-tabButtons["Home"].TextColor3 = Color3.fromRGB(255, 255, 255)
-
---------------------------------------------------------------------------------
--- TAB 1: HOME PAGE (Vertikal & Tengah) - FIXED YIELDING
---------------------------------------------------------------------------------
-local HomeCenterFrame = Instance.new("Frame", HomePage)
-HomeCenterFrame.Size = UDim2.new(1, 0, 1, 0)
-HomeCenterFrame.BackgroundTransparency = 1
-
-local HomeList = Instance.new("UIListLayout", HomeCenterFrame)
-HomeList.SortOrder = Enum.SortOrder.LayoutOrder
-HomeList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-HomeList.VerticalAlignment = Enum.VerticalAlignment.Center
-HomeList.Padding = UDim.new(0, 5)
-
--- Using rbxthumb for instant load without yielding UI
-local userAvatar = Instance.new("ImageLabel", HomeCenterFrame)
-userAvatar.Size = UDim2.new(0, 70, 0, 70)
-userAvatar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-userAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-userAvatar.LayoutOrder = 1
-Instance.new("UICorner", userAvatar).CornerRadius = UDim.new(1, 0)
-
-local function addCenteredText(text, order)
-    local lbl = Instance.new("TextLabel", HomeCenterFrame)
-    lbl.Size = UDim2.new(1, 0, 0, 16)
-    lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
-    lbl.Font = Enum.Font.GothamSemibold
-    lbl.TextSize = 10
-    lbl.TextXAlignment = Enum.TextXAlignment.Center
-    lbl.BackgroundTransparency = 1
-    lbl.LayoutOrder = order
-    return lbl
-end
-
-addCenteredText("Username: " .. LocalPlayer.Name, 2)
-addCenteredText("User Id      : " .. LocalPlayer.UserId, 3)
-
-local accAge = "0"
-pcall(function() accAge = tostring(LocalPlayer.AccountAge) end)
-addCenteredText("Acc Age   : " .. accAge .. " Days", 4)
-
-pcall(function()
-    local joinTimestamp = os.time() - (tonumber(accAge) * 86400)
-    addCenteredText("Join Date : " .. os.date("%d %b %Y", joinTimestamp), 5)
-end)
-
--- Fetch Game Name Asynchronously
-local gameNameLbl = addCenteredText("Game       : Loading...", 6)
-task.spawn(function()
-    pcall(function()
-        local info = MarketService:GetProductInfo(game.PlaceId)
-        if info and info.Name then 
-            gameNameLbl.Text = "Game       : " .. info.Name 
-        end
-    end)
-end)
-
---------------------------------------------------------------------------------
--- HELPER CREATORS
---------------------------------------------------------------------------------
 local function createToggleRow(parent, labelText, order)
     local row = Instance.new("Frame", parent)
     row.Size = UDim2.new(1, -6, 0, 26)
@@ -279,61 +229,7 @@ local function createToggleRow(parent, labelText, order)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 10
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
     return row, btn
-end
-
-local function createConfigRow(parent, name, defaultVal1, defaultVal2, order, isDouble)
-    local row = Instance.new("Frame", parent)
-    row.Size = UDim2.new(1, -6, 0, 26)
-    row.BackgroundTransparency = 1
-    row.LayoutOrder = order
-
-    local label = Instance.new("TextLabel", row)
-    label.Size = UDim2.new(0.55, 0, 1, 0)
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.Font = Enum.Font.GothamSemibold
-    label.TextSize = 9
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-
-    if not isDouble then
-        local Box = Instance.new("TextBox", row)
-        Box.Size = UDim2.new(0, 70, 0, 22)
-        Box.Position = UDim2.new(1, -70, 0.5, -11)
-        Box.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        Box.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Box.Text = tostring(defaultVal1)
-        Box.Font = Enum.Font.GothamBold
-        Box.TextSize = 9
-        Box.BorderSizePixel = 0
-        Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
-        return Box
-    else
-        local Box1 = Instance.new("TextBox", row)
-        Box1.Size = UDim2.new(0, 33, 0, 22)
-        Box1.Position = UDim2.new(1, -70, 0.5, -11)
-        Box1.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        Box1.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Box1.Text = tostring(defaultVal1)
-        Box1.Font = Enum.Font.GothamBold
-        Box1.TextSize = 8
-        Box1.BorderSizePixel = 0
-        Instance.new("UICorner", Box1).CornerRadius = UDim.new(0, 4)
-
-        local Box2 = Instance.new("TextBox", row)
-        Box2.Size = UDim2.new(0, 33, 0, 22)
-        Box2.Position = UDim2.new(1, -33, 0.5, -11)
-        Box2.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        Box2.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Box2.Text = tostring(defaultVal2)
-        Box2.Font = Enum.Font.GothamBold
-        Box2.TextSize = 8
-        Box2.BorderSizePixel = 0
-        Instance.new("UICorner", Box2).CornerRadius = UDim.new(0, 4)
-        return Box1, Box2
-    end
 end
 
 local function createActionRow(parent, labelText, btnText, order, btnColor)
@@ -361,25 +257,46 @@ local function createActionRow(parent, labelText, btnText, order, btnColor)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 9
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
     return row, btn
 end
 
---------------------------------------------------------------------------------
--- MODIFIER GUI SYSTEM LOGIC & TABS
---------------------------------------------------------------------------------
+local function createConfigRow(parent, name, defaultVal, order)
+    local row = Instance.new("Frame", parent)
+    row.Size = UDim2.new(1, -6, 0, 26)
+    row.BackgroundTransparency = 1
+    row.LayoutOrder = order
+
+    local label = Instance.new("TextLabel", row)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 10
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+
+    local Box = Instance.new("TextBox", row)
+    Box.Size = UDim2.new(0, 70, 0, 22)
+    Box.Position = UDim2.new(1, -70, 0.5, -11)
+    Box.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Box.Text = tostring(defaultVal)
+    Box.Font = Enum.Font.GothamBold
+    Box.TextSize = 9
+    Box.BorderSizePixel = 0
+    Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
+    return Box
+end
+
 local modActive = true
 local modRunning = false
 local floatModActive = true
-local isModLocked = false
 local showModFloat = true
 local customStatusText = nil
-
 local spawnedBlocks = {}
 local currentIndex = 1
 local lastPos = nil
 local startingCFrame = nil
-local currentTransitionTime = 0
 
 local function setTemporaryStatus(msg, duration)
     customStatusText = msg
@@ -388,14 +305,13 @@ local function setTemporaryStatus(msg, duration)
     end)
 end
 
--- Mod Main Controls
+-- Mod Main Page Controls
 local _, ModActiveBtn = createToggleRow(ModMainPage, "Active Features:", 1)
 ModActiveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ModActiveBtn.Text = "ON"
 
 local _, ModStartBtn = createToggleRow(ModMainPage, "Start Modifier:", 2)
 
--- Modifier Speed
 local speedRow = Instance.new("Frame", ModMainPage)
 speedRow.Size = UDim2.new(1, -6, 0, 26)
 speedRow.BackgroundTransparency = 1
@@ -421,7 +337,6 @@ MinusSpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
 MinusSpeedBtn.BorderSizePixel = 0
 MinusSpeedBtn.Text = "-"
 MinusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinusSpeedBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", MinusSpeedBtn).CornerRadius = UDim.new(0, 4)
 
 local SpeedDisplayLabel = Instance.new("TextLabel", speedControl)
@@ -442,23 +357,20 @@ PlusSpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
 PlusSpeedBtn.BorderSizePixel = 0
 PlusSpeedBtn.Text = "+"
 PlusSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-PlusSpeedBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", PlusSpeedBtn).CornerRadius = UDim.new(0, 4)
 
 local _, ModSpawnBtn = createActionRow(ModMainPage, "Spawn Block:", "SPAWN", 4, Color3.fromRGB(0, 140, 240))
 local _, ModUndoBtn = createActionRow(ModMainPage, "Undo Last Block:", "UNDO", 5, Color3.fromRGB(230, 140, 0))
 local _, ModResetBtn = createActionRow(ModMainPage, "Reset Modifier:", "RESET", 6, Color3.fromRGB(220, 50, 50))
 local _, ModRemoveTireBtn = createActionRow(ModMainPage, "Remove Tire:", "REMOVE", 7, Color3.fromRGB(180, 0, 180))
-
-local _, ModLockBtn = createToggleRow(ModMainPage, "Lock Button:", 8)
-local _, ModShowFloatBtn = createToggleRow(ModMainPage, "Show Float Btn:", 9)
+local _, ModShowFloatBtn = createToggleRow(ModMainPage, "Show Float Btn:", 8)
 ModShowFloatBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ModShowFloatBtn.Text = "ON"
 
 local ModStatusRow = Instance.new("Frame", ModMainPage)
 ModStatusRow.Size = UDim2.new(1, -6, 0, 20)
 ModStatusRow.BackgroundTransparency = 1
-ModStatusRow.LayoutOrder = 10
+ModStatusRow.LayoutOrder = 9
 
 local ModStatusLabel = Instance.new("TextLabel", ModStatusRow)
 ModStatusLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -477,7 +389,6 @@ modCfgRow.LayoutOrder = 1
 local SaveConfigBtn = Instance.new("TextButton", modCfgRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
 SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
-SaveConfigBtn.BorderSizePixel = 0
 SaveConfigBtn.Text = "Save New"
 SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SaveConfigBtn.Font = Enum.Font.GothamBold
@@ -488,7 +399,6 @@ local LoadConfigBtn = Instance.new("TextButton", modCfgRow)
 LoadConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
 LoadConfigBtn.Position = UDim2.new(0.52, 0, 0, 0)
 LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-LoadConfigBtn.BorderSizePixel = 0
 LoadConfigBtn.Text = "Load Local"
 LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoadConfigBtn.Font = Enum.Font.GothamBold
@@ -498,59 +408,72 @@ Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 local _, UpdateConfigBtn = createActionRow(ModConfigsPage, "Update Config:", "UPDATE", 2, Color3.fromRGB(130, 60, 200))
 
 local loadBoxRow = Instance.new("Frame", ModConfigsPage)
-loadBoxRow.Size = UDim2.new(1, -6, 0, 50)
+loadBoxRow.Size = UDim2.new(1, -6, 0, 45)
 loadBoxRow.BackgroundTransparency = 1
 loadBoxRow.LayoutOrder = 3
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
 LoadBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-LoadBox.BorderSizePixel = 0
-LoadBox.PlaceholderText = "Paste Code Config / Click Built-in Below..."
+LoadBox.PlaceholderText = "Paste Code Config Here..."
 LoadBox.Text = ""
 LoadBox.TextColor3 = Color3.fromRGB(220, 220, 220)
 LoadBox.Font = Enum.Font.Gotham
 LoadBox.TextSize = 9
 LoadBox.TextWrapped = true
-LoadBox.ClearTextOnFocus = false
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 
--- NEW BUILT-IN CONFIGS SECTION
-local function createBuiltInHeader(titleText, order)
-    local lbl = Instance.new("TextLabel", ModConfigsPage)
-    lbl.Size = UDim2.new(1, -6, 0, 20)
-    lbl.Text = titleText
-    lbl.TextColor3 = Color3.fromRGB(0, 255, 220)
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 9
-    lbl.BackgroundTransparency = 1
-    lbl.LayoutOrder = order
-end
+local dropdownContainer = Instance.new("Frame", ModConfigsPage)
+dropdownContainer.Size = UDim2.new(1, -6, 0, 0)
+dropdownContainer.BackgroundTransparency = 1
+dropdownContainer.LayoutOrder = 5
+dropdownContainer.ClipsDescendants = true
+
+local dropLayout = Instance.new("UIListLayout", dropdownContainer)
+dropLayout.SortOrder = Enum.SortOrder.LayoutOrder
+dropLayout.Padding = UDim.new(0, 4)
+
+local ToggleBuiltInBtn = Instance.new("TextButton", ModConfigsPage)
+ToggleBuiltInBtn.Size = UDim2.new(1, -6, 0, 24)
+ToggleBuiltInBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+ToggleBuiltInBtn.Text = "📂 Built-in Configs (Click to Open)"
+ToggleBuiltInBtn.TextColor3 = Color3.fromRGB(0, 255, 220)
+ToggleBuiltInBtn.Font = Enum.Font.GothamBold
+ToggleBuiltInBtn.TextSize = 9
+ToggleBuiltInBtn.LayoutOrder = 4
+Instance.new("UICorner", ToggleBuiltInBtn).CornerRadius = UDim.new(0, 4)
+
+local selectedAutoConfigName = Settings.AutoExecuteTarget or ""
 
 local function addBuiltInBtnRow(name1, url1, name2, url2, order)
-    local row = Instance.new("Frame", ModConfigsPage)
-    row.Size = UDim2.new(1, -6, 0, 24)
+    local row = Instance.new("Frame", dropdownContainer)
+    row.Size = UDim2.new(1, 0, 0, 22)
     row.BackgroundTransparency = 1
     row.LayoutOrder = order
 
     local btn1 = Instance.new("TextButton", row)
     btn1.Size = UDim2.new(0.48, 0, 1, 0)
-    btn1.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    btn1.BackgroundColor3 = (selectedAutoConfigName == name1) and Color3.fromRGB(200, 120, 0) or Color3.fromRGB(35, 35, 45)
     btn1.Text = name1
     btn1.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn1.Font = Enum.Font.GothamSemibold
-    btn1.TextSize = 9
+    btn1.TextSize = 8
     Instance.new("UICorner", btn1).CornerRadius = UDim.new(0, 4)
 
     btn1.MouseButton1Click:Connect(function()
-        LoadBox.Text = "Loading " .. name1 .. "..."
+        LoadBox.Text = "Loading..."
         task.spawn(function()
             local s, r = pcall(function() return game:HttpGet(url1) end)
-            if s then
-                LoadBox.Text = r
-                setTemporaryStatus(name1 .. " Loaded! Click UPDATE", 2)
-            else
-                LoadBox.Text = "Failed to load " .. name1
+            if s then 
+                LoadBox.Text = r 
+                setTemporaryStatus(name1 .. " Loaded!", 2) 
+                if Settings.AutoExecuteEnabled then
+                    Settings.AutoExecuteTarget = name1
+                    selectedAutoConfigName = name1
+                    saveSettings()
+                end
+            else 
+                LoadBox.Text = "Failed" 
             end
         end)
     end)
@@ -559,261 +482,215 @@ local function addBuiltInBtnRow(name1, url1, name2, url2, order)
         local btn2 = Instance.new("TextButton", row)
         btn2.Size = UDim2.new(0.48, 0, 1, 0)
         btn2.Position = UDim2.new(0.52, 0, 0, 0)
-        btn2.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        btn2.BackgroundColor3 = (selectedAutoConfigName == name2) and Color3.fromRGB(200, 120, 0) or Color3.fromRGB(35, 35, 45)
         btn2.Text = name2
         btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn2.Font = Enum.Font.GothamSemibold
-        btn2.TextSize = 9
+        btn2.TextSize = 8
         Instance.new("UICorner", btn2).CornerRadius = UDim.new(0, 4)
 
         btn2.MouseButton1Click:Connect(function()
-            LoadBox.Text = "Loading " .. name2 .. "..."
+            LoadBox.Text = "Loading..."
             task.spawn(function()
                 local s, r = pcall(function() return game:HttpGet(url2) end)
-                if s then
-                    LoadBox.Text = r
-                    setTemporaryStatus(name2 .. " Loaded! Click UPDATE", 2)
-                else
-                    LoadBox.Text = "Failed to load " .. name2
+                if s then 
+                    LoadBox.Text = r 
+                    setTemporaryStatus(name2 .. " Loaded!", 2) 
+                    if Settings.AutoExecuteEnabled then
+                        Settings.AutoExecuteTarget = name2
+                        selectedAutoConfigName = name2
+                        saveSettings()
+                    end
+                else 
+                    LoadBox.Text = "Failed" 
                 end
             end)
         end)
     end
 end
 
-createBuiltInHeader("--- BUILT-IN CONFIGS ---", 4)
-createBuiltInHeader("[ Sirkuit ]", 5)
-addBuiltInBtnRow("Southern100", "https://pastebin.com/raw/bVP3PhyW", "Mandalika", "https://pastebin.com/raw/ePCXtCmD", 6)
-addBuiltInBtnRow("Sentul", "https://pastebin.com/raw/uVHft5gJ", nil, nil, 7)
-createBuiltInHeader("[ Street Race ]", 8)
-addBuiltInBtnRow("Around The Map", "https://pastebin.com/raw/65Z54PjK", "Speed Fest", "https://pastebin.com/raw/t3RR02d9", 9)
-addBuiltInBtnRow("Drag", "https://pastebin.com/raw/z7zm3Yp9", "Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ", 10)
+local function addCategoryLabel(text, order)
+    local lbl = Instance.new("TextLabel", dropdownContainer)
+    lbl.Size = UDim2.new(1, 0, 0, 16)
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(255, 200, 0)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 8
+    lbl.BackgroundTransparency = 1
+    lbl.LayoutOrder = order
+end
 
--- Floating Action Buttons Modifier
+addCategoryLabel("- Sirkuit -", 1)
+addBuiltInBtnRow("Southern100", "https://pastebin.com/raw/bVP3PhyW", "Mandalika", "https://pastebin.com/raw/ePCXtCmD", 2)
+addBuiltInBtnRow("Sentul", "https://pastebin.com/raw/uVHft5gJ", nil, nil, 3)
+addCategoryLabel("- Street Race -", 4)
+addBuiltInBtnRow("Around The Map", "https://pastebin.com/raw/65Z54PjK", "Speed Fest", "https://pastebin.com/raw/t3RR02d9", 5)
+addBuiltInBtnRow("Drag", "https://pastebin.com/raw/z7zm3Yp9", "Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ", 6)
+
+local isOpen = false
+ToggleBuiltInBtn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    ToggleBuiltInBtn.Text = isOpen and "📂 Built-in Configs (Click to Close)" or "📁 Built-in Configs (Click to Open)"
+    dropdownContainer.Size = isOpen and UDim2.new(1, -6, 0, dropLayout.AbsoluteContentSize.Y + 5) or UDim2.new(1, -6, 0, 0)
+end)
+
+-- Auto Execute URL Map Reference for Auto Runner
+local builtInUrls = {
+    ["Southern100"] = "https://pastebin.com/raw/bVP3PhyW",
+    ["Mandalika"] = "https://pastebin.com/raw/ePCXtCmD",
+    ["Sentul"] = "https://pastebin.com/raw/uVHft5gJ",
+    ["Around The Map"] = "https://pastebin.com/raw/65Z54PjK",
+    ["Speed Fest"] = "https://pastebin.com/raw/t3RR02d9",
+    ["Drag"] = "https://pastebin.com/raw/z7zm3Yp9",
+    ["Souq Scramble"] = "https://pastebin.com/raw/mZ7TzxEZ"
+}
+
+if Settings.AutoExecuteEnabled and Settings.AutoExecuteTarget ~= "" and builtInUrls[Settings.AutoExecuteTarget] then
+    task.spawn(function()
+        local s, r = pcall(function() return game:HttpGet(builtInUrls[Settings.AutoExecuteTarget]) end)
+        if s then
+            LoadBox.Text = r
+            setTemporaryStatus("Auto-executed: " .. Settings.AutoExecuteTarget, 3)
+        end
+    end)
+end
+
+-- Misc Page (Fly, Btools, Teleport Tool)
+local _, TeleportToolBtn = createActionRow(ModMiscPage, "Teleport Tool:", "GIVE", 1, Color3.fromRGB(0, 140, 240))
+local _, FlyGuiBtn = createActionRow(ModMiscPage, "Fly GUI:", "EXEC", 2, Color3.fromRGB(0, 140, 240))
+local _, BToolsBtn = createActionRow(ModMiscPage, "BTools:", "EXEC", 3, Color3.fromRGB(0, 140, 240))
+
+TeleportToolBtn.MouseButton1Click:Connect(function()
+    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
+    t.Name = "Teleport Tool"
+    t.RequiresHandle = false
+    t.Activated:Connect(function()
+        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
+        end
+    end)
+    setTemporaryStatus("Teleport Tool Added!", 2)
+end)
+
+FlyGuiBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly?t=' .. tick()))()
+    setTemporaryStatus("Fly GUI Loaded!", 2)
+end)
+
+BToolsBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://gist.githubusercontent.com/fyfreefiregg-max/cc9b6220ca645fc168cecbaa7b74f1a0/raw/fedd5e4645b77b48d2fa2560d3efc7d82f948740/BTools.Lua'))()
+    setTemporaryStatus("BTools Loaded!", 2)
+end)
+
+-- Settings Page Controls
+local WidthBox = createConfigRow(ModSettingsPage, "Menu Width:", Settings.MainWidth, 1)
+local HeightBox = createConfigRow(ModSettingsPage, "Menu Height:", Settings.MainHeight, 2)
+local FloatSizeBox = createConfigRow(ModSettingsPage, "Float Size:", Settings.FloatSize, 3)
+local ShortcutSizeBox = createConfigRow(ModSettingsPage, "Shortcut Size:", Settings.ShortcutSize, 4)
+local MainAlphaBox = createConfigRow(ModSettingsPage, "Main Alpha (0-100):", Settings.MainTransparency, 5)
+local FloatAlphaBox = createConfigRow(ModSettingsPage, "Float Alpha (0-100):", Settings.FloatTransparency, 6)
+
+local _, AutoExecToggleBtn = createToggleRow(ModSettingsPage, "Auto Execute:", 7)
+local AutoExecTargetBox = createConfigRow(ModSettingsPage, "Target Config:", Settings.AutoExecuteTarget, 8)
+local _, SaveSettingsBtn = createActionRow(ModSettingsPage, "Save Settings:", "SAVE", 9, Color3.fromRGB(50, 200, 50))
+
+if Settings.AutoExecuteEnabled then
+    AutoExecToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    AutoExecToggleBtn.Text = "ON"
+else
+    AutoExecToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    AutoExecToggleBtn.Text = "OFF"
+end
+
+AutoExecToggleBtn.MouseButton1Click:Connect(function()
+    Settings.AutoExecuteEnabled = not Settings.AutoExecuteEnabled
+    AutoExecToggleBtn.Text = Settings.AutoExecuteEnabled and "ON" or "OFF"
+    AutoExecToggleBtn.BackgroundColor3 = Settings.AutoExecuteEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+end)
+
+-- Floating Buttons
 local modFloatButtons = {}
-
-local function createModFloat(name, emojiText, customPos, callback)
+local function createModFloat(emojiText, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
-    btn.Size = UDim2.new(0, 45, 0, 45)
+    btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
     btn.Position = customPos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.BackgroundTransparency = 0.3
+    btn.BackgroundTransparency = Settings.FloatTransparency / 100
     btn.Text = emojiText
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255) -- FIXED: WHITE TEXT COLOR
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 16
-    btn.BorderSizePixel = 0
     btn.Active = true
     btn.Visible = showModFloat
-
     table.insert(modFloatButtons, btn)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-    btn.MouseButton1Click:Connect(function()
-        if modActive and floatModActive then callback() end
-    end)
-
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = btn.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-
-    btn.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging and not isModLocked then
-            local delta = input.Position - dragStart
-            btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
+    btn.MouseButton1Click:Connect(function() if modActive and floatModActive then callback() end end)
     return btn
 end
 
--- Modifier Functions
-local function createVisualBlock(cf)
-    local block = Instance.new("Part")
-    block.Size = Vector3.new(1, 10, 1)
-    block.CFrame = cf
-    block.Anchored = true
-    block.CanCollide = false
-    block.Transparency = 0.5
-    block.Material = Enum.Material.SmoothPlastic
-    block.Color = Color3.fromRGB(255, 255, 255)
-
-    local texture = Instance.new("Texture")
-    texture.Face = Enum.NormalId.Top
-    texture.Texture = "rbxassetid://620583021"
-    texture.Parent = block
-
-    block.Parent = workspace
-    table.insert(spawnedBlocks, block)
-    return block
-end
-
-local function clearAllBlocks()
-    modRunning = false
-    ModStartBtn.Text = "OFF"
-    ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    currentIndex = 1
-    lastPos = nil
-    startingCFrame = nil
-    currentTransitionTime = 0
-    for _, block in ipairs(spawnedBlocks) do if block then block:Destroy() end end
-    spawnedBlocks = {}
-end
-
 local FloatModStart
-
 local function toggleStartMod()
     if not modActive or #spawnedBlocks == 0 then return end
     modRunning = not modRunning
-    if modRunning then
-        ModStartBtn.Text = "ON"
-        ModStartBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        if FloatModStart then FloatModStart.Text = "⏸️" end
-        startingCFrame = nil
-        currentTransitionTime = 0
-    else
-        ModStartBtn.Text = "OFF"
-        ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatModStart then FloatModStart.Text = "◀️" end
-    end
+    ModStartBtn.Text = modRunning and "ON" or "OFF"
+    ModStartBtn.BackgroundColor3 = modRunning and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+    if FloatModStart then FloatModStart.Text = modRunning and "⏸️" or "◀️" end
+    startingCFrame = nil
 end
 
 local function spawnBlockAtPlayer()
     if not modActive then return end
     local char = LocalPlayer.Character
-    if not char then return end
-    local targetPart = (char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or char:FindFirstChild("HumanoidRootPart")
-
+    local targetPart = (char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or (char and char:FindFirstChild("HumanoidRootPart"))
     if targetPart then
         local currentPos = targetPart.Position
-        local finalCFrame
-
-        if lastPos then
-            local moveDir = currentPos - lastPos
-            if moveDir.Magnitude > 0.01 then
-                local forwardVector = moveDir.Unit
-                local upVector = targetPart.CFrame.UpVector
-                local rightVector = forwardVector:Cross(upVector).Unit
-                upVector = rightVector:Cross(forwardVector).Unit
-                finalCFrame = CFrame.fromMatrix(currentPos, rightVector, upVector, -forwardVector)
-            else
-                finalCFrame = targetPart.CFrame
-            end
-        else
-            finalCFrame = targetPart.CFrame
-        end
-
+        local finalCFrame = lastPos and CFrame.fromMatrix(currentPos, (currentPos - lastPos).Unit:Cross(targetPart.CFrame.UpVector).Unit, targetPart.CFrame.UpVector, -(currentPos - lastPos).Unit) or targetPart.CFrame
         lastPos = currentPos
-        createVisualBlock(finalCFrame)
-        setTemporaryStatus("Block Spawned!", 1.5)
+        local block = Instance.new("Part")
+        block.Size = Vector3.new(1, 10, 1)
+        block.CFrame = finalCFrame
+        block.Anchored = true
+        block.CanCollide = false
+        block.Transparency = 0.5
+        block.Color = Color3.fromRGB(255, 255, 255)
+        local tex = Instance.new("Texture", block)
+        tex.Face = Enum.NormalId.Top
+        tex.Texture = "rbxassetid://620583021"
+        block.Parent = workspace
+        table.insert(spawnedBlocks, block)
+        setTemporaryStatus("Spawned!", 1)
     end
 end
 
 local function undoLastBlock()
-    if not modActive then return end
     if #spawnedBlocks > 0 then
-        local lastBlock = table.remove(spawnedBlocks, #spawnedBlocks)
-        if lastBlock then lastBlock:Destroy() end
-        if currentIndex > #spawnedBlocks then currentIndex = math.max(1, #spawnedBlocks) end
+        table.remove(spawnedBlocks, #spawnedBlocks):Destroy()
         lastPos = #spawnedBlocks > 0 and spawnedBlocks[#spawnedBlocks].Position or nil
-        setTemporaryStatus("Last Block Removed!", 1.5)
     end
 end
 
 local function resetModAll()
-    if not modActive then return end
-    clearAllBlocks()
+    modRunning = false
+    ModStartBtn.Text = "OFF"
+    ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    for _, b in ipairs(spawnedBlocks) do if b then b:Destroy() end end
+    spawnedBlocks = {}
     if FloatModStart then FloatModStart.Text = "◀️" end
-    setTemporaryStatus("Reseted!", 1.5)
 end
 
-local function removeTireMod()
-    if not modActive then return end
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hum or not hum.SeatPart then setTemporaryStatus("Sit on bike!", 2) return end
+FloatModStart = createModFloat("◀️", UDim2.new(1, -75, 0.5, -90), toggleStartMod)
+createModFloat("🆕", UDim2.new(1, -75, 0.5, -35), spawnBlockAtPlayer)
+createModFloat("↩️", UDim2.new(1, -75, 0.5, 20), undoLastBlock)
 
-    local carModel = hum.SeatPart:FindFirstAncestorOfClass("Model")
-    local bodyFolder = carModel and carModel:FindFirstChild("Body")
-    if bodyFolder then
-        for _, name in ipairs({"RearSuspensionBase", "RearSuspensionBaseHinge", "SwingArmHinge"}) do
-            local obj = bodyFolder:FindFirstChild(name)
-            if obj then obj:Destroy() end
-        end
-        local steeringHinge = bodyFolder:FindFirstChild("SteeringHinge")
-        if steeringHinge and steeringHinge:FindFirstChild("Attachment") then
-            steeringHinge.Attachment:Destroy()
-        end
-        setTemporaryStatus("Tire Removed!", 2)
-    end
-end
-
--- Speed Array Control
-local currentSpeedIndex = 11
-local speedValues = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-local FastSteerFloatBtn
-
-local function updateSpeedUI()
-    local val = speedValues[currentSpeedIndex]
-    SpeedDisplayLabel.Text = tostring(val)
-    if FastSteerFloatBtn then FastSteerFloatBtn.Text = tostring(val) end
-end
-
-PlusSpeedBtn.MouseButton1Click:Connect(function()
-    if currentSpeedIndex < #speedValues then currentSpeedIndex = currentSpeedIndex + 1; updateSpeedUI() end
-end)
-MinusSpeedBtn.MouseButton1Click:Connect(function()
-    if currentSpeedIndex > 1 then currentSpeedIndex = currentSpeedIndex - 1; updateSpeedUI() end
-end)
-
--- Float Mod Position
-FloatModStart = createModFloat("Start", "◀️", UDim2.new(1, -305, 1, -270), toggleStartMod)
-local FloatModSpawn = createModFloat("Spawn", "🆕", UDim2.new(1, -280, 1, -195), spawnBlockAtPlayer)
-local FloatModUndo = createModFloat("Undo", "↩️", UDim2.new(1, -280, 1, -120), undoLastBlock)
-local FloatModReset = createModFloat("Reset", "🔄", UDim2.new(1, -185, 1, -345), resetModAll)
-local FloatModRemoveTire = createModFloat("RemoveTire", "🚫", UDim2.new(1, -185, 1, -410), removeTireMod)
-
-FastSteerFloatBtn = createModFloat("Speed", "1", UDim2.new(1, -280, 1, -345), function()
-    currentSpeedIndex = currentSpeedIndex - 1
-    if currentSpeedIndex < 1 then currentSpeedIndex = #speedValues end
-    updateSpeedUI()
-end)
-
--- Connect Mod Page Buttons
 ModStartBtn.MouseButton1Click:Connect(toggleStartMod)
 ModSpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
 ModUndoBtn.MouseButton1Click:Connect(undoLastBlock)
 ModResetBtn.MouseButton1Click:Connect(resetModAll)
-ModRemoveTireBtn.MouseButton1Click:Connect(removeTireMod)
 
 ModActiveBtn.MouseButton1Click:Connect(function()
     modActive = not modActive
     ModActiveBtn.Text = modActive and "ON" or "OFF"
     ModActiveBtn.BackgroundColor3 = modActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if not modActive and modRunning then toggleStartMod() end
-end)
-
-ModLockBtn.MouseButton1Click:Connect(function()
-    isModLocked = not isModLocked
-    ModLockBtn.Text = isModLocked and "ON" or "OFF"
-    ModLockBtn.BackgroundColor3 = isModLocked and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
 end)
 
 ModShowFloatBtn.MouseButton1Click:Connect(function()
@@ -823,342 +700,45 @@ ModShowFloatBtn.MouseButton1Click:Connect(function()
     for _, btn in ipairs(modFloatButtons) do btn.Visible = showModFloat end
 end)
 
---------------------------------------------------------------------------------
--- BOOST SPEED SYSTEM LOGIC & TABS
---------------------------------------------------------------------------------
-local boostActive = true
-local isBoostLocked = false
-local isSmoothBoosting = false
-local isSmoothReversing = false
-local isSteerSettingActive = false
+SaveSettingsBtn.MouseButton1Click:Connect(function()
+    Settings.MainWidth = tonumber(WidthBox.Text) or Settings.MainWidth
+    Settings.MainHeight = tonumber(HeightBox.Text) or Settings.MainHeight
+    Settings.FloatSize = tonumber(FloatSizeBox.Text) or Settings.FloatSize
+    Settings.ShortcutSize = tonumber(ShortcutSizeBox.Text) or Settings.ShortcutSize
+    Settings.MainTransparency = tonumber(MainAlphaBox.Text) or Settings.MainTransparency
+    Settings.FloatTransparency = tonumber(FloatAlphaBox.Text) or Settings.FloatTransparency
+    Settings.AutoExecuteTarget = AutoExecTargetBox.Text
 
-local defaultP, defaultD, defaultTorqueZ
-local activeBodyGyro = nil
-
--- Boost Main Page
-local _, BoostActiveBtn = createToggleRow(BoostMainPage, "Active Features:", 1)
-BoostActiveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-BoostActiveBtn.Text = "ON"
-
-local _, FastToggleBtn = createToggleRow(BoostMainPage, "Fast boost :", 2)
-local FastSpeedBox = createConfigRow(BoostMainPage, "Fast Spd:", 100, nil, 3, false)
-
-local _, SmoothToggleBtn = createToggleRow(BoostMainPage, "Smooth boost :", 4)
-local SmoothBox1, SmoothBox2 = createConfigRow(BoostMainPage, "Smooth Bst:", 3.5, 0.03, 5, true)
-
-local _, SmoothReverseToggleBtn = createToggleRow(BoostMainPage, "Smooth brake :", 6)
-local BrakeBox1, BrakeBox2 = createConfigRow(BoostMainPage, "Brake Brk:", 4, 0.0225, 7, true)
-
-local _, BoostLockBtn = createToggleRow(BoostMainPage, "Lock button :", 8)
-
--- Steer Setting Page
-local _, SteerSettingToggleBtn = createToggleRow(BoostSteerPage, "Steer Setting :", 1)
-local SteerBoxP = createConfigRow(BoostSteerPage, "P (Power) :", "-", nil, 2, false)
-local SteerBoxD = createConfigRow(BoostSteerPage, "D (Dampening) :", "-", nil, 3, false)
-local SteerBoxTorque = createConfigRow(BoostSteerPage, "MaxTorque (Z) :", "-", nil, 4, false)
-local _, ResetSteerBtn = createActionRow(BoostSteerPage, "Reset Steer:", "RESET", 5, Color3.fromRGB(255, 120, 0))
-
-local DensityBox = createConfigRow(BoostSteerPage, "Density :", "-", nil, 6, false)
-local _, ResetDensityBtn = createActionRow(BoostSteerPage, "Reset Density:", "RESET", 7, Color3.fromRGB(255, 120, 0))
-
-local _, MaxFrictionBtn = createActionRow(BoostSteerPage, "Max Friction:", "EXEC", 8, Color3.fromRGB(0, 140, 240))
-local _, ResetFrictionBtn = createActionRow(BoostSteerPage, "Reset Friction:", "RESET", 9, Color3.fromRGB(255, 120, 0))
-
--- Misc Page
-local _, RemoveWheelieBtn = createActionRow(BoostMiscPage, "Del Wheelie Data:", "EXEC", 1, Color3.fromRGB(0, 140, 240))
-local _, GiveTeleportToolBtn = createActionRow(BoostMiscPage, "Teleport Tool:", "EXEC", 2, Color3.fromRGB(0, 140, 240))
-local _, FlyBtn = createActionRow(BoostMiscPage, "Fly GUI:", "EXEC", 3, Color3.fromRGB(0, 140, 240))
-local _, BToolsBtn = createActionRow(BoostMiscPage, "BTools:", "EXEC", 4, Color3.fromRGB(0, 140, 240))
-
--- Boost Floating Buttons
-local FastFloatBtn = Instance.new("TextButton", ScreenGui)
-FastFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-FastFloatBtn.Position = UDim2.new(1, -220, 1, -270)
-FastFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-FastFloatBtn.BackgroundTransparency = 0.4
-FastFloatBtn.Text = "🚀"
-FastFloatBtn.TextSize = 16
-FastFloatBtn.Visible = false
-FastFloatBtn.Active = true
-FastFloatBtn.Draggable = true
-Instance.new("UICorner", FastFloatBtn).CornerRadius = UDim.new(1, 0)
-
-local SmoothFloatBtn = Instance.new("TextButton", ScreenGui)
-SmoothFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-SmoothFloatBtn.Position = UDim2.new(1, -220, 1, -195)
-SmoothFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-SmoothFloatBtn.BackgroundTransparency = 0.4
-SmoothFloatBtn.Text = "⚡"
-SmoothFloatBtn.TextSize = 16
-SmoothFloatBtn.Visible = false
-SmoothFloatBtn.Active = true
-SmoothFloatBtn.Draggable = true
-Instance.new("UICorner", SmoothFloatBtn).CornerRadius = UDim.new(1, 0)
-
-local SmoothReverseFloatBtn = Instance.new("TextButton", ScreenGui)
-SmoothReverseFloatBtn.Size = UDim2.new(0, 45, 0, 45)
-SmoothReverseFloatBtn.Position = UDim2.new(1, -220, 1, -120)
-SmoothReverseFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-SmoothReverseFloatBtn.BackgroundTransparency = 0.4
-SmoothReverseFloatBtn.Text = "🛑"
-SmoothReverseFloatBtn.TextSize = 16
-SmoothReverseFloatBtn.Visible = false
-SmoothReverseFloatBtn.Active = true
-SmoothReverseFloatBtn.Draggable = true
-Instance.new("UICorner", SmoothReverseFloatBtn).CornerRadius = UDim.new(1, 0)
-
--- Helper Vehicle Functions
-local function getCurrentVehicle()
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local seat = hum and hum.SeatPart
-    if seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
-        return seat, seat:FindFirstAncestorOfClass("Model")
+    -- Apply live changes
+    MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
+    MainFrame.BackgroundTransparency = math.clamp(Settings.MainTransparency, 0, 100) / 100
+    MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
+    for _, btn in ipairs(modFloatButtons) do
+        btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
+        btn.BackgroundTransparency = math.clamp(Settings.FloatTransparency, 0, 100) / 100
     end
-    return nil, nil
-end
 
--- Connect Boost Controls
-BoostActiveBtn.MouseButton1Click:Connect(function()
-    boostActive = not boostActive
-    BoostActiveBtn.Text = boostActive and "ON" or "OFF"
-    BoostActiveBtn.BackgroundColor3 = boostActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+    saveSettings()
+    setTemporaryStatus("Settings Saved!", 2)
 end)
-
-FastToggleBtn.MouseButton1Click:Connect(function()
-    FastFloatBtn.Visible = not FastFloatBtn.Visible
-    FastToggleBtn.Text = FastFloatBtn.Visible and "ON" or "OFF"
-    FastToggleBtn.BackgroundColor3 = FastFloatBtn.Visible and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-end)
-
-SmoothToggleBtn.MouseButton1Click:Connect(function()
-    SmoothFloatBtn.Visible = not SmoothFloatBtn.Visible
-    SmoothToggleBtn.Text = SmoothFloatBtn.Visible and "ON" or "OFF"
-    SmoothToggleBtn.BackgroundColor3 = SmoothFloatBtn.Visible and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if not SmoothFloatBtn.Visible then isSmoothBoosting = false; SmoothFloatBtn.Text = "⚡" end
-end)
-
-SmoothReverseToggleBtn.MouseButton1Click:Connect(function()
-    SmoothReverseFloatBtn.Visible = not SmoothReverseFloatBtn.Visible
-    SmoothReverseToggleBtn.Text = SmoothReverseFloatBtn.Visible and "ON" or "OFF"
-    SmoothReverseToggleBtn.BackgroundColor3 = SmoothReverseFloatBtn.Visible and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if not SmoothReverseFloatBtn.Visible then isSmoothReversing = false; SmoothReverseFloatBtn.Text = "🛑" end
-end)
-
-BoostLockBtn.MouseButton1Click:Connect(function()
-    isBoostLocked = not isBoostLocked
-    BoostLockBtn.Text = isBoostLocked and "ON" or "OFF"
-    BoostLockBtn.BackgroundColor3 = isBoostLocked and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    FastFloatBtn.Draggable = not isBoostLocked
-    SmoothFloatBtn.Draggable = not isBoostLocked
-    SmoothReverseFloatBtn.Draggable = not isBoostLocked
-end)
-
-SteerSettingToggleBtn.MouseButton1Click:Connect(function()
-    isSteerSettingActive = not isSteerSettingActive
-    SteerSettingToggleBtn.Text = isSteerSettingActive and "ON" or "OFF"
-    SteerSettingToggleBtn.BackgroundColor3 = isSteerSettingActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if not isSteerSettingActive and activeBodyGyro and defaultP and defaultD and defaultTorqueZ then
-        activeBodyGyro.P = defaultP
-        activeBodyGyro.D = defaultD
-        activeBodyGyro.MaxTorque = Vector3.new(0, 0, defaultTorqueZ)
-    end
-end)
-
--- Float Boost Actions
-FastFloatBtn.MouseButton1Click:Connect(function()
-    if not boostActive then return end
-    local seat = getCurrentVehicle()
-    if seat then
-        local customSpeed = tonumber(FastSpeedBox.Text) or 100
-        local currentVel = seat.AssemblyLinearVelocity
-        seat.AssemblyLinearVelocity = (seat.CFrame.LookVector * (currentVel.Magnitude + customSpeed)) + Vector3.new(0, math.clamp(currentVel.Y, -5, 3), 0)
-    end
-end)
-
-SmoothFloatBtn.MouseButton1Click:Connect(function()
-    if not boostActive then return end
-    isSmoothBoosting = not isSmoothBoosting
-    SmoothFloatBtn.Text = isSmoothBoosting and "🔥" or "⚡"
-
-    if isSmoothBoosting then
-        task.spawn(function()
-            while isSmoothBoosting and boostActive do
-                local seat = getCurrentVehicle()
-                if seat and seat:IsA("BasePart") then
-                    local addPower = tonumber(SmoothBox1.Text) or 3.5
-                    local delayVal = tonumber(SmoothBox2.Text) or 0.03
-                    local curVel = seat.AssemblyLinearVelocity
-                    seat.AssemblyLinearVelocity = (curVel + (seat.CFrame.LookVector * addPower)) + Vector3.new(0, math.clamp(curVel.Y, -5, 3), 0)
-                    task.wait(delayVal)
-                else
-                    isSmoothBoosting = false; SmoothFloatBtn.Text = "⚡"; break
-                end
-            end
-        end)
-    end
-end)
-
-SmoothReverseFloatBtn.MouseButton1Click:Connect(function()
-    if not boostActive then return end
-    isSmoothReversing = not isSmoothReversing
-    SmoothReverseFloatBtn.Text = isSmoothReversing and "💥" or "🛑"
-
-    if isSmoothReversing then
-        task.spawn(function()
-            while isSmoothReversing and boostActive do
-                local seat = getCurrentVehicle()
-                if seat and seat:IsA("BasePart") then
-                    local brakePower = tonumber(BrakeBox1.Text) or 4
-                    local delayVal = tonumber(BrakeBox2.Text) or 0.0225
-                    local currentVel = seat.AssemblyLinearVelocity
-                    local forwardSpeed = currentVel:Dot(seat.CFrame.LookVector)
-
-                    if forwardSpeed > 0 then
-                        local newVel = currentVel - (seat.CFrame.LookVector * brakePower)
-                        seat.AssemblyLinearVelocity = Vector3.new(newVel.X, math.clamp(newVel.Y, -5, 3), newVel.Z)
-                    elseif forwardSpeed > -1 then
-                        seat.AssemblyLinearVelocity = Vector3.new(0, math.clamp(currentVel.Y, -5, 3), 0)
-                    end
-                    task.wait(delayVal)
-                else
-                    isSmoothReversing = false; SmoothReverseFloatBtn.Text = "🛑"; break
-                end
-            end
-        end)
-    end
-end)
-
--- Misc Actions
-GiveTeleportToolBtn.MouseButton1Click:Connect(function()
-    local t = Instance.new("Tool", LocalPlayer:WaitForChild("Backpack"))
-    t.Name = "Teleport Tool"
-    t.RequiresHandle = false
-    t.Activated:Connect(function()
-        if Mouse.Hit and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
-        end
-    end)
-end)
-
-FlyBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly?t=' .. tick()))()
-end)
-
-BToolsBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet('https://gist.githubusercontent.com/fyfreefiregg-max/cc9b6220ca645fc168cecbaa7b74f1a0/raw/fedd5e4645b77b48d2fa2560d3efc7d82f948740/BTools.Lua'))()
-end)
-
-RemoveWheelieBtn.MouseButton1Click:Connect(function()
-    local _, carModel = getCurrentVehicle()
-    local deletedCount = 0
-    if carModel then
-        for _, item in ipairs(carModel:GetDescendants()) do
-            if item.Name:lower():find("wheelie") then
-                item:Destroy()
-                deletedCount = deletedCount + 1
-            end
-        end
-    end
-    RemoveWheelieBtn.Text = deletedCount > 0 and ("DEL ("..deletedCount..")") or "NOT FOUND"
-    task.wait(1.5)
-    RemoveWheelieBtn.Text = "EXEC"
-end)
-
---------------------------------------------------------------------------------
--- RUNSERVICE MAIN LOOPS
---------------------------------------------------------------------------------
--- Sensor Display Mod Main Status
-local function sensorCarName(name)
-    local len = #name
-    if len <= 2 then return string.sub(name, 1, 1) .. "*" end
-    return string.sub(name, 1, 1) .. "***" .. string.sub(name, math.max(1, len - 2), len)
-end
 
 RunService.Heartbeat:Connect(function()
-    if customStatusText then
-        ModStatusLabel.Text = customStatusText
-        return
-    end
-    local seat, carModel = getCurrentVehicle()
-    ModStatusLabel.Text = carModel and ("Car: " .. sensorCarName(carModel.Name)) or "Car: None"
+    if customStatusText then ModStatusLabel.Text = customStatusText; return end
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    local car = hum and hum.SeatPart and hum.SeatPart:FindFirstAncestorOfClass("Model")
+    ModStatusLabel.Text = car and ("Car: " .. car.Name) or "Car: None"
 end)
 
--- Modifier Position Updating
 RunService.Heartbeat:Connect(function(dt)
     if not modActive or not modRunning or #spawnedBlocks == 0 then return end
-
-    local speedVal = speedValues[currentSpeedIndex]
     local char = LocalPlayer.Character
     local targetPart = (char and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").SeatPart) or (char and char:FindFirstChild("HumanoidRootPart"))
-
     if targetPart then
-        if targetPart:IsA("BasePart") then
-            targetPart.AssemblyLinearVelocity = Vector3.zero
-            targetPart.AssemblyAngularVelocity = Vector3.zero
-        end
-
         local targetBlock = spawnedBlocks[currentIndex]
         if targetBlock then
-            local targetCFrame = targetBlock.CFrame
-            if speedVal == 0 then
-                targetPart.CFrame = targetCFrame
-                currentIndex = currentIndex + 1
-                if currentIndex > #spawnedBlocks then currentIndex = 1 end
-                startingCFrame = nil
-            else
-                if not startingCFrame then
-                    startingCFrame = targetPart.CFrame
-                    currentTransitionTime = 0
-                end
-                currentTransitionTime = currentTransitionTime + dt
-                if currentTransitionTime >= speedVal then
-                    targetPart.CFrame = targetCFrame
-                    currentIndex = currentIndex + 1
-                    if currentIndex > #spawnedBlocks then currentIndex = 1 end
-                    startingCFrame = nil
-                else
-                    local alpha = currentTransitionTime / speedVal
-                    targetPart.CFrame = startingCFrame:Lerp(targetCFrame, alpha)
-                end
-            end
+            targetPart.CFrame = targetBlock.CFrame
+            currentIndex = currentIndex + 1
+            if currentIndex > #spawnedBlocks then currentIndex = 1 end
         end
-    end
-end)
-
--- Boost Vehicle Adjustments
-RunService.Stepped:Connect(function()
-    if not boostActive then return end
-
-    local seat, carModel = getCurrentVehicle()
-    if seat and carModel then
-        local vel = seat.AssemblyLinearVelocity
-        if vel.Y > 8 or vel.Y < -15 then
-            seat.AssemblyLinearVelocity = Vector3.new(vel.X, math.clamp(vel.Y, -10, 5), vel.Z)
-        end
-
-        local gyro = carModel:FindFirstChild("LeanGyro", true)
-        if gyro then
-            if activeBodyGyro ~= gyro then
-                activeBodyGyro = gyro
-                if gyro.P > 0 then defaultP = gyro.P end
-                if gyro.D > 0 then defaultD = gyro.D end
-                if gyro.MaxTorque.Z > 0 then defaultTorqueZ = gyro.MaxTorque.Z end
-                SteerBoxP.Text = tostring(defaultP or gyro.P)
-                SteerBoxD.Text = tostring(defaultD or gyro.D)
-                SteerBoxTorque.Text = tostring(defaultTorqueZ or gyro.MaxTorque.Z)
-            end
-
-            if isSteerSettingActive then
-                local targetP = tonumber(SteerBoxP.Text)
-                local targetD = tonumber(SteerBoxD.Text)
-                local targetTorqueZ = tonumber(SteerBoxTorque.Text)
-                if targetP and targetP > 0 then gyro.P = targetP end
-                if targetD and targetD > 0 then gyro.D = targetD end
-                if targetTorqueZ and targetTorqueZ > 0 then gyro.MaxTorque = Vector3.new(0, 0, targetTorqueZ) end
-            end
-        end
-    else
-        activeBodyGyro = nil
     end
 end)
