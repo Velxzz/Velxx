@@ -533,7 +533,7 @@ local function createModFloat(name, emojiText, customPos, callback)
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
+           end)
         end
     end)
 
