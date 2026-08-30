@@ -1,4 +1,4 @@
--- Modifier Gui Pro (Fixed: Direct Built-in Exec, 5 Floating Buttons, Aligned Layout & Cosmic Outline)
+-- Modifier Gui Pro (Fixed: Auto-exec Built-in, Emoji Float Icons, Realtime Settings)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -24,8 +24,8 @@ end
 local Settings = {
     MainWidth = 520,
     MainHeight = 300,
-    FloatSize = 42,
-    ShortcutSize = 45,
+    FloatSize = 52,
+    ShortcutSize = 50,
     MainTransparency = 15,
     FloatTransparency = 30,
     AutoExecuteEnabled = false,
@@ -62,19 +62,18 @@ MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize
 MenuShortcut.Position = UDim2.new(0, 15, 0, 15)
 MenuShortcut.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MenuShortcut.BackgroundTransparency = 0.3
-MenuShortcut.Image = "rbxassetid://130705104438925"
+MenuShortcut.Image = "rbxassetid://113467230333515"
 MenuShortcut.Active = true
 MenuShortcut.Draggable = true
 Instance.new("UICorner", MenuShortcut).CornerRadius = UDim.new(0, 12)
 
 local MenuStroke = Instance.new("UIStroke", MenuShortcut)
 MenuStroke.Thickness = 1.5
-MenuStroke.Transparency = 0
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
-MainFrame.Position = UDim2.new(0.2, 0, 0.4, 0)
+MainFrame.Position = UDim2.new(0.2, 0, 0.4, -50)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = Settings.MainTransparency / 100
 MainFrame.Active = true
@@ -83,9 +82,7 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local FrameStroke = Instance.new("UIStroke", MainFrame)
 FrameStroke.Thickness = 1.5
-FrameStroke.Transparency = 0
 
--- Cosmic Purple ke Cosmic Cyan Outline Animasi
 RunService.RenderStepped:Connect(function()
     local t = math.sin(tick() * 2) * 0.5 + 0.5
     local cosmicPurple = Color3.fromRGB(138, 43, 226)
@@ -104,7 +101,7 @@ Instance.new("UICorner", HeaderBar).CornerRadius = UDim.new(0, 10)
 local Title = Instance.new("TextLabel", HeaderBar)
 Title.Size = UDim2.new(1, -10, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "MODIFIER SYSTEM PRO"
+Title.Text = "MODIFIER Gui v5.0 PRO"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 11
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -336,6 +333,7 @@ local function resetModAll()
     for _, b in ipairs(spawnedBlocks) do if b then b:Destroy() end end
     spawnedBlocks = {}
     lastPos = nil
+    currentIndex = 1
 end
 
 local function removeTireFunc()
@@ -350,7 +348,7 @@ local function removeTireFunc()
                 removedCount = removedCount + 1
             end
         end
-        setTemporaryStatus("Removed " .. removedCount .. " tires/wheels!", 2)
+        setTemporaryStatus("Removed " .. removedCount .. " tires!", 2)
     else
         setTemporaryStatus("Not in a vehicle!", 2)
     end
@@ -358,34 +356,44 @@ end
 
 local function loadConfigFromString(codeStr)
     resetModAll()
-    local success, func = pcall(function() return loadstring(codeStr) end)
-    if success and type(func) == "function" then
-        local ok, res = pcall(func)
-        if ok and type(res) == "table" then
-            for _, posData in ipairs(res) do
-                local cf = posData
-                if typeof(posData) == "CFrame" then
-                    cf = posData
-                elseif type(posData) == "table" then
-                    cf = CFrame.new(unpack(posData))
-                end
-                if typeof(cf) == "CFrame" then
-                    local block = Instance.new("Part")
-                    block.Size = Vector3.new(1, 10, 1)
-                    block.CFrame = cf
-                    block.Anchored = true
-                    block.CanCollide = false
-                    block.Transparency = 0.5
-                    block.Color = Color3.fromRGB(255, 255, 255)
-                    local tex = Instance.new("Texture", block)
-                    tex.Face = Enum.NormalId.Top
-                    tex.Texture = "rbxassetid://620583021"
-                    block.Parent = workspace
-                    table.insert(spawnedBlocks, block)
-                end
+    local cleanCode = codeStr:match("{.*}") or codeStr
+    local success, result = pcall(function()
+        return loadstring("return " .. cleanCode)()
+    end)
+    
+    if not success or type(result) ~= "table" then
+        success, result = pcall(function()
+            local func = loadstring(codeStr)
+            return func and func()
+        end)
+    end
+
+    if success and type(result) == "table" then
+        for _, posData in ipairs(result) do
+            local cf = posData
+            if typeof(posData) == "CFrame" then
+                cf = posData
+            elseif type(posData) == "table" then
+                cf = CFrame.new(unpack(posData))
             end
-            setTemporaryStatus("Config Loaded (" .. #spawnedBlocks .. " blocks)", 3)
+            if typeof(cf) == "CFrame" then
+                local block = Instance.new("Part")
+                block.Size = Vector3.new(1, 10, 1)
+                block.CFrame = cf
+                block.Anchored = true
+                block.CanCollide = false
+                block.Transparency = 0.5
+                block.Color = Color3.fromRGB(255, 255, 255)
+                local tex = Instance.new("Texture", block)
+                tex.Face = Enum.NormalId.Top
+                tex.Texture = "rbxassetid://620583021"
+                block.Parent = workspace
+                table.insert(spawnedBlocks, block)
+            end
         end
+        setTemporaryStatus("Loaded " .. #spawnedBlocks .. " Blocks", 3)
+    else
+        setTemporaryStatus("Error Parsing Config!", 2)
     end
 end
 
@@ -559,7 +567,7 @@ local function addBuiltInBtnRow(name1, url1, name2, url2, order)
             local s, r = pcall(function() return game:HttpGet(url1) end)
             if s then 
                 LoadBox.Text = r 
-                loadConfigFromString(r)
+                loadConfigFromString(r) -- Auto Exec
                 if Settings.AutoExecuteEnabled then
                     Settings.AutoExecuteTarget = name1
                     selectedAutoConfigName = name1
@@ -588,7 +596,7 @@ local function addBuiltInBtnRow(name1, url1, name2, url2, order)
                 local s, r = pcall(function() return game:HttpGet(url2) end)
                 if s then 
                     LoadBox.Text = r 
-                    loadConfigFromString(r)
+                    loadConfigFromString(r) -- Auto Exec
                     if Settings.AutoExecuteEnabled then
                         Settings.AutoExecuteTarget = name2
                         selectedAutoConfigName = name2
@@ -626,27 +634,6 @@ ToggleBuiltInBtn.MouseButton1Click:Connect(function()
     ToggleBuiltInBtn.Text = isOpen and "📂 Built-in Configs (Click to Close)" or "📁 Built-in Configs (Click to Open)"
     dropdownContainer.Size = isOpen and UDim2.new(1, -6, 0, dropLayout.AbsoluteContentSize.Y + 5) or UDim2.new(1, -6, 0, 0)
 end)
-
-local builtInUrls = {
-    ["Southern100"] = "https://pastebin.com/raw/bVP3PhyW",
-    ["Mandalika"] = "https://pastebin.com/raw/ePCXtCmD",
-    ["Sentul"] = "https://pastebin.com/raw/uVHft5gJ",
-    ["Around The Map"] = "https://pastebin.com/raw/65Z54PjK",
-    ["Speed Fest"] = "https://pastebin.com/raw/t3RR02d9",
-    ["Drag"] = "https://pastebin.com/raw/z7zm3Yp9",
-    ["Souq Scramble"] = "https://pastebin.com/raw/mZ7TzxEZ"
-}
-
-if Settings.AutoExecuteEnabled and Settings.AutoExecuteTarget ~= "" and builtInUrls[Settings.AutoExecuteTarget] then
-    task.spawn(function()
-        local s, r = pcall(function() return game:HttpGet(builtInUrls[Settings.AutoExecuteTarget]) end)
-        if s then
-            LoadBox.Text = r
-            loadConfigFromString(r)
-            setTemporaryStatus("Auto-executed: " .. Settings.AutoExecuteTarget, 3)
-        end
-    end)
-end
 
 -- Misc Page
 local _, TeleportToolBtn = createActionRow(ModMiscPage, "Teleport Tool:", "GIVE", 1, Color3.fromRGB(0, 140, 240))
@@ -687,6 +674,34 @@ local _, AutoExecToggleBtn = createToggleRow(ModSettingsPage, "Auto Execute:", 7
 local AutoExecTargetBox = createConfigRow(ModSettingsPage, "Target Config:", Settings.AutoExecuteTarget, 8)
 local _, SaveSettingsBtn = createActionRow(ModSettingsPage, "Save Settings:", "SAVE", 9, Color3.fromRGB(50, 200, 50))
 
+-- Auto-Apply Realtime Settings Callback
+local function updateRealtimeSettings()
+    Settings.MainWidth = tonumber(WidthBox.Text) or Settings.MainWidth
+    Settings.MainHeight = tonumber(HeightBox.Text) or Settings.MainHeight
+    Settings.FloatSize = tonumber(FloatSizeBox.Text) or Settings.FloatSize
+    Settings.ShortcutSize = tonumber(ShortcutSizeBox.Text) or Settings.ShortcutSize
+    Settings.MainTransparency = tonumber(MainAlphaBox.Text) or Settings.MainTransparency
+    Settings.FloatTransparency = tonumber(FloatAlphaBox.Text) or Settings.FloatTransparency
+
+    MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
+    MainFrame.BackgroundTransparency = math.clamp(Settings.MainTransparency, 0, 100) / 100
+    MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
+
+    for _, btn in ipairs(ScreenGui:GetChildren()) do
+        if btn:IsA("TextButton") and btn.Name:find("Float") then
+            btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
+            btn.BackgroundTransparency = math.clamp(Settings.FloatTransparency, 0, 100) / 100
+        end
+    end
+end
+
+WidthBox.FocusLost:Connect(updateRealtimeSettings)
+HeightBox.FocusLost:Connect(updateRealtimeSettings)
+FloatSizeBox.FocusLost:Connect(updateRealtimeSettings)
+ShortcutSizeBox.FocusLost:Connect(updateRealtimeSettings)
+MainAlphaBox.FocusLost:Connect(updateRealtimeSettings)
+FloatAlphaBox.FocusLost:Connect(updateRealtimeSettings)
+
 if Settings.AutoExecuteEnabled then
     AutoExecToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
     AutoExecToggleBtn.Text = "ON"
@@ -701,20 +716,21 @@ AutoExecToggleBtn.MouseButton1Click:Connect(function()
     AutoExecToggleBtn.BackgroundColor3 = Settings.AutoExecuteEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
 end)
 
--- Floating Buttons
+-- Floating Buttons (Emoji Fixed)
 local modFloatButtons = {}
-local function createCircularFloat(name, text, customPos, callback)
+local function createCircularFloat(name, emojiIcon, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
-    btn.Name = name
+    btn.Name = "Float_" .. name
     btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
     btn.Position = customPos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.BackgroundTransparency = Settings.FloatTransparency / 100
-    btn.Text = text
+    btn.Text = emojiIcon
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 11
+    btn.TextSize = 18 -- Ukuran emoji lebih jelas
     btn.Active = true
+    btn.Draggable = true
     btn.Visible = showModFloat
     table.insert(modFloatButtons, btn)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
@@ -728,23 +744,24 @@ local function toggleStart()
     modRunning = not modRunning
     ModStartBtn.Text = modRunning and "ON" or "OFF"
     ModStartBtn.BackgroundColor3 = modRunning and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
-    if FloatStart then FloatStart.Text = modRunning and "Pause" or "Start" end
+    if FloatStart then FloatStart.Text = modRunning and "⏸️" or "🚀" end
 end
 
 local FastSteerFloatBtn
 local function cycleSpeedFloat()
     modifierSpeed = modifierSpeed >= 5 and 1 or (modifierSpeed + 1)
     if SpeedDisplayLabel then SpeedDisplayLabel.Text = tostring(modifierSpeed) end
-    if FastSteerFloatBtn then FastSteerFloatBtn.Text = tostring(modifierSpeed) end
+    if FastSteerFloatBtn then FastSteerFloatBtn.Text = "⚡" .. tostring(modifierSpeed) end
     setTemporaryStatus("Speed: " .. modifierSpeed, 1)
 end
 
-FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
-local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
-local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
-local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTireFunc)
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetModAll)
-FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeedFloat)
+-- Floating Buttons dengan Logo Emoji
+FloatStart = createCircularFloat("Start", "🚀", UDim2.new(1, -260, 1, -270), toggleStart)
+local FloatSpawn = createCircularFloat("Spawn", "➕", UDim2.new(1, -200, 1, -270), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "↩️", UDim2.new(1, -140, 1, -270), undoLastBlock)
+local FloatRemoveTire = createCircularFloat("RemoveTire", "🛠️", UDim2.new(1, -200, 1, -200), removeTireFunc)
+local FloatReset = createCircularFloat("Reset", "🔄", UDim2.new(1, -140, 1, -200), resetModAll)
+FastSteerFloatBtn = createCircularFloat("Speed", "⚡1", UDim2.new(1, -260, 1, -200), cycleSpeedFloat)
 
 ModStartBtn.MouseButton1Click:Connect(toggleStart)
 ModSpawnBtn.MouseButton1Click:Connect(spawnBlockAtPlayer)
@@ -766,22 +783,8 @@ ModShowFloatBtn.MouseButton1Click:Connect(function()
 end)
 
 SaveSettingsBtn.MouseButton1Click:Connect(function()
-    Settings.MainWidth = tonumber(WidthBox.Text) or Settings.MainWidth
-    Settings.MainHeight = tonumber(HeightBox.Text) or Settings.MainHeight
-    Settings.FloatSize = tonumber(FloatSizeBox.Text) or Settings.FloatSize
-    Settings.ShortcutSize = tonumber(ShortcutSizeBox.Text) or Settings.ShortcutSize
-    Settings.MainTransparency = tonumber(MainAlphaBox.Text) or Settings.MainTransparency
-    Settings.FloatTransparency = tonumber(FloatAlphaBox.Text) or Settings.FloatTransparency
+    updateRealtimeSettings()
     Settings.AutoExecuteTarget = AutoExecTargetBox.Text
-
-    MainFrame.Size = UDim2.new(0, Settings.MainWidth, 0, Settings.MainHeight)
-    MainFrame.BackgroundTransparency = math.clamp(Settings.MainTransparency, 0, 100) / 100
-    MenuShortcut.Size = UDim2.new(0, Settings.ShortcutSize, 0, Settings.ShortcutSize)
-    for _, btn in ipairs(modFloatButtons) do
-        btn.Size = UDim2.new(0, Settings.FloatSize, 0, Settings.FloatSize)
-        btn.BackgroundTransparency = math.clamp(Settings.FloatTransparency, 0, 100) / 100
-    end
-
     saveSettings()
     setTemporaryStatus("Settings Saved!", 2)
 end)
