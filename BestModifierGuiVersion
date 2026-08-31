@@ -1,17 +1,20 @@
--- Modifier Gui V4.2 PRO (Wide Horizontal Layout with Tab Sidebar & Cosmic Theme Update)
+-- Modifier Gui V4.2 PRO (Wide Horizontal Layout with Tab Sidebar & Fixed Cosmic Theme)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- Helper: Outline Cosmic Purple to Cosmic Cyan
+-- Helper: Outline Cosmic Purple to Cosmic Cyan (Fixed stroke rendering)
 local function applyCosmicOutline(instance, thickness)
-    local stroke = Instance.new("UIStroke")
+    local stroke = instance:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke")
     stroke.Thickness = thickness or 2
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.LineJoinMode = Enum.LineJoinMode.Round
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Transparency = 0
     stroke.Parent = instance
 
-    local gradient = Instance.new("UIGradient")
+    local gradient = stroke:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 0, 255)), -- Cosmic Purple
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))  -- Cosmic Cyan
@@ -199,7 +202,6 @@ end
 addProfileText("Username : " .. LocalPlayer.Name)
 addProfileText("User ID       : " .. LocalPlayer.UserId)
 
--- Account Age Calculations
 local joinTimestamp = os.time() - (LocalPlayer.AccountAge * 86400)
 local joinDateStr = os.date("%d %b %Y", joinTimestamp)
 
@@ -246,33 +248,110 @@ local isLocked = false
 local showFloatButtons = true
 local customStatusText = nil
 local autoExecuteActive = false
+local autoExecConfigCode = ""
+local currentSpeedIndex = 11
 
 --------------------------------------------------------------------------------
--- TAB 4: SETTINGS PAGE (UI Settings & Auto Execute)
+-- TAB 4: SETTINGS PAGE (UI Settings, Auto Exec Config & Save Settings)
 --------------------------------------------------------------------------------
+local settingsFilePath = "ModifierConfigs/UserSettings.json"
+
+local function setTemporaryStatus(msg, duration)
+    customStatusText = msg
+    task.delay(duration or 2, function()
+        if customStatusText == msg then
+            customStatusText = nil
+        end
+    end)
+end
+
 local _, AutoExecToggle = createToggleRow(SettingsPage, "Auto Execute", 1)
+
+-- Row untuk input config code Auto Execute
+local autoExecConfigRow = Instance.new("Frame", SettingsPage)
+autoExecConfigRow.Size = UDim2.new(1, -6, 0, 28)
+autoExecConfigRow.BackgroundTransparency = 1
+autoExecConfigRow.LayoutOrder = 2
+
+local autoExecLabel = Instance.new("TextLabel", autoExecConfigRow)
+autoExecLabel.Size = UDim2.new(0.45, 0, 1, 0)
+autoExecLabel.Text = "Auto Exec Config :"
+autoExecLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+autoExecLabel.Font = Enum.Font.GothamBold
+autoExecLabel.TextSize = 10
+autoExecLabel.TextXAlignment = Enum.TextXAlignment.Left
+autoExecLabel.BackgroundTransparency = 1
+
+local AutoExecConfigBox = Instance.new("TextBox", autoExecConfigRow)
+AutoExecConfigBox.Size = UDim2.new(0.55, 0, 0, 22)
+AutoExecConfigBox.Position = UDim2.new(0.45, 0, 0.5, -11)
+AutoExecConfigBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+AutoExecConfigBox.BorderSizePixel = 0
+AutoExecConfigBox.PlaceholderText = "Code / URL Config..."
+AutoExecConfigBox.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
+AutoExecConfigBox.Text = ""
+AutoExecConfigBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoExecConfigBox.Font = Enum.Font.Gotham
+AutoExecConfigBox.TextSize = 9
+Instance.new("UICorner", AutoExecConfigBox).CornerRadius = UDim.new(0, 4)
+
+AutoExecConfigBox:GetPropertyChangedSignal("Text"):Connect(function()
+    autoExecConfigCode = AutoExecConfigBox.Text
+end)
+
+-- Tombol Save Setting
+local saveSettingRow = Instance.new("Frame", SettingsPage)
+saveSettingRow.Size = UDim2.new(1, -6, 0, 28)
+saveSettingRow.BackgroundTransparency = 1
+saveSettingRow.LayoutOrder = 3
+
+local SaveSettingsBtn = Instance.new("TextButton", saveSettingRow)
+SaveSettingsBtn.Size = UDim2.new(1, 0, 1, 0)
+SaveSettingsBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 120)
+SaveSettingsBtn.BorderSizePixel = 0
+SaveSettingsBtn.Text = "SAVE SETTINGS"
+SaveSettingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SaveSettingsBtn.Font = Enum.Font.GothamBold
+SaveSettingsBtn.TextSize = 10
+Instance.new("UICorner", SaveSettingsBtn).CornerRadius = UDim.new(0, 4)
+
+local function saveUserSettings()
+    if not writefile then
+        setTemporaryStatus("Executor unsupported!", 2)
+        return
+    end
+
+    local data = {
+        AutoExecute = autoExecuteActive,
+        AutoExecConfig = autoExecConfigCode,
+        ShowFloatButtons = showFloatButtons,
+        LockButton = isLocked,
+        SpeedIndex = currentSpeedIndex
+    }
+
+    local succ, _ = pcall(function()
+        writefile(settingsFilePath, HttpService:JSONEncode(data))
+    end)
+
+    if succ then
+        setTemporaryStatus("Settings Saved!", 2)
+    else
+        setTemporaryStatus("Failed to save settings!", 2)
+    end
+end
+
+SaveSettingsBtn.MouseButton1Click:Connect(saveUserSettings)
 
 AutoExecToggle.MouseButton1Click:Connect(function()
     autoExecuteActive = not autoExecuteActive
     if autoExecuteActive then
         AutoExecToggle.Text = "ON"
         AutoExecToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        if writefile then pcall(writefile, "ModifierConfigs/AutoExec.txt", "true") end
     else
         AutoExecToggle.Text = "OFF"
         AutoExecToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if writefile then pcall(writefile, "ModifierConfigs/AutoExec.txt", "false") end
     end
 end)
-
-if isfile and isfile("ModifierConfigs/AutoExec.txt") then
-    local successRead, val = pcall(readfile, "ModifierConfigs/AutoExec.txt")
-    if successRead and val == "true" then
-        autoExecuteActive = true
-        AutoExecToggle.Text = "ON"
-        AutoExecToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    end
-end
 
 --------------------------------------------------------------------------------
 -- TAB 2: MAIN PAGE (Fitur Utama)
@@ -565,15 +644,6 @@ local function createVisualBlock(cf)
     return block
 end
 
-local function setTemporaryStatus(msg, duration)
-    customStatusText = msg
-    task.delay(duration or 2, function()
-        if customStatusText == msg then
-            customStatusText = nil
-        end
-    end)
-end
-
 local FloatStart
 
 local function clearAllBlocks()
@@ -791,7 +861,6 @@ local function createMiscCategory()
         end)
     end
 
-    -- Kolom Kosong TP Tool URL
     local tpRow = Instance.new("Frame", container)
     tpRow.Size = UDim2.new(1, 0, 0, 24)
     tpRow.BackgroundTransparency = 1
@@ -887,7 +956,7 @@ RunService.Heartbeat:Connect(function()
     StatusLabel.Text = "Car: None"
 end)
 
--- Float Logo Button (Squircle Layout dengan Texture ID 113467230333515)
+-- Float Logo Button
 local MainFloatBtn = Instance.new("ImageButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
 MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
@@ -923,7 +992,7 @@ local function createCircularFloat(name, text, customPos, callback)
 
     table.insert(featureFloatButtons, btn)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    applyCosmicOutline(btn, 1) -- Outline Cosmic Cyan-Purple lebih kecil
+    applyCosmicOutline(btn, 1.5)
 
     btn.MouseButton1Click:Connect(function()
         if activeFeatures and floatFunctionActive then
@@ -979,11 +1048,10 @@ ShowFloatButtonsToggle.MouseButton1Click:Connect(function()
     end
 end)
 
-local currentSpeedIndex = 11
 local speedValues = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 local function getSpeedValue()
-    return speedValues[currentSpeedIndex]
+    return speedValues[currentSpeedIndex] or 1
 end
 
 local FastSteerFloatBtn
@@ -1030,7 +1098,7 @@ local function spawnBlockAtPlayer()
     local targetPart = (humanoid and humanoid.SeatPart) or rootPart
 
     if targetPart then
-        local currentPos = targetPart.Position
+           local currentPos = targetPart.Position
         local finalCFrame
 
         if lastPos then
@@ -1107,7 +1175,7 @@ local function removeTire()
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if not humanoid or not humanoid.SeatPart then
         setTemporaryStatus("Sit on a bike first!", 2)
-     return
+        return
     end
 
     local carModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
@@ -1138,7 +1206,7 @@ local function removeTire()
     setTemporaryStatus("Tire Removed from " .. sensorCarName(carModel.Name) .. "!", 2.5)
 end
 
--- Circular Float Init (Simbol Tombol Float Diperbarui)
+-- Circular Float Init
 FloatStart = createCircularFloat("Start", "▶️", UDim2.new(1, -245, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "🆕", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "↩️", UDim2.new(1, -220, 1, -120), undoLastBlock)
@@ -1281,6 +1349,75 @@ LoadConfigBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Load User Settings Logic On Startup
+local function loadUserSettings()
+    if isfile and readfile and isfile(settingsFilePath) then
+        local succ, res = pcall(readfile, settingsFilePath)
+        if succ and res then
+            local succDec, data = pcall(function() return HttpService:JSONDecode(res) end)
+            if succDec and type(data) == "table" then
+                if data.AutoExecute ~= nil then
+                    autoExecuteActive = data.AutoExecute
+                    AutoExecToggle.Text = autoExecuteActive and "ON" or "OFF"
+                    AutoExecToggle.BackgroundColor3 = autoExecuteActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+                end
+                if data.AutoExecConfig ~= nil then
+                    autoExecConfigCode = data.AutoExecConfig
+                    AutoExecConfigBox.Text = autoExecConfigCode
+                end
+                if data.ShowFloatButtons ~= nil then
+                    showFloatButtons = data.ShowFloatButtons
+                    ShowFloatButtonsToggle.Text = showFloatButtons and "ON" or "OFF"
+                    ShowFloatButtonsToggle.BackgroundColor3 = showFloatButtons and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+                    for _, btn in ipairs(featureFloatButtons) do
+                        if btn then btn.Visible = showFloatButtons end
+                    end
+                end
+                if data.LockButton ~= nil then
+                    isLocked = data.LockButton
+                    LockButtonToggle.Text = isLocked and "ON" or "OFF"
+                    LockButtonToggle.BackgroundColor3 = isLocked and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
+                end
+                if data.SpeedIndex ~= nil then
+                    currentSpeedIndex = math.clamp(data.SpeedIndex, 1, #speedValues)
+                    updateSpeedUI()
+                end
+            end
+        end
+    end
+end
+
+loadUserSettings()
+
+-- Auto Execute Runner On Launch
+if autoExecuteActive and autoExecConfigCode ~= "" then
+    task.defer(function()
+        if autoExecConfigCode:find("http://") or autoExecConfigCode:find("https://") then
+            loadPresetFromUrl(autoExecConfigCode, "AutoExec Config")
+        else
+            local fileName = "ModifierConfigs/" .. autoExecConfigCode .. ".json"
+            if readfile and isfile and isfile(fileName) then
+                local succRead, rawData = pcall(readfile, fileName)
+                if succRead and rawData then
+                    local succDecode, decodedData = pcall(function() return HttpService:JSONDecode(rawData) end)
+                    if succDecode and type(decodedData) == "table" then
+                        clearAllBlocks()
+                        for _, comps in ipairs(decodedData) do
+                            local cf = CFrame.new(table.unpack(comps))
+                            createVisualBlock(cf)
+                        end
+                        if #spawnedBlocks > 0 then
+                            lastPos = spawnedBlocks[#spawnedBlocks].Position
+                        end
+                        setTemporaryStatus("Auto Executed: " .. autoExecConfigCode, 3)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- Heartbeat Modifier Loop
 RunService.Heartbeat:Connect(function(dt)
     if not activeFeatures or not isRunning or #spawnedBlocks == 0 then return end
 
