@@ -1,4 +1,4 @@
--- Modifier Gui Pro (Fixed: Auto-exec Built-in, Emoji Float Icons, Realtime Settings)
+-- Modifier Gui Pro (Built-in via HttpGet Pastebin, Dropdown, Auto Execute)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -29,7 +29,7 @@ local Settings = {
     MainTransparency = 15,
     FloatTransparency = 30,
     AutoExecuteEnabled = false,
-    AutoExecuteTarget = ""
+    AutoExecuteTarget = "Southern100"
 }
 
 local settingsFileName = "ModifierConfigs/UserSettings.json"
@@ -291,6 +291,30 @@ local function setTemporaryStatus(msg, duration)
     end)
 end
 
+local function clearAllBlocks()
+    for _, b in ipairs(spawnedBlocks) do
+        if b then b:Destroy() end
+    end
+    spawnedBlocks = {}
+    lastPos = nil
+    currentIndex = 1
+end
+
+local function createVisualBlock(cf)
+    local block = Instance.new("Part")
+    block.Size = Vector3.new(1, 10, 1)
+    block.CFrame = cf
+    block.Anchored = true
+    block.CanCollide = false
+    block.Transparency = 0.5
+    block.Color = Color3.fromRGB(255, 255, 255)
+    local tex = Instance.new("Texture", block)
+    tex.Face = Enum.NormalId.Top
+    tex.Texture = "rbxassetid://620583021"
+    block.Parent = workspace
+    table.insert(spawnedBlocks, block)
+end
+
 local ModStartBtn, SpeedDisplayLabel
 
 local function spawnBlockAtPlayer()
@@ -301,18 +325,7 @@ local function spawnBlockAtPlayer()
         local currentPos = targetPart.Position
         local finalCFrame = lastPos and CFrame.fromMatrix(currentPos, (currentPos - lastPos).Unit:Cross(targetPart.CFrame.UpVector).Unit, targetPart.CFrame.UpVector, -(currentPos - lastPos).Unit) or targetPart.CFrame
         lastPos = currentPos
-        local block = Instance.new("Part")
-        block.Size = Vector3.new(1, 10, 1)
-        block.CFrame = finalCFrame
-        block.Anchored = true
-        block.CanCollide = false
-        block.Transparency = 0.5
-        block.Color = Color3.fromRGB(255, 255, 255)
-        local tex = Instance.new("Texture", block)
-        tex.Face = Enum.NormalId.Top
-        tex.Texture = "rbxassetid://620583021"
-        block.Parent = workspace
-        table.insert(spawnedBlocks, block)
+        createVisualBlock(finalCFrame)
         setTemporaryStatus("Spawned!", 1)
     end
 end
@@ -330,10 +343,7 @@ local function resetModAll()
         ModStartBtn.Text = "OFF"
         ModStartBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     end
-    for _, b in ipairs(spawnedBlocks) do if b then b:Destroy() end end
-    spawnedBlocks = {}
-    lastPos = nil
-    currentIndex = 1
+    clearAllBlocks()
 end
 
 local function removeTireFunc()
@@ -360,7 +370,7 @@ local function loadConfigFromString(codeStr)
     local success, result = pcall(function()
         return loadstring("return " .. cleanCode)()
     end)
-    
+
     if not success or type(result) ~= "table" then
         success, result = pcall(function()
             local func = loadstring(codeStr)
@@ -377,27 +387,17 @@ local function loadConfigFromString(codeStr)
                 cf = CFrame.new(unpack(posData))
             end
             if typeof(cf) == "CFrame" then
-                local block = Instance.new("Part")
-                block.Size = Vector3.new(1, 10, 1)
-                block.CFrame = cf
-                block.Anchored = true
-                block.CanCollide = false
-                block.Transparency = 0.5
-                block.Color = Color3.fromRGB(255, 255, 255)
-                local tex = Instance.new("Texture", block)
-                tex.Face = Enum.NormalId.Top
-                tex.Texture = "rbxassetid://620583021"
-                block.Parent = workspace
-                table.insert(spawnedBlocks, block)
+                createVisualBlock(cf)
             end
         end
+        if #spawnedBlocks > 0 then lastPos = spawnedBlocks[#spawnedBlocks].Position end
         setTemporaryStatus("Loaded " .. #spawnedBlocks .. " Blocks", 3)
     else
         setTemporaryStatus("Error Parsing Config!", 2)
     end
 end
 
--- Mod Main Page
+-- Mod Main Page Controls
 local _, ModActiveBtn = createToggleRow(ModMainPage, "Active Features:", 1)
 ModActiveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 ModActiveBtn.Text = "ON"
@@ -481,42 +481,46 @@ ModStatusLabel.Font = Enum.Font.GothamSemibold
 ModStatusLabel.TextSize = 10
 ModStatusLabel.BackgroundTransparency = 1
 
--- Mod Configs Page
-local modCfgRow = Instance.new("Frame", ModConfigsPage)
-modCfgRow.Size = UDim2.new(1, -6, 0, 28)
-modCfgRow.BackgroundTransparency = 1
-modCfgRow.LayoutOrder = 1
+--------------------------------------------------------------------------------
+-- TAB 2: CONFIGS PAGE (HTTPGET PASTEBIN SYSTEM)
+--------------------------------------------------------------------------------
+local configRow = Instance.new("Frame", ModConfigsPage)
+configRow.Size = UDim2.new(1, -6, 0, 28)
+configRow.BackgroundTransparency = 1
+configRow.LayoutOrder = 1
 
-local SaveConfigBtn = Instance.new("TextButton", modCfgRow)
+local SaveConfigBtn = Instance.new("TextButton", configRow)
 SaveConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
-SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+SaveConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+SaveConfigBtn.BorderSizePixel = 0
 SaveConfigBtn.Text = "Save New"
 SaveConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SaveConfigBtn.Font = Enum.Font.GothamBold
 SaveConfigBtn.TextSize = 9
 Instance.new("UICorner", SaveConfigBtn).CornerRadius = UDim.new(0, 4)
 
-local LoadConfigBtn = Instance.new("TextButton", modCfgRow)
+local LoadConfigBtn = Instance.new("TextButton", configRow)
 LoadConfigBtn.Size = UDim2.new(0.48, 0, 1, 0)
 LoadConfigBtn.Position = UDim2.new(0.52, 0, 0, 0)
-LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+LoadConfigBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+LoadConfigBtn.BorderSizePixel = 0
 LoadConfigBtn.Text = "Load Local"
 LoadConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoadConfigBtn.Font = Enum.Font.GothamBold
 LoadConfigBtn.TextSize = 9
 Instance.new("UICorner", LoadConfigBtn).CornerRadius = UDim.new(0, 4)
 
-local _, UpdateConfigBtn = createActionRow(ModConfigsPage, "Update Config:", "UPDATE", 2, Color3.fromRGB(130, 60, 200))
-
 local loadBoxRow = Instance.new("Frame", ModConfigsPage)
-loadBoxRow.Size = UDim2.new(1, -6, 0, 45)
+loadBoxRow.Size = UDim2.new(1, -6, 0, 35)
 loadBoxRow.BackgroundTransparency = 1
-loadBoxRow.LayoutOrder = 3
+loadBoxRow.LayoutOrder = 2
 
 local LoadBox = Instance.new("TextBox", loadBoxRow)
 LoadBox.Size = UDim2.new(1, 0, 1, 0)
 LoadBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-LoadBox.PlaceholderText = "Paste Code Config Here..."
+LoadBox.BorderSizePixel = 0
+LoadBox.PlaceholderText = "Paste Custom Code / URL Raw Here..."
+LoadBox.PlaceholderColor3 = Color3.fromRGB(180, 180, 180)
 LoadBox.Text = ""
 LoadBox.TextColor3 = Color3.fromRGB(220, 220, 220)
 LoadBox.Font = Enum.Font.Gotham
@@ -524,116 +528,152 @@ LoadBox.TextSize = 9
 LoadBox.TextWrapped = true
 Instance.new("UICorner", LoadBox).CornerRadius = UDim.new(0, 4)
 
-local dropdownContainer = Instance.new("Frame", ModConfigsPage)
-dropdownContainer.Size = UDim2.new(1, -6, 0, 0)
-dropdownContainer.BackgroundTransparency = 1
-dropdownContainer.LayoutOrder = 5
-dropdownContainer.ClipsDescendants = true
+-- DAFTAR LINK PASTEBIN / RAW URL UNTUK PRESET BUILT-IN
+local builtInPresets = {
+    ["Sirkuit"] = {
+        {
+            Name = "Southern100",
+            Url = "https://pastebin.com/raw/bVP3PhyW" -- Ganti dengan link Raw Pastebin kamu
+        },
+        {
+            Name = "Mandalika",
+            Url = "https://pastebin.com/raw/ePCXtCmD"
+        },
+        {
+            Name = "Sentul",
+            Url = "https://pastebin.com/raw/uVHft5gJ"
+        }
+    },
+    ["Street Race"] = {
+        {
+            Name = "Around The Map",
+            Url = "https://pastebin.com/raw/65Z54PjK"
+        },
+        {
+            Name = "Speed Fest",
+            Url = "https://pastebin.com/raw/t3RR02d9"
+        },
+        {
+            Name = "Drag",
+            Url = "https://pastebin.com/raw/z7zm3Yp9"
+        },
+        {
+            Name = "Souq Scramble",
+            Url = "https://pastebin.com/raw/mZ7TzxEZ"
+        }
+    }
+}
 
-local dropLayout = Instance.new("UIListLayout", dropdownContainer)
-dropLayout.SortOrder = Enum.SortOrder.LayoutOrder
-dropLayout.Padding = UDim.new(0, 4)
+-- Logika Mengambil Data via HttpGet Pastebin
+local function fetchAndLoadUrl(url, trackName)
+    if not url or url == "" or url:find("XXXXXX") then
+        setTemporaryStatus("Link " .. trackName .. " belum diset!", 2)
+        return
+    end
 
-local ToggleBuiltInBtn = Instance.new("TextButton", ModConfigsPage)
-ToggleBuiltInBtn.Size = UDim2.new(1, -6, 0, 24)
-ToggleBuiltInBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-ToggleBuiltInBtn.Text = "📂 Built-in Configs (Click to Open)"
-ToggleBuiltInBtn.TextColor3 = Color3.fromRGB(0, 255, 220)
-ToggleBuiltInBtn.Font = Enum.Font.GothamBold
-ToggleBuiltInBtn.TextSize = 9
-ToggleBuiltInBtn.LayoutOrder = 4
-Instance.new("UICorner", ToggleBuiltInBtn).CornerRadius = UDim.new(0, 4)
+    setTemporaryStatus("Downloading " .. trackName .. "...", 5)
+    
+    task.spawn(function()
+        local success, response = pcall(function()
+            return game:HttpGet(url)
+        end)
 
-local selectedAutoConfigName = Settings.AutoExecuteTarget or ""
+        if success and response then
+            loadConfigFromString(response)
+            setTemporaryStatus("Loaded " .. trackName .. "!", 2)
+        else
+            setTemporaryStatus("Gagal HttpGet!", 2)
+        end
+    end)
+end
 
-local function addBuiltInBtnRow(name1, url1, name2, url2, order)
-    local row = Instance.new("Frame", dropdownContainer)
-    row.Size = UDim2.new(1, 0, 0, 22)
-    row.BackgroundTransparency = 1
-    row.LayoutOrder = order
+-- Generator Menu Dropdown Built-in Config
+local currentLayoutOrder = 3
+local function createDropdownCategory(categoryName, items)
+    local dropHeader = Instance.new("Frame", ModConfigsPage)
+    dropHeader.Size = UDim2.new(1, -6, 0, 26)
+    dropHeader.BackgroundTransparency = 1
+    dropHeader.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
 
-    local btn1 = Instance.new("TextButton", row)
-    btn1.Size = UDim2.new(0.48, 0, 1, 0)
-    btn1.BackgroundColor3 = (selectedAutoConfigName == name1) and Color3.fromRGB(200, 120, 0) or Color3.fromRGB(35, 35, 45)
-    btn1.Text = name1
-    btn1.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn1.Font = Enum.Font.GothamSemibold
-    btn1.TextSize = 8
-    Instance.new("UICorner", btn1).CornerRadius = UDim.new(0, 4)
+    local headerBtn = Instance.new("TextButton", dropHeader)
+    headerBtn.Size = UDim2.new(1, 0, 1, 0)
+    headerBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    headerBtn.BorderSizePixel = 0
+    headerBtn.Text = " ▶  " .. categoryName
+    headerBtn.TextColor3 = Color3.fromRGB(0, 255, 220)
+    headerBtn.Font = Enum.Font.GothamBold
+    headerBtn.TextSize = 9
+    headerBtn.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", headerBtn).CornerRadius = UDim.new(0, 4)
 
-    btn1.MouseButton1Click:Connect(function()
-        LoadBox.Text = "Loading..."
-        task.spawn(function()
-            local s, r = pcall(function() return game:HttpGet(url1) end)
-            if s then 
-                LoadBox.Text = r 
-                loadConfigFromString(r) -- Auto Exec
-                if Settings.AutoExecuteEnabled then
-                    Settings.AutoExecuteTarget = name1
-                    selectedAutoConfigName = name1
-                    saveSettings()
-                end
-            else 
-                LoadBox.Text = "Failed" 
+    local container = Instance.new("Frame", ModConfigsPage)
+    container.Size = UDim2.new(1, -6, 0, 0)
+    container.BackgroundTransparency = 1
+    container.ClipsDescendants = true
+    container.Visible = false
+    container.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
+
+    local containerLayout = Instance.new("UIListLayout", container)
+    containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    containerLayout.Padding = UDim.new(0, 4)
+
+    local isExpanded = false
+
+    for idx, item in ipairs(items) do
+        local trackRow = Instance.new("Frame", container)
+        trackRow.Size = UDim2.new(1, 0, 0, 22)
+        trackRow.BackgroundTransparency = 1
+        trackRow.LayoutOrder = idx
+
+        local nameLabel = Instance.new("TextLabel", trackRow)
+        nameLabel.Size = UDim2.new(0.6, -5, 1, 0)
+        nameLabel.Position = UDim2.new(0, 5, 0, 0)
+        nameLabel.Text = item.Name
+        nameLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+        nameLabel.Font = Enum.Font.GothamSemibold
+        nameLabel.TextSize = 9
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.BackgroundTransparency = 1
+
+        local execBtn = Instance.new("TextButton", trackRow)
+        execBtn.Size = UDim2.new(0, 70, 0, 20)
+        execBtn.Position = UDim2.new(1, -70, 0.5, -10)
+        execBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        execBtn.BorderSizePixel = 0
+        execBtn.Text = "GET"
+        execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        execBtn.Font = Enum.Font.GothamBold
+        execBtn.TextSize = 8
+        Instance.new("UICorner", execBtn).CornerRadius = UDim.new(0, 4)
+
+        execBtn.MouseButton1Click:Connect(function()
+            fetchAndLoadUrl(item.Url, item.Name)
+            if Settings.AutoExecuteEnabled then
+                Settings.AutoExecuteTarget = item.Name
+                saveSettings()
             end
         end)
-    end)
-
-    if name2 and url2 then
-        local btn2 = Instance.new("TextButton", row)
-        btn2.Size = UDim2.new(0.48, 0, 1, 0)
-        btn2.Position = UDim2.new(0.52, 0, 0, 0)
-        btn2.BackgroundColor3 = (selectedAutoConfigName == name2) and Color3.fromRGB(200, 120, 0) or Color3.fromRGB(35, 35, 45)
-        btn2.Text = name2
-        btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn2.Font = Enum.Font.GothamSemibold
-        btn2.TextSize = 8
-        Instance.new("UICorner", btn2).CornerRadius = UDim.new(0, 4)
-
-        btn2.MouseButton1Click:Connect(function()
-            LoadBox.Text = "Loading..."
-            task.spawn(function()
-                local s, r = pcall(function() return game:HttpGet(url2) end)
-                if s then 
-                    LoadBox.Text = r 
-                    loadConfigFromString(r) -- Auto Exec
-                    if Settings.AutoExecuteEnabled then
-                        Settings.AutoExecuteTarget = name2
-                        selectedAutoConfigName = name2
-                        saveSettings()
-                    end
-                else 
-                    LoadBox.Text = "Failed" 
-                end
-            end)
-        end)
     end
+
+    headerBtn.MouseButton1Click:Connect(function()
+        isExpanded = not isExpanded
+        if isExpanded then
+            headerBtn.Text = " ▼  " .. categoryName
+            container.Visible = true
+            container.Size = UDim2.new(1, -6, 0, (#items * 26))
+        else
+            headerBtn.Text = " ▶  " .. categoryName
+            container.Visible = false
+            container.Size = UDim2.new(1, -6, 0, 0)
+        end
+    end)
 end
 
-local function addCategoryLabel(text, order)
-    local lbl = Instance.new("TextLabel", dropdownContainer)
-    lbl.Size = UDim2.new(1, 0, 0, 16)
-    lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(255, 200, 0)
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 8
-    lbl.BackgroundTransparency = 1
-    lbl.LayoutOrder = order
-end
-
-addCategoryLabel("- Sirkuit -", 1)
-addBuiltInBtnRow("Southern100", "https://pastebin.com/raw/bVP3PhyW", "Mandalika", "https://pastebin.com/raw/ePCXtCmD", 2)
-addBuiltInBtnRow("Sentul", "https://pastebin.com/raw/uVHft5gJ", nil, nil, 3)
-addCategoryLabel("- Street Race -", 4)
-addBuiltInBtnRow("Around The Map", "https://pastebin.com/raw/65Z54PjK", "Speed Fest", "https://pastebin.com/raw/t3RR02d9", 5)
-addBuiltInBtnRow("Drag", "https://pastebin.com/raw/z7zm3Yp9", "Souq Scramble", "https://pastebin.com/raw/mZ7TzxEZ", 6)
-
-local isOpen = false
-ToggleBuiltInBtn.MouseButton1Click:Connect(function()
-    isOpen = not isOpen
-    ToggleBuiltInBtn.Text = isOpen and "📂 Built-in Configs (Click to Close)" or "📁 Built-in Configs (Click to Open)"
-    dropdownContainer.Size = isOpen and UDim2.new(1, -6, 0, dropLayout.AbsoluteContentSize.Y + 5) or UDim2.new(1, -6, 0, 0)
-end)
+-- Render Built-in Config Dropdowns
+createDropdownCategory("Built-in: Sirkuit", builtInPresets["Sirkuit"])
+createDropdownCategory("Built-in: Street Race", builtInPresets["Street Race"])
 
 -- Misc Page
 local _, TeleportToolBtn = createActionRow(ModMiscPage, "Teleport Tool:", "GIVE", 1, Color3.fromRGB(0, 140, 240))
@@ -674,7 +714,6 @@ local _, AutoExecToggleBtn = createToggleRow(ModSettingsPage, "Auto Execute:", 7
 local AutoExecTargetBox = createConfigRow(ModSettingsPage, "Target Config:", Settings.AutoExecuteTarget, 8)
 local _, SaveSettingsBtn = createActionRow(ModSettingsPage, "Save Settings:", "SAVE", 9, Color3.fromRGB(50, 200, 50))
 
--- Auto-Apply Realtime Settings Callback
 local function updateRealtimeSettings()
     Settings.MainWidth = tonumber(WidthBox.Text) or Settings.MainWidth
     Settings.MainHeight = tonumber(HeightBox.Text) or Settings.MainHeight
@@ -716,7 +755,7 @@ AutoExecToggleBtn.MouseButton1Click:Connect(function()
     AutoExecToggleBtn.BackgroundColor3 = Settings.AutoExecuteEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(220, 50, 50)
 end)
 
--- Floating Buttons (Emoji Fixed)
+-- Floating Buttons
 local modFloatButtons = {}
 local function createCircularFloat(name, emojiIcon, customPos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
@@ -728,7 +767,7 @@ local function createCircularFloat(name, emojiIcon, customPos, callback)
     btn.Text = emojiIcon
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18 -- Ukuran emoji lebih jelas
+    btn.TextSize = 18
     btn.Active = true
     btn.Draggable = true
     btn.Visible = showModFloat
@@ -755,7 +794,6 @@ local function cycleSpeedFloat()
     setTemporaryStatus("Speed: " .. modifierSpeed, 1)
 end
 
--- Floating Buttons dengan Logo Emoji
 FloatStart = createCircularFloat("Start", "▶️", UDim2.new(1, -260, 1, -270), toggleStart)
 local FloatSpawn = createCircularFloat("Spawn", "➕", UDim2.new(1, -200, 1, -270), spawnBlockAtPlayer)
 local FloatUndo = createCircularFloat("Undo", "↩️", UDim2.new(1, -140, 1, -270), undoLastBlock)
@@ -791,9 +829,36 @@ end)
 
 LoadConfigBtn.MouseButton1Click:Connect(function()
     if LoadBox.Text ~= "" then
-        loadConfigFromString(LoadBox.Text)
+        if LoadBox.Text:find("http") then
+            fetchAndLoadUrl(LoadBox.Text, "Custom Link")
+        else
+            loadConfigFromString(LoadBox.Text)
+        end
     end
 end)
+
+--------------------------------------------------------------------------------
+-- AUTO EXECUTE VIA HTTPGET ON INITIALIZATION
+--------------------------------------------------------------------------------
+local function checkAndAutoExecute()
+    if not Settings.AutoExecuteEnabled then return end
+    local targetName = Settings.AutoExecuteTarget
+    if not targetName or targetName == "" then return end
+
+    task.spawn(function()
+        task.wait(1)
+        for category, tracks in pairs(builtInPresets) do
+            for _, item in ipairs(tracks) do
+                if item.Name == targetName then
+                    fetchAndLoadUrl(item.Url, item.Name)
+                    return
+                end
+            end
+        end
+    end)
+end
+
+checkAndAutoExecute()
 
 RunService.Heartbeat:Connect(function()
     if customStatusText then ModStatusLabel.Text = customStatusText; return end
