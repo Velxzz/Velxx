@@ -1,8 +1,25 @@
--- Modifier Gui V4.2 PRO (Wide Horizontal Layout with Tab Sidebar)
+-- Modifier Gui V4.2 PRO (Wide Horizontal Layout with Tab Sidebar & Cosmic Theme Update)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
+
+-- Helper: Outline Cosmic Purple to Cosmic Cyan
+local function applyCosmicOutline(instance, thickness)
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = thickness or 2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = instance
+
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 0, 255)), -- Cosmic Purple
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))  -- Cosmic Cyan
+    })
+    gradient.Rotation = 45
+    gradient.Parent = stroke
+    return stroke
+end
 
 -- Safe GUI Container
 local parentContainer
@@ -40,6 +57,7 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+applyCosmicOutline(MainFrame, 2)
 
 -- Header UI
 local HeaderBar = Instance.new("Frame", MainFrame)
@@ -112,7 +130,7 @@ local function createTab(name, order)
     local pageLayout = Instance.new("UIListLayout", page)
     pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
     pageLayout.Padding = UDim.new(0, 6)
-    
+
     pageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         page.CanvasSize = UDim2.new(0, 0, 0, pageLayout.AbsoluteContentSize.Y + 10)
     end)
@@ -134,6 +152,7 @@ end
 local HomePage = createTab("Home", 1)
 local MainPage = createTab("Main", 2)
 local ConfigsPage = createTab("Configs", 3)
+local SettingsPage = createTab("Settings", 4)
 
 -- Active Tab Default
 HomePage.Visible = true
@@ -226,6 +245,34 @@ local floatFunctionActive = true
 local isLocked = false
 local showFloatButtons = true
 local customStatusText = nil
+local autoExecuteActive = false
+
+--------------------------------------------------------------------------------
+-- TAB 4: SETTINGS PAGE (UI Settings & Auto Execute)
+--------------------------------------------------------------------------------
+local _, AutoExecToggle = createToggleRow(SettingsPage, "Auto Execute", 1)
+
+AutoExecToggle.MouseButton1Click:Connect(function()
+    autoExecuteActive = not autoExecuteActive
+    if autoExecuteActive then
+        AutoExecToggle.Text = "ON"
+        AutoExecToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        if writefile then pcall(writefile, "ModifierConfigs/AutoExec.txt", "true") end
+    else
+        AutoExecToggle.Text = "OFF"
+        AutoExecToggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        if writefile then pcall(writefile, "ModifierConfigs/AutoExec.txt", "false") end
+    end
+end)
+
+if isfile and isfile("ModifierConfigs/AutoExec.txt") then
+    local successRead, val = pcall(readfile, "ModifierConfigs/AutoExec.txt")
+    if successRead and val == "true" then
+        autoExecuteActive = true
+        AutoExecToggle.Text = "ON"
+        AutoExecToggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    end
+end
 
 --------------------------------------------------------------------------------
 -- TAB 2: MAIN PAGE (Fitur Utama)
@@ -413,7 +460,7 @@ StatusLabel.TextSize = 10
 StatusLabel.BackgroundTransparency = 1
 
 --------------------------------------------------------------------------------
--- TAB 3: CONFIGS PAGE (Save, Load, Presets)
+-- TAB 3: CONFIGS PAGE (Save, Load, Presets, MISC)
 --------------------------------------------------------------------------------
 local configRow = Instance.new("Frame", ConfigsPage)
 configRow.Size = UDim2.new(1, -6, 0, 30)
@@ -527,10 +574,13 @@ local function setTemporaryStatus(msg, duration)
     end)
 end
 
+local FloatStart
+
 local function clearAllBlocks()
     isRunning = false
     StartToggleBtn.Text = "OFF"
     StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    if FloatStart then FloatStart.Text = "▶️" end
     currentIndex = 1
     lastPos = nil
     startingCFrame = nil
@@ -545,7 +595,7 @@ local function loadPresetFromUrl(url, trackName)
     if not url then
         setTemporaryStatus("Config " .. trackName .. " belum dibuat!", 2)
         return
-end
+    end
 
     setTemporaryStatus("Loading " .. trackName .. "...", 5)
 
@@ -661,8 +711,150 @@ local function createDropdownCategory(categoryName, items)
     end)
 end
 
+-- MISC Category Implementation
+local miscData = {
+    {"Fly Script", "https://raw.githubusercontent.com/Velxzz/Velxx/refs/heads/main/Fly"},
+    {"BTool", "https://gist.githubusercontent.com/fyfreefiregg-max/cc9b6220ca645fc168cecbaa7b74f1a0/raw/fedd5e4645b77b48d2fa2560d3efc7d82f948740/BTools.Lua"}
+}
+
+local function createMiscCategory()
+    local dropHeader = Instance.new("Frame", ConfigsPage)
+    dropHeader.Size = UDim2.new(1, -6, 0, 26)
+    dropHeader.BackgroundTransparency = 1
+    dropHeader.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
+
+    local headerBtn = Instance.new("TextButton", dropHeader)
+    headerBtn.Size = UDim2.new(1, 0, 1, 0)
+    headerBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    headerBtn.BorderSizePixel = 0
+    headerBtn.Text = " ▶  MISC"
+    headerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    headerBtn.Font = Enum.Font.GothamBold
+    headerBtn.TextSize = 10
+    headerBtn.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", headerBtn).CornerRadius = UDim.new(0, 4)
+
+    local container = Instance.new("Frame", ConfigsPage)
+    container.Size = UDim2.new(1, -6, 0, 0)
+    container.BackgroundTransparency = 1
+    container.ClipsDescendants = true
+    container.Visible = false
+    container.LayoutOrder = currentLayoutOrder
+    currentLayoutOrder = currentLayoutOrder + 1
+
+    local containerLayout = Instance.new("UIListLayout", container)
+    containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    containerLayout.Padding = UDim.new(0, 4)
+
+    local isExpanded = false
+
+    for idx, item in ipairs(miscData) do
+        local name, url = item[1], item[2]
+
+        local itemRow = Instance.new("Frame", container)
+        itemRow.Size = UDim2.new(1, 0, 0, 24)
+        itemRow.BackgroundTransparency = 1
+        itemRow.LayoutOrder = idx
+
+        local nameLabel = Instance.new("TextLabel", itemRow)
+        nameLabel.Size = UDim2.new(0.6, -5, 1, 0)
+        nameLabel.Position = UDim2.new(0, 5, 0, 0)
+        nameLabel.Text = name
+        nameLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 9
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.BackgroundTransparency = 1
+
+        local execBtn = Instance.new("TextButton", itemRow)
+        execBtn.Size = UDim2.new(0, 75, 0, 20)
+        execBtn.Position = UDim2.new(1, -75, 0.5, -10)
+        execBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        execBtn.BorderSizePixel = 0
+        execBtn.Text = "EXECUTE"
+        execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        execBtn.Font = Enum.Font.GothamBold
+        execBtn.TextSize = 8
+        Instance.new("UICorner", execBtn).CornerRadius = UDim.new(0, 4)
+
+        execBtn.MouseButton1Click:Connect(function()
+            setTemporaryStatus("Executing " .. name .. "...", 2)
+            task.spawn(function()
+                local succ, res = pcall(function() return game:HttpGet(url) end)
+                if succ and res then
+                    loadstring(res)()
+                else
+                    setTemporaryStatus("Failed to execute " .. name, 2)
+                end
+            end)
+        end)
+    end
+
+    -- Kolom Kosong TP Tool URL
+    local tpRow = Instance.new("Frame", container)
+    tpRow.Size = UDim2.new(1, 0, 0, 24)
+    tpRow.BackgroundTransparency = 1
+    tpRow.LayoutOrder = #miscData + 1
+
+    local tpBox = Instance.new("TextBox", tpRow)
+    tpBox.Size = UDim2.new(0.62, -5, 1, 0)
+    tpBox.Position = UDim2.new(0, 5, 0, 0)
+    tpBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    tpBox.BorderSizePixel = 0
+    tpBox.PlaceholderText = "TP Tool Script URL..."
+    tpBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    tpBox.Text = ""
+    tpBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpBox.Font = Enum.Font.Gotham
+    tpBox.TextSize = 8
+    Instance.new("UICorner", tpBox).CornerRadius = UDim.new(0, 4)
+
+    local tpExecBtn = Instance.new("TextButton", tpRow)
+    tpExecBtn.Size = UDim2.new(0, 75, 0, 20)
+    tpExecBtn.Position = UDim2.new(1, -75, 0.5, -10)
+    tpExecBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    tpExecBtn.BorderSizePixel = 0
+    tpExecBtn.Text = "TP TOOL"
+    tpExecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpExecBtn.Font = Enum.Font.GothamBold
+    tpExecBtn.TextSize = 8
+    Instance.new("UICorner", tpExecBtn).CornerRadius = UDim.new(0, 4)
+
+    tpExecBtn.MouseButton1Click:Connect(function()
+        local url = tpBox.Text:gsub("%s+", "")
+        if url ~= "" then
+            setTemporaryStatus("Executing TP Tool...", 2)
+            task.spawn(function()
+                local succ, res = pcall(function() return game:HttpGet(url) end)
+                if succ and res then
+                    loadstring(res)()
+                else
+                    setTemporaryStatus("Failed to load TP Tool!", 2)
+                end
+            end)
+        else
+            setTemporaryStatus("Enter TP Tool URL!", 2)
+        end
+    end)
+
+    headerBtn.MouseButton1Click:Connect(function()
+        isExpanded = not isExpanded
+        if isExpanded then
+            headerBtn.Text = " ▼  MISC"
+            container.Visible = true
+            container.Size = UDim2.new(1, -6, 0, ((#miscData + 1) * 28))
+        else
+            headerBtn.Text = " ▶  MISC"
+            container.Visible = false
+            container.Size = UDim2.new(1, -6, 0, 0)
+        end
+    end)
+end
+
 createDropdownCategory("Built-in: Sirkuit", presetData["Sirkuit"])
 createDropdownCategory("Built-in: Street Race", presetData["Street Race"])
+createMiscCategory()
 
 local function sensorCarName(name)
     local len = #name
@@ -695,20 +887,18 @@ RunService.Heartbeat:Connect(function()
     StatusLabel.Text = "Car: None"
 end)
 
--- Float Logo Button
-local MainFloatBtn = Instance.new("TextButton", ScreenGui)
+-- Float Logo Button (Squircle Layout dengan Texture ID 113467230333515)
+local MainFloatBtn = Instance.new("ImageButton", ScreenGui)
 MainFloatBtn.Size = UDim2.new(0, 45, 0, 45)
 MainFloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
 MainFloatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFloatBtn.BackgroundTransparency = 0.2
-MainFloatBtn.Text = "M"
-MainFloatBtn.TextColor3 = Color3.fromRGB(0, 150, 255)
-MainFloatBtn.Font = Enum.Font.GothamBold
-MainFloatBtn.TextSize = 18
+MainFloatBtn.Image = "rbxassetid://113467230333515"
 MainFloatBtn.BorderSizePixel = 0
 MainFloatBtn.Active = true
 MainFloatBtn.Draggable = true
-Instance.new("UICorner", MainFloatBtn).CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", MainFloatBtn).CornerRadius = UDim.new(0, 10)
+applyCosmicOutline(MainFloatBtn, 2)
 
 MainFloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
@@ -726,13 +916,14 @@ local function createCircularFloat(name, text, customPos, callback)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = name == "Speed" and 12 or 10
+    btn.TextSize = (name == "Speed" or name == "Start" or name == "Undo" or name == "Reset" or name == "Spawn" or name == "RemoveTire") and 16 or 10
     btn.BorderSizePixel = 0
     btn.Active = true
     btn.Visible = showFloatButtons
 
     table.insert(featureFloatButtons, btn)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+    applyCosmicOutline(btn, 1) -- Outline Cosmic Cyan-Purple lebih kecil
 
     btn.MouseButton1Click:Connect(function()
         if activeFeatures and floatFunctionActive then
@@ -884,28 +1075,26 @@ local function undoLastBlock()
     end
 end
 
-local FloatStart
-
 local function toggleStart()
     if not activeFeatures or #spawnedBlocks == 0 then return end
     isRunning = not isRunning
     if isRunning then
         StartToggleBtn.Text = "ON"
         StartToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        if FloatStart then FloatStart.Text = "Pause" end
+        if FloatStart then FloatStart.Text = "⏸️" end
         startingCFrame = nil
         currentTransitionTime = 0
     else
         StartToggleBtn.Text = "OFF"
         StartToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        if FloatStart then FloatStart.Text = "Start" end
+        if FloatStart then FloatStart.Text = "▶️" end
     end
 end
 
 local function resetAll()
     if not activeFeatures then return end
     clearAllBlocks()
-    if FloatStart then FloatStart.Text = "Start" end
+    if FloatStart then FloatStart.Text = "▶️" end
     setTemporaryStatus("Reseted!", 1.5)
 end
 
@@ -918,7 +1107,7 @@ local function removeTire()
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if not humanoid or not humanoid.SeatPart then
         setTemporaryStatus("Sit on a bike first!", 2)
-        return
+     return
     end
 
     local carModel = humanoid.SeatPart:FindFirstAncestorOfClass("Model")
@@ -949,12 +1138,12 @@ local function removeTire()
     setTemporaryStatus("Tire Removed from " .. sensorCarName(carModel.Name) .. "!", 2.5)
 end
 
--- Circular Float Init
-FloatStart = createCircularFloat("Start", "Start", UDim2.new(1, -245, 1, -270), toggleStart)
-local FloatSpawn = createCircularFloat("Spawn", "Spawn", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
-local FloatUndo = createCircularFloat("Undo", "Undo", UDim2.new(1, -220, 1, -120), undoLastBlock)
-local FloatRemoveTire = createCircularFloat("RemoveTire", "RMV", UDim2.new(1, -125, 1, -410), removeTire)
-local FloatReset = createCircularFloat("Reset", "Reset", UDim2.new(1, -125, 1, -345), resetAll)
+-- Circular Float Init (Simbol Tombol Float Diperbarui)
+FloatStart = createCircularFloat("Start", "▶️", UDim2.new(1, -245, 1, -270), toggleStart)
+local FloatSpawn = createCircularFloat("Spawn", "🆕", UDim2.new(1, -220, 1, -195), spawnBlockAtPlayer)
+local FloatUndo = createCircularFloat("Undo", "↩️", UDim2.new(1, -220, 1, -120), undoLastBlock)
+local FloatRemoveTire = createCircularFloat("RemoveTire", "🛠️", UDim2.new(1, -125, 1, -410), removeTire)
+local FloatReset = createCircularFloat("Reset", "🔄", UDim2.new(1, -125, 1, -345), resetAll)
 FastSteerFloatBtn = createCircularFloat("Speed", "1", UDim2.new(1, -220, 1, -345), cycleSpeedFloat)
 
 -- Event Connections
