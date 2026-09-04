@@ -94,7 +94,7 @@ local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
 local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5)
-local DistZoomToggleBtn = createButton("DIST-ZOOM: OFF", Color3.fromRGB(150, 100, 50), 6) -- Toggle On/Off Penyesuaian Jarak
+local DistZoomToggleBtn = createButton("DIST-ZOOM: OFF", Color3.fromRGB(150, 100, 50), 6)
 local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 7)
 
 -- Zoom Container
@@ -191,7 +191,7 @@ local function spawnCCTVAction()
     local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
     if rootPart then
         initialSpawnDistance = (camCFrame.Position - rootPart.Position).Magnitude
-        if initialSpawnDistance < 1 then initialSpawnDistance = 50 end
+        if initialSpawnDistance < 10 then initialSpawnDistance = 50 end
     end
     
     local block = Instance.new("Part")
@@ -323,7 +323,7 @@ local function resetAction()
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- Render Priority
+-- Render Loop
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
         local char = LocalPlayer.Character
@@ -341,24 +341,28 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             end
         end
         
-        -- Kalkulasi Zoom & Jarak (Hanya aktif jika Dist-Zoom diaktifkan)
-        local effectiveZoom = zoomLevel
+        -- FOV Management
+        local targetFOV = baseFOV
         if isDistZoomActive and rootPart then
             local currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
-            if currentDistance < 1 then currentDistance = 1 end
-            -- Membalikkan rasio agar saat mendekat zoom semakin besar (efek lensa otomatis)
-            local distanceRatio = initialSpawnDistance / currentDistance
-            effectiveZoom = zoomLevel * distanceRatio
+            local distFactor = currentDistance / math.max(initialSpawnDistance, 10)
+            
+            -- Minimal distFactor = 1 (agar tidak pernah melar/zoom out melampaui default 70 FOV)
+            if distFactor < 1 then distFactor = 1 end
+            
+            local effectiveZoom = zoomLevel * distFactor
+            targetFOV = math.clamp(baseFOV / effectiveZoom, 5, baseFOV)
+        else
+            targetFOV = math.clamp(baseFOV / math.max(zoomLevel, 1), 5, baseFOV)
         end
         
-        local targetFOV = baseFOV / math.clamp(effectiveZoom, 0.1, 100)
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
         end
     end
 end)
 
--- Kontrol HP & Mouse
+-- Controls
 local activeTouch = nil
 local lastTouchPos = Vector2.new()
 
@@ -393,7 +397,6 @@ UserInputService.TouchEnded:Connect(function(touch)
     if touch == activeTouch then activeTouch = nil end
 end)
 
--- Keyboard Shortcuts
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.M then toggleMenuVisibility()
