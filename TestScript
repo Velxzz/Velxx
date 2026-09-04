@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 375) -- Disesuaikan ukurannya untuk tombol Follow
+MainFrame.Size = UDim2.new(0, 220, 0, 375)
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -93,7 +93,7 @@ end
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
-local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5) -- Tombol Follow Baru
+local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5)
 local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 6)
 
 -- Zoom Container
@@ -146,6 +146,7 @@ Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
 local activeCCTV = nil
+local initialCFileName = nil
 local initialCFrame = nil
 local isMonitoring = false
 local isCamLocked = true
@@ -154,6 +155,7 @@ local zoomLevel = 1
 local baseFOV = 70
 local cameraRotX = 0
 local cameraRotY = 0
+local initialSpawnDistance = 50 -- Referensi jarak dasar untuk kompensasi otomatis
 
 local function toggleMenuVisibility()
     MainFrame.Visible = not MainFrame.Visible
@@ -161,7 +163,7 @@ end
 FloatBtn.MouseButton1Click:Connect(toggleMenuVisibility)
 
 local function updateZoomDisplay()
-    ZoomLabel.Text = "Zoom: " .. zoomLevel .. "x"
+    ZoomLabel.Text = "Zoom: " .. string.format("%.1f", zoomLevel) .. "x"
 end
 
 local function stopMonitoring()
@@ -184,6 +186,13 @@ local function spawnCCTVAction()
     local camCFrame = CurrentCamera.CFrame
     
     initialCFrame = camCFrame
+    
+    local char = LocalPlayer.Character
+    local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
+    if rootPart then
+        initialSpawnDistance = (camCFrame.Position - rootPart.Position).Magnitude
+        if initialSpawnDistance < 1 then initialSpawnDistance = 50 end
+    end
     
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
@@ -244,14 +253,13 @@ LockCamBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- FITUR BARU: TOGGLE CAM FOLLOW BODY/CHARACTER
 FollowCharBtn.MouseButton1Click:Connect(function()
     if not activeCCTV or not isMonitoring then return end
     isFollowing = not isFollowing
     if isFollowing then
         FollowCharBtn.Text = "CAM FOLLOW: ON"
         FollowCharBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        isCamLocked = false -- Matikan lock manual agar kamera bisa otomatis menatap karakter
+        isCamLocked = false
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
     else
@@ -262,7 +270,7 @@ end)
 
 ResetDirBtn.MouseButton1Click:Connect(function()
     if activeCCTV and initialCFrame then
-        isFollowing = false -- Matikan follow jika di-reset manual
+        isFollowing = false
         FollowCharBtn.Text = "CAM FOLLOW: OFF"
         FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
         
@@ -303,14 +311,13 @@ local function resetAction()
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- Render Priority (Logika Kamera Termasuk Cam Follow)
+-- Render Priority (Logika Kamera + Dynamic Distance Zoom Compensation)
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
         local char = LocalPlayer.Character
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
         
         if isFollowing and rootPart then
-            -- Kamera diam di posisi CCTV, tapi menghadap (LookAt) ke arah karakter pemain
             local camPos = activeCCTV.Position
             local targetPos = rootPart.Position
             CurrentCamera.CFrame = CFrame.new(camPos, targetPos)
@@ -322,7 +329,18 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             end
         end
         
-        local targetFOV = baseFOV / zoomLevel
+        -- Penyesuaian Zoom Otomatis Berdasarkan Jarak Karakter ke CCTV
+        local currentDistance = initialSpawnDistance
+        if rootPart then
+            currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
+            if currentDistance < 1 then currentDistance = 1 end
+        end
+        
+        -- Kompensasi faktor jarak terhadap zoom yang dipilih
+        local distanceFactor = currentDistance / initialSpawnDistance
+        local effectiveZoom = zoomLevel * distanceFactor
+        local targetFOV = baseFOV / math.clamp(effectiveZoom, 1, 500)
+        
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
         end
