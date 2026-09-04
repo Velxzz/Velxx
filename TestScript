@@ -168,7 +168,7 @@ local function stopMonitoring()
     isMonitoring = false
     ToggleViewBtn.Text = "VIEW CCTV: OFF"
     ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    
+
     CurrentCamera.CameraType = Enum.CameraType.Custom
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         CurrentCamera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -179,9 +179,9 @@ end
 local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     local camCFrame = CurrentCamera.CFrame
-    
+
     initialCFrame = camCFrame
-    
+
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
     block.Size = Vector3.new(1, 1, 1)
@@ -192,13 +192,13 @@ local function spawnCCTVAction()
     block.Color = Color3.fromRGB(255, 0, 50)
     block.Transparency = 0.3
     block.Parent = Workspace
-    
+
     activeCCTV = block
-    
+
     local lookVector = camCFrame.LookVector
     cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
     cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-    
+
     if isMonitoring then CurrentCamera.CFrame = activeCCTV.CFrame end
 end
 SpawnBtn.MouseButton1Click:Connect(spawnCCTVAction)
@@ -210,7 +210,7 @@ local function toggleViewAction()
         ToggleViewBtn.Text = "VIEW CCTV: ON"
         ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
-        
+
         local lookVector = activeCCTV.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
@@ -227,14 +227,14 @@ LockCamBtn.MouseButton1Click:Connect(function()
     if isCamLocked then
         LockCamBtn.Text = "CAMERA LOCK: LOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        
+
         if activeCCTV then
             activeCCTV.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
         end
     else
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
-        
+
         local lookVector = CurrentCamera.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
@@ -247,7 +247,7 @@ ResetDirBtn.MouseButton1Click:Connect(function()
         local lookVector = initialCFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-        
+
         if isMonitoring then
             CurrentCamera.CFrame = activeCCTV.CFrame
         end
@@ -323,7 +323,7 @@ UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
     if isMonitoring and not isCamLocked and touch == activeTouch then
         local delta = touch.Position - lastTouchPos
         lastTouchPos = touch.Position
-        
+
         cameraRotX = cameraRotX - delta.X * 0.005
         cameraRotY = math.clamp(cameraRotY - delta.Y * 0.005, -math.pi/2 + 0.01, math.pi/2 - 0.01)
     end
