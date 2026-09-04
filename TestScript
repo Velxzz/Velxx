@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 375)
+MainFrame.Size = UDim2.new(0, 220, 0, 405)
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -94,13 +94,14 @@ local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
 local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5)
-local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 6)
+local DistZoomToggleBtn = createButton("DIST-ZOOM: OFF", Color3.fromRGB(150, 100, 50), 6) -- Toggle On/Off Penyesuaian Jarak
+local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 7)
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
 ZoomFrame.Size = UDim2.new(0.9, 0, 0, 26)
 ZoomFrame.BackgroundTransparency = 1
-ZoomFrame.LayoutOrder = 7
+ZoomFrame.LayoutOrder = 8
 
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
 ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
@@ -115,7 +116,7 @@ local ZoomLabel = Instance.new("TextLabel", ZoomFrame)
 ZoomLabel.Size = UDim2.new(0.36, 0, 1, 0)
 ZoomLabel.Position = UDim2.new(0.32, 0, 0, 0)
 ZoomLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-ZoomLabel.Text = "Zoom: 1x"
+ZoomLabel.Text = "Zoom: 1.0x"
 ZoomLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 ZoomLabel.Font = Enum.Font.GothamBold
 ZoomLabel.TextSize = 9
@@ -131,8 +132,8 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
-local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 8)
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 9)
+local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 9)
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 10)
 
 local ShortcutInfo = Instance.new("TextLabel", MainFrame)
 ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
@@ -141,21 +142,21 @@ ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
 ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
 ShortcutInfo.Font = Enum.Font.Gotham
 ShortcutInfo.TextSize = 8
-ShortcutInfo.LayoutOrder = 10
+ShortcutInfo.LayoutOrder = 11
 Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
 local activeCCTV = nil
-local initialCFileName = nil
 local initialCFrame = nil
 local isMonitoring = false
 local isCamLocked = true
 local isFollowing = false
-local zoomLevel = 1
+local isDistZoomActive = false
+local zoomLevel = 1.0
 local baseFOV = 70
 local cameraRotX = 0
 local cameraRotY = 0
-local initialSpawnDistance = 50 -- Referensi jarak dasar untuk kompensasi otomatis
+local initialSpawnDistance = 50
 
 local function toggleMenuVisibility()
     MainFrame.Visible = not MainFrame.Visible
@@ -184,7 +185,6 @@ end
 local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     local camCFrame = CurrentCamera.CFrame
-    
     initialCFrame = camCFrame
     
     local char = LocalPlayer.Character
@@ -239,14 +239,12 @@ LockCamBtn.MouseButton1Click:Connect(function()
     if isCamLocked then
         LockCamBtn.Text = "CAMERA LOCK: LOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        
         if activeCCTV then
             activeCCTV.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
         end
     else
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
-        
         local lookVector = CurrentCamera.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
@@ -265,6 +263,17 @@ FollowCharBtn.MouseButton1Click:Connect(function()
     else
         FollowCharBtn.Text = "CAM FOLLOW: OFF"
         FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+    end
+end)
+
+DistZoomToggleBtn.MouseButton1Click:Connect(function()
+    isDistZoomActive = not isDistZoomActive
+    if isDistZoomActive then
+        DistZoomToggleBtn.Text = "DIST-ZOOM: ON"
+        DistZoomToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    else
+        DistZoomToggleBtn.Text = "DIST-ZOOM: OFF"
+        DistZoomToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 50)
     end
 end)
 
@@ -287,19 +296,19 @@ end)
 
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    zoomLevel = math.min(100, zoomLevel + 1)
+    zoomLevel = math.min(20.0, zoomLevel + 0.5)
     updateZoomDisplay()
 end)
 
 ZoomOutBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    zoomLevel = math.max(1, zoomLevel - 1)
+    zoomLevel = math.max(1.0, zoomLevel - 0.5)
     updateZoomDisplay()
 end)
 
 ResetZoomBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
-    zoomLevel = 1
+    zoomLevel = 1.0
     updateZoomDisplay()
 end)
 
@@ -307,11 +316,14 @@ local function resetAction()
     stopMonitoring()
     if activeCCTV then activeCCTV:Destroy(); activeCCTV = nil end
     initialCFrame = nil
-    zoomLevel = 1
+    zoomLevel = 1.0
+    isDistZoomActive = false
+    DistZoomToggleBtn.Text = "DIST-ZOOM: OFF"
+    DistZoomToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 50)
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- Render Priority (Logika Kamera + Dynamic Distance Zoom Compensation)
+-- Render Priority
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
         local char = LocalPlayer.Character
@@ -329,18 +341,17 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             end
         end
         
-        -- Penyesuaian Zoom Otomatis Berdasarkan Jarak Karakter ke CCTV
-        local currentDistance = initialSpawnDistance
-        if rootPart then
-            currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
+        -- Kalkulasi Zoom & Jarak (Hanya aktif jika Dist-Zoom diaktifkan)
+        local effectiveZoom = zoomLevel
+        if isDistZoomActive and rootPart then
+            local currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
             if currentDistance < 1 then currentDistance = 1 end
+            -- Membalikkan rasio agar saat mendekat zoom semakin besar (efek lensa otomatis)
+            local distanceRatio = initialSpawnDistance / currentDistance
+            effectiveZoom = zoomLevel * distanceRatio
         end
         
-        -- Kompensasi faktor jarak terhadap zoom yang dipilih
-        local distanceFactor = currentDistance / initialSpawnDistance
-        local effectiveZoom = zoomLevel * distanceFactor
-        local targetFOV = baseFOV / math.clamp(effectiveZoom, 1, 500)
-        
+        local targetFOV = baseFOV / math.clamp(effectiveZoom, 0.1, 100)
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
         end
