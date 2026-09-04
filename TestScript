@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 370) -- Ditingkatkan ukurannya agar cukup menampung semua tombol
+MainFrame.Size = UDim2.new(0, 220, 0, 375) -- Disesuaikan ukurannya untuk tombol Follow
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -93,13 +93,14 @@ end
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
-local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 5)
+local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5) -- Tombol Follow Baru
+local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 6)
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
 ZoomFrame.Size = UDim2.new(0.9, 0, 0, 26)
 ZoomFrame.BackgroundTransparency = 1
-ZoomFrame.LayoutOrder = 6
+ZoomFrame.LayoutOrder = 7
 
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
 ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
@@ -130,10 +131,8 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
--- Tombol Reset Zoom
-local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 7)
-
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 8)
+local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 8)
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 9)
 
 local ShortcutInfo = Instance.new("TextLabel", MainFrame)
 ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
@@ -142,7 +141,7 @@ ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
 ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
 ShortcutInfo.Font = Enum.Font.Gotham
 ShortcutInfo.TextSize = 8
-ShortcutInfo.LayoutOrder = 9
+ShortcutInfo.LayoutOrder = 10
 Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
 
 -- System Variables
@@ -150,6 +149,7 @@ local activeCCTV = nil
 local initialCFrame = nil
 local isMonitoring = false
 local isCamLocked = true
+local isFollowing = false
 local zoomLevel = 1
 local baseFOV = 70
 local cameraRotX = 0
@@ -166,9 +166,12 @@ end
 
 local function stopMonitoring()
     isMonitoring = false
+    isFollowing = false
+    FollowCharBtn.Text = "CAM FOLLOW: OFF"
+    FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
     ToggleViewBtn.Text = "VIEW CCTV: OFF"
     ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-
+    
     CurrentCamera.CameraType = Enum.CameraType.Custom
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         CurrentCamera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -179,9 +182,9 @@ end
 local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     local camCFrame = CurrentCamera.CFrame
-
+    
     initialCFrame = camCFrame
-
+    
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
     block.Size = Vector3.new(1, 1, 1)
@@ -192,13 +195,13 @@ local function spawnCCTVAction()
     block.Color = Color3.fromRGB(255, 0, 50)
     block.Transparency = 0.3
     block.Parent = Workspace
-
+    
     activeCCTV = block
-
+    
     local lookVector = camCFrame.LookVector
     cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
     cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-
+    
     if isMonitoring then CurrentCamera.CFrame = activeCCTV.CFrame end
 end
 SpawnBtn.MouseButton1Click:Connect(spawnCCTVAction)
@@ -210,7 +213,7 @@ local function toggleViewAction()
         ToggleViewBtn.Text = "VIEW CCTV: ON"
         ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
-
+        
         local lookVector = activeCCTV.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
@@ -227,48 +230,65 @@ LockCamBtn.MouseButton1Click:Connect(function()
     if isCamLocked then
         LockCamBtn.Text = "CAMERA LOCK: LOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-
+        
         if activeCCTV then
             activeCCTV.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
         end
     else
         LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
-
+        
         local lookVector = CurrentCamera.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
     end
 end)
 
+-- FITUR BARU: TOGGLE CAM FOLLOW BODY/CHARACTER
+FollowCharBtn.MouseButton1Click:Connect(function()
+    if not activeCCTV or not isMonitoring then return end
+    isFollowing = not isFollowing
+    if isFollowing then
+        FollowCharBtn.Text = "CAM FOLLOW: ON"
+        FollowCharBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        isCamLocked = false -- Matikan lock manual agar kamera bisa otomatis menatap karakter
+        LockCamBtn.Text = "CAMERA LOCK: UNLOCKED"
+        LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    else
+        FollowCharBtn.Text = "CAM FOLLOW: OFF"
+        FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+    end
+end)
+
 ResetDirBtn.MouseButton1Click:Connect(function()
     if activeCCTV and initialCFrame then
+        isFollowing = false -- Matikan follow jika di-reset manual
+        FollowCharBtn.Text = "CAM FOLLOW: OFF"
+        FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+        
         activeCCTV.CFrame = initialCFrame
         local lookVector = initialCFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-
+        
         if isMonitoring then
             CurrentCamera.CFrame = activeCCTV.CFrame
         end
     end
 end)
 
--- ZOOM IN
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.min(100, zoomLevel + 1)
     updateZoomDisplay()
 end)
 
--- ZOOM OUT
 ZoomOutBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.max(1, zoomLevel - 1)
     updateZoomDisplay()
 end)
 
--- RESET ZOOM
 ResetZoomBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = 1
@@ -283,14 +303,25 @@ local function resetAction()
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
 
--- Render Priority
+-- Render Priority (Logika Kamera Termasuk Cam Follow)
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
-        if isCamLocked then
-            CurrentCamera.CFrame = activeCCTV.CFrame
+        local char = LocalPlayer.Character
+        local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
+        
+        if isFollowing and rootPart then
+            -- Kamera diam di posisi CCTV, tapi menghadap (LookAt) ke arah karakter pemain
+            local camPos = activeCCTV.Position
+            local targetPos = rootPart.Position
+            CurrentCamera.CFrame = CFrame.new(camPos, targetPos)
         else
-            CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
+            if isCamLocked then
+                CurrentCamera.CFrame = activeCCTV.CFrame
+            else
+                CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
+            end
         end
+        
         local targetFOV = baseFOV / zoomLevel
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
@@ -304,7 +335,7 @@ local lastTouchPos = Vector2.new()
 
 UserInputService.InputChanged:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if isMonitoring and not isCamLocked and input.UserInputType == Enum.UserInputType.MouseMovement then
+    if isMonitoring and not isCamLocked and not isFollowing and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Delta
         cameraRotX = cameraRotX - delta.X * 0.003
         cameraRotY = math.clamp(cameraRotY - delta.Y * 0.003, -math.pi/2 + 0.01, math.pi/2 - 0.01)
@@ -313,27 +344,24 @@ end)
 
 UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
     if gameProcessed then return end
-    if isMonitoring and not isCamLocked then
+    if isMonitoring and not isCamLocked and not isFollowing then
         activeTouch = touch
         lastTouchPos = touch.Position
     end
 end)
 
 UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
-    if isMonitoring and not isCamLocked and touch == activeTouch then
+    if isMonitoring and not isCamLocked and not isFollowing and touch == activeTouch then
         local delta = touch.Position - lastTouchPos
         lastTouchPos = touch.Position
-
+        
         cameraRotX = cameraRotX - delta.X * 0.005
         cameraRotY = math.clamp(cameraRotY - delta.Y * 0.005, -math.pi/2 + 0.01, math.pi/2 - 0.01)
     end
 end)
 
--- BAGIAN PERBAIKAN: Dibenarkan struktur logika TouchEnded
 UserInputService.TouchEnded:Connect(function(touch)
-    if touch == activeTouch then 
-        activeTouch = nil 
-    end
+    if touch == activeTouch then activeTouch = nil end
 end)
 
 -- Keyboard Shortcuts
