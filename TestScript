@@ -341,19 +341,18 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             end
         end
         
-        -- FOV Management
+        -- FOV Management dengan Limit Minimal 1 Derajat
         local targetFOV = baseFOV
         if isDistZoomActive and rootPart then
             local currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
             local distFactor = currentDistance / math.max(initialSpawnDistance, 10)
             
-            -- Minimal distFactor = 1 (agar tidak pernah melar/zoom out melampaui default 70 FOV)
             if distFactor < 1 then distFactor = 1 end
             
             local effectiveZoom = zoomLevel * distFactor
-            targetFOV = math.clamp(baseFOV / effectiveZoom, 5, baseFOV)
+            targetFOV = math.clamp(baseFOV / effectiveZoom, 1, baseFOV)
         else
-            targetFOV = math.clamp(baseFOV / math.max(zoomLevel, 1), 5, baseFOV)
+            targetFOV = math.clamp(baseFOV / math.max(zoomLevel, 1), 1, baseFOV)
         end
         
         if CurrentCamera.FieldOfView ~= targetFOV then
@@ -362,7 +361,7 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
     end
 end)
 
--- Controls
+-- Controls (PC & Touch HP)
 local activeTouch = nil
 local lastTouchPos = Vector2.new()
 
@@ -397,6 +396,7 @@ UserInputService.TouchEnded:Connect(function(touch)
     if touch == activeTouch then activeTouch = nil end
 end)
 
+-- Keyboard Shortcuts
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.M then toggleMenuVisibility()
