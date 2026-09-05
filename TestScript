@@ -48,7 +48,7 @@ FloatStroke.Thickness = 2
 
 -- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 405)
+MainFrame.Size = UDim2.new(0, 220, 0, 425)
 MainFrame.Position = UDim2.new(0.15, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
@@ -95,13 +95,14 @@ local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
 local FollowCharBtn = createButton("CAM FOLLOW: OFF", Color3.fromRGB(150, 50, 200), 5)
 local DistZoomToggleBtn = createButton("DIST-ZOOM: OFF", Color3.fromRGB(150, 100, 50), 6)
-local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 7)
+local FreezeBtn = createButton("FREEZE CHAR/VEHICLE: OFF", Color3.fromRGB(0, 170, 170), 7)
+local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 8)
 
 -- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
 ZoomFrame.Size = UDim2.new(0.9, 0, 0, 26)
 ZoomFrame.BackgroundTransparency = 1
-ZoomFrame.LayoutOrder = 8
+ZoomFrame.LayoutOrder = 9
 
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
 ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
@@ -132,18 +133,8 @@ ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
 
-local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 9)
-local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 10)
-
-local ShortcutInfo = Instance.new("TextLabel", MainFrame)
-ShortcutInfo.Size = UDim2.new(0.9, 0, 0, 24)
-ShortcutInfo.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ShortcutInfo.Text = "[M] Toggle UI | [E] View | [R] Reset"
-ShortcutInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
-ShortcutInfo.Font = Enum.Font.Gotham
-ShortcutInfo.TextSize = 8
-ShortcutInfo.LayoutOrder = 11
-Instance.new("UICorner", ShortcutInfo).CornerRadius = UDim.new(0, 4)
+local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 10)
+local ResetBtn = createButton("RESET CCTV", Color3.fromRGB(180, 40, 40), 11)
 
 -- System Variables
 local activeCCTV = nil
@@ -152,6 +143,8 @@ local isMonitoring = false
 local isCamLocked = true
 local isFollowing = false
 local isDistZoomActive = false
+local isFrozen = false
+local frozenParts = {}
 local zoomLevel = 1.0
 local baseFOV = 70
 local cameraRotX = 0
@@ -166,6 +159,60 @@ FloatBtn.MouseButton1Click:Connect(toggleMenuVisibility)
 local function updateZoomDisplay()
     ZoomLabel.Text = "Zoom: " .. string.format("%.1f", zoomLevel) .. "x"
 end
+
+-- Logic Freeze
+local function unfreezeAll()
+    for part, wasAnchored in pairs(frozenParts) do
+        if part and part:IsA("BasePart") then
+            part.Anchored = wasAnchored
+        end
+    end
+    table.clear(frozenParts)
+    isFrozen = false
+    FreezeBtn.Text = "FREEZE CHAR/VEHICLE: OFF"
+    FreezeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 170)
+end
+
+local function freezeAll()
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    table.clear(frozenParts)
+    
+    -- Freeze Karakter
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            frozenParts[part] = part.Anchored
+            part.Anchored = true
+        end
+    end
+    
+    -- Freeze Kendaraan (jika sedang mengendarai motor/mobil)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum and hum.SeatPart then
+        local vehicleModel = hum.SeatPart:FindFirstAncestorOfClass("Model")
+        if vehicleModel then
+            for _, part in ipairs(vehicleModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    frozenParts[part] = part.Anchored
+                    part.Anchored = true
+                end
+            end
+        end
+    end
+    
+    isFrozen = true
+    FreezeBtn.Text = "FREEZE CHAR/VEHICLE: ON"
+    FreezeBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
+end
+
+FreezeBtn.MouseButton1Click:Connect(function()
+    if isFrozen then
+        unfreezeAll()
+    else
+        freezeAll()
+    end
+end)
 
 local function stopMonitoring()
     isMonitoring = false
@@ -313,6 +360,7 @@ ResetZoomBtn.MouseButton1Click:Connect(function()
 end)
 
 local function resetAction()
+    unfreezeAll()
     stopMonitoring()
     if activeCCTV then activeCCTV:Destroy(); activeCCTV = nil end
     initialCFrame = nil
@@ -341,7 +389,7 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             end
         end
         
-        -- FOV Management dengan Limit Minimal 1 Derajat
+        -- FOV Management
         local targetFOV = baseFOV
         if isDistZoomActive and rootPart then
             local currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
@@ -361,7 +409,7 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
     end
 end)
 
--- Controls (PC & Touch HP)
+-- Controls (Drag Kamera via Mouse / Touch HP)
 local activeTouch = nil
 local lastTouchPos = Vector2.new()
 
@@ -394,12 +442,4 @@ end)
 
 UserInputService.TouchEnded:Connect(function(touch)
     if touch == activeTouch then activeTouch = nil end
-end)
-
--- Keyboard Shortcuts
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.M then toggleMenuVisibility()
-    elseif input.KeyCode == Enum.KeyCode.E then toggleViewAction()
-    elseif input.KeyCode == Enum.KeyCode.R then resetAction() end
 end)
