@@ -6,8 +6,6 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local CurrentCamera = Workspace.CurrentCamera
-
--- Container GUI Aman
 local parentContainer
 if gethui then
     parentContainer = gethui()
@@ -15,18 +13,12 @@ else
     local success, core = pcall(function() return game:GetService("CoreGui") end)
     parentContainer = (success and core) or LocalPlayer:WaitForChild("PlayerGui")
 end
-
--- Clean Up GUI Lama
 local oldGui = parentContainer:FindFirstChild("CCTVSystemGui")
 if oldGui then oldGui:Destroy() end
-
--- ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CCTVSystemGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parentContainer
-
--- ==================== FLOATING SHORTCUT BUTTON ====================
 local FloatBtn = Instance.new("TextButton", ScreenGui)
 FloatBtn.Name = "MenuFloatShortcut"
 FloatBtn.Size = UDim2.new(0, 45, 0, 45)
@@ -39,13 +31,10 @@ FloatBtn.TextSize = 10
 FloatBtn.BorderSizePixel = 0
 FloatBtn.Active = true
 FloatBtn.Draggable = true
-
 Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 local FloatStroke = Instance.new("UIStroke", FloatBtn)
 FloatStroke.Color = Color3.fromRGB(0, 150, 255)
 FloatStroke.Thickness = 2
-
--- ==================== FRAME UTAMA ====================
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 220, 0, 520)
 MainFrame.Position = UDim2.new(0.15, 0, 0.15, 0)
@@ -54,9 +43,7 @@ MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = false
-
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
-
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 28)
 Title.Text = "CINEMATIC CCTV & PATH SYSTEM"
@@ -65,12 +52,10 @@ Title.Font = Enum.Font.GothamBold
 Title.TextSize = 10
 Title.BackgroundTransparency = 1
 Title.LayoutOrder = 1
-
 local UIList = Instance.new("UIListLayout", MainFrame)
 UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIList.Padding = UDim.new(0, 4)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
-
 local function createButton(text, color, order)
     local btn = Instance.new("TextButton", MainFrame)
     btn.Size = UDim2.new(0.9, 0, 0, 24)
@@ -84,8 +69,6 @@ local function createButton(text, color, order)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
     return btn
 end
-
--- UI Elements
 local SpawnBtn = createButton("SPAWN CCTV (Cam Pos)", Color3.fromRGB(0, 150, 255), 2)
 local ToggleViewBtn = createButton("VIEW CCTV: OFF", Color3.fromRGB(200, 50, 50), 3)
 local LockCamBtn = createButton("CAMERA LOCK: LOCKED", Color3.fromRGB(100, 100, 100), 4)
@@ -94,13 +77,10 @@ local DistZoomToggleBtn = createButton("DIST-ZOOM: OFF", Color3.fromRGB(150, 100
 local FreezeBtn = createButton("FREEZE CHAR/VEHICLE: OFF", Color3.fromRGB(0, 170, 170), 7)
 local ToggleVisualsBtn = createButton("TOGGLE VISUALPARTS: ON", Color3.fromRGB(0, 180, 100), 8)
 local AddPathPointBtn = createButton("ADD PATH POINT", Color3.fromRGB(220, 130, 0), 9)
-
--- Speed Controls Container
 local SpeedFrame = Instance.new("Frame", MainFrame)
 SpeedFrame.Size = UDim2.new(0.9, 0, 0, 24)
 SpeedFrame.BackgroundTransparency = 1
 SpeedFrame.LayoutOrder = 10
-
 local SpeedDownBtn = Instance.new("TextButton", SpeedFrame)
 SpeedDownBtn.Size = UDim2.new(0.25, 0, 1, 0)
 SpeedDownBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
@@ -109,7 +89,6 @@ SpeedDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedDownBtn.Font = Enum.Font.GothamBold
 SpeedDownBtn.TextSize = 9
 Instance.new("UICorner", SpeedDownBtn).CornerRadius = UDim.new(0, 5)
-
 local SpeedLabel = Instance.new("TextLabel", SpeedFrame)
 SpeedLabel.Size = UDim2.new(0.46, 0, 1, 0)
 SpeedLabel.Position = UDim2.new(0.27, 0, 0, 0)
@@ -119,7 +98,6 @@ SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedLabel.Font = Enum.Font.GothamBold
 SpeedLabel.TextSize = 9
 Instance.new("UICorner", SpeedLabel).CornerRadius = UDim.new(0, 5)
-
 local SpeedUpBtn = Instance.new("TextButton", SpeedFrame)
 SpeedUpBtn.Size = UDim2.new(0.25, 0, 1, 0)
 SpeedUpBtn.Position = UDim2.new(0.75, 0, 0, 0)
@@ -129,16 +107,12 @@ SpeedUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedUpBtn.Font = Enum.Font.GothamBold
 SpeedUpBtn.TextSize = 9
 Instance.new("UICorner", SpeedUpBtn).CornerRadius = UDim.new(0, 5)
-
 local PlayCinematicBtn = createButton("PLAY CINEMATIC PATH", Color3.fromRGB(230, 80, 0), 11)
 local ResetDirBtn = createButton("RESET DIRECTION", Color3.fromRGB(120, 80, 200), 12)
-
--- Zoom Container
 local ZoomFrame = Instance.new("Frame", MainFrame)
 ZoomFrame.Size = UDim2.new(0.9, 0, 0, 24)
 ZoomFrame.BackgroundTransparency = 1
 ZoomFrame.LayoutOrder = 13
-
 local ZoomOutBtn = Instance.new("TextButton", ZoomFrame)
 ZoomOutBtn.Size = UDim2.new(0.3, 0, 1, 0)
 ZoomOutBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
@@ -147,7 +121,6 @@ ZoomOutBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ZoomOutBtn.Font = Enum.Font.GothamBold
 ZoomOutBtn.TextSize = 12
 Instance.new("UICorner", ZoomOutBtn).CornerRadius = UDim.new(0, 5)
-
 local ZoomLabel = Instance.new("TextLabel", ZoomFrame)
 ZoomLabel.Size = UDim2.new(0.36, 0, 1, 0)
 ZoomLabel.Position = UDim2.new(0.32, 0, 0, 0)
@@ -157,7 +130,6 @@ ZoomLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 ZoomLabel.Font = Enum.Font.GothamBold
 ZoomLabel.TextSize = 9
 Instance.new("UICorner", ZoomLabel).CornerRadius = UDim.new(0, 5)
-
 local ZoomInBtn = Instance.new("TextButton", ZoomFrame)
 ZoomInBtn.Size = UDim2.new(0.3, 0, 1, 0)
 ZoomInBtn.Position = UDim2.new(0.7, 0, 0, 0)
@@ -167,11 +139,8 @@ ZoomInBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ZoomInBtn.Font = Enum.Font.GothamBold
 ZoomInBtn.TextSize = 12
 Instance.new("UICorner", ZoomInBtn).CornerRadius = UDim.new(0, 5)
-
 local ResetZoomBtn = createButton("RESET ZOOM", Color3.fromRGB(70, 110, 160), 14)
 local ResetBtn = createButton("RESET ALL", Color3.fromRGB(180, 40, 40), 15)
-
--- System Variables
 local activeCCTV = nil
 local centerPart = nil
 local initialCFrame = nil
@@ -193,38 +162,30 @@ local baseFOV = 70
 local cameraRotX = 0
 local cameraRotY = 0
 local initialSpawnDistance = 50
-
 local PathFolder = Workspace:FindFirstChild("CCTV_Path_Folder") or Instance.new("Folder", Workspace)
 PathFolder.Name = "CCTV_Path_Folder"
 FloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
-
 local function updateZoomDisplay()
     ZoomLabel.Text = "Zoom: " .. string.format("%.1f", zoomLevel) .. "x"
 end
-
 local function updateSpeedDisplay()
     SpeedLabel.Text = "Durasi: " .. string.format("%.1f", pathDuration) .. "s"
 end
-
 SpeedUpBtn.MouseButton1Click:Connect(function()
     pathDuration = math.max(1.0, pathDuration - 1.0)
     updateSpeedDisplay()
 end)
-
 SpeedDownBtn.MouseButton1Click:Connect(function()
     pathDuration = math.min(30.0, pathDuration + 1.0)
     updateSpeedDisplay()
 end)
-
 local function renderCurvedPath()
     for _, block in ipairs(curveVisualBlocks) do block:Destroy() end
     table.clear(curveVisualBlocks)
     table.clear(curvePositions)
-    
     if #pathPoints < 2 then return end
-    
     local resolution = 20
     for i = 1, #pathPoints - 1 do
         local pA = pathPoints[i]
@@ -232,15 +193,12 @@ local function renderCurvedPath()
         local dir = (pB - pA)
         local dist = dir.Magnitude
         local normal = Vector3.new(-dir.Z, 0, dir.X).Unit
-        
         for step = 1, resolution do
             local t = step / resolution
             local linearPos = pA:Lerp(pB, t)
             local waveOffset = normal * math.sin(t * math.pi) * (dist * 0.2)
             local finalPos = linearPos + waveOffset
-            
             table.insert(curvePositions, finalPos)
-            
             local curveBlock = Instance.new("Part")
             curveBlock.Name = "Curve_Point"
             curveBlock.Size = Vector3.new(0.5, 0.5, 0.5)
@@ -251,20 +209,16 @@ local function renderCurvedPath()
             curveBlock.Color = Color3.fromRGB(255, 170, 0)
             curveBlock.Transparency = showVisualParts and 0.4 or 1
             curveBlock.Parent = PathFolder
-            
             table.insert(curveVisualBlocks, curveBlock)
         end
     end
 end
-
 AddPathPointBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
     if not rootPart then return end
-    
     local pos = rootPart.Position
     table.insert(pathPoints, pos)
-    
     local block = Instance.new("Part")
     block.Name = "Path_Node_1x1x1"
     block.Size = Vector3.new(1, 1, 1)
@@ -275,60 +229,48 @@ AddPathPointBtn.MouseButton1Click:Connect(function()
     block.Color = Color3.fromRGB(255, 50, 50)
     block.Transparency = showVisualParts and 0.2 or 1
     block.Parent = PathFolder
-    
     table.insert(pathVisualBlocks, block)
     renderCurvedPath()
 end)
-
 PlayCinematicBtn.MouseButton1Click:Connect(function()
     if #curvePositions < 2 or not activeCCTV or isPlayingPath then return end
-    
     isPlayingPath = true
     PlayCinematicBtn.Text = "PLAYING PATH..."
     PlayCinematicBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    
     task.spawn(function()
         local timePerSegment = pathDuration / #curvePositions
         for _, targetPos in ipairs(curvePositions) do
             if not isPlayingPath or not activeCCTV then break end
-            
             local tweenInfo = TweenInfo.new(timePerSegment, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
             local tween = TweenService:Create(activeCCTV, tweenInfo, {Position = targetPos})
             tween:Play()
             tween.Completed:Wait()
         end
-        
         isPlayingPath = false
         PlayCinematicBtn.Text = "PLAY CINEMATIC PATH"
         PlayCinematicBtn.BackgroundColor3 = Color3.fromRGB(230, 80, 0)
     end)
 end)
-
 ToggleVisualsBtn.MouseButton1Click:Connect(function()
     showVisualParts = not showVisualParts
     ToggleVisualsBtn.Text = showVisualParts and "TOGGLE VISUALPARTS: ON" or "TOGGLE VISUALPARTS: OFF"
     ToggleVisualsBtn.BackgroundColor3 = showVisualParts and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(150, 50, 50)
-    
     if activeCCTV then activeCCTV.Transparency = showVisualParts and 0.3 or 1 end
     if centerPart then centerPart.Transparency = showVisualParts and 0.2 or 1 end
     for _, b in ipairs(pathVisualBlocks) do b.Transparency = showVisualParts and 0.2 or 1 end
     for _, c in ipairs(curveVisualBlocks) do c.Transparency = showVisualParts and 0.4 or 1 end
 end)
-
 local function spawnCCTVAction()
     if activeCCTV then activeCCTV:Destroy() end
     if centerPart then centerPart:Destroy() end
-    
     local camCFrame = CurrentCamera.CFrame
     initialCFrame = camCFrame
-    
     local char = LocalPlayer.Character
     local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
     if rootPart then
         initialSpawnDistance = (camCFrame.Position - rootPart.Position).Magnitude
         if initialSpawnDistance < 10 then initialSpawnDistance = 50 end
     end
-    
     local block = Instance.new("Part")
     block.Name = "CCTV_Block"
     block.Size = Vector3.new(1, 1, 1)
@@ -340,7 +282,6 @@ local function spawnCCTVAction()
     block.Transparency = showVisualParts and 0.3 or 1
     block.Parent = Workspace
     activeCCTV = block
-    
     local cPart = Instance.new("Part")
     cPart.Name = "CCTV_Center_Green"
     cPart.Size = Vector3.new(1, 1, 1)
@@ -352,15 +293,12 @@ local function spawnCCTVAction()
     cPart.Transparency = showVisualParts and 0.2 or 1
     cPart.Parent = Workspace
     centerPart = cPart
-    
     local lookVector = camCFrame.LookVector
     cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
     cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-    
     if isMonitoring then CurrentCamera.CFrame = activeCCTV.CFrame end
 end
 SpawnBtn.MouseButton1Click:Connect(spawnCCTVAction)
-
 local function unfreezeAll()
     for part, wasAnchored in pairs(frozenParts) do
         if part and part:IsA("BasePart") then part.Anchored = wasAnchored end
@@ -370,19 +308,16 @@ local function unfreezeAll()
     FreezeBtn.Text = "FREEZE CHAR/VEHICLE: OFF"
     FreezeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 170)
 end
-
 local function freezeAll()
     local char = LocalPlayer.Character
     if not char then return end
     table.clear(frozenParts)
-    
     for _, part in ipairs(char:GetDescendants()) do
         if part:IsA("BasePart") then
             frozenParts[part] = part.Anchored
             part.Anchored = true
         end
     end
-    
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum and hum.SeatPart then
         local vehicleModel = hum.SeatPart:FindFirstAncestorOfClass("Model")
@@ -395,16 +330,13 @@ local function freezeAll()
             end
         end
     end
-    
     isFrozen = true
     FreezeBtn.Text = "FREEZE CHAR/VEHICLE: ON"
     FreezeBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
 end
-
 FreezeBtn.MouseButton1Click:Connect(function()
     if isFrozen then unfreezeAll() else freezeAll() end
 end)
-
 local function stopMonitoring()
     isMonitoring = false
     isFollowing = false
@@ -412,14 +344,12 @@ local function stopMonitoring()
     FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
     ToggleViewBtn.Text = "VIEW CCTV: OFF"
     ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    
     CurrentCamera.CameraType = Enum.CameraType.Custom
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         CurrentCamera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     end
     CurrentCamera.FieldOfView = baseFOV
 end
-
 ToggleViewBtn.MouseButton1Click:Connect(function()
     if not activeCCTV then return end
     isMonitoring = not isMonitoring
@@ -427,7 +357,6 @@ ToggleViewBtn.MouseButton1Click:Connect(function()
         ToggleViewBtn.Text = "VIEW CCTV: ON"
         ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
-        
         local lookVector = activeCCTV.CFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
@@ -437,13 +366,11 @@ ToggleViewBtn.MouseButton1Click:Connect(function()
         stopMonitoring()
     end
 end)
-
 LockCamBtn.MouseButton1Click:Connect(function()
     isCamLocked = not isCamLocked
     LockCamBtn.Text = isCamLocked and "CAMERA LOCK: LOCKED" or "CAMERA LOCK: UNLOCKED"
     LockCamBtn.BackgroundColor3 = isCamLocked and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(50, 150, 200)
 end)
-
 FollowCharBtn.MouseButton1Click:Connect(function()
     if not activeCCTV or not isMonitoring then return end
     isFollowing = not isFollowing
@@ -455,59 +382,49 @@ FollowCharBtn.MouseButton1Click:Connect(function()
         LockCamBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
     end
 end)
-
 DistZoomToggleBtn.MouseButton1Click:Connect(function()
     isDistZoomActive = not isDistZoomActive
     DistZoomToggleBtn.Text = isDistZoomActive and "DIST-ZOOM: ON" or "DIST-ZOOM: OFF"
     DistZoomToggleBtn.BackgroundColor3 = isDistZoomActive and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 100, 50)
 end)
-
 ResetDirBtn.MouseButton1Click:Connect(function()
     if activeCCTV and initialCFrame then
         isFollowing = false
         FollowCharBtn.Text = "CAM FOLLOW: OFF"
         FollowCharBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
-        
         activeCCTV.CFrame = initialCFrame
         local lookVector = initialCFrame.LookVector
         cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
         cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-        
         if isMonitoring then CurrentCamera.CFrame = activeCCTV.CFrame end
     end
 end)
-
 ZoomInBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.min(20.0, zoomLevel + 0.5)
     updateZoomDisplay()
 end)
-
 ZoomOutBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = math.max(1.0, zoomLevel - 0.5)
     updateZoomDisplay()
 end)
-
 ResetZoomBtn.MouseButton1Click:Connect(function()
     if not isMonitoring then return end
     zoomLevel = 1.0
     updateZoomDisplay()
 end)
-
 local function resetAction()
     isPlayingPath = false
     unfreezeAll()
     stopMonitoring()
     if activeCCTV then activeCCTV:Destroy(); activeCCTV = nil end
     if centerPart then centerPart:Destroy(); centerPart = nil end
-    
     PathFolder:ClearAllChildren()
     table.clear(pathPoints)
     table.clear(pathVisualBlocks)
     table.clear(curvePositions)
     table.clear(curveVisualBlocks)
-    
     initialCFrame = nil
     zoomLevel = 1.0
     isDistZoomActive = false
@@ -515,12 +432,10 @@ local function resetAction()
     DistZoomToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 50)
 end
 ResetBtn.MouseButton1Click:Connect(resetAction)
-
 RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1, function()
     if isMonitoring and activeCCTV then
         local char = LocalPlayer.Character
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
-        
         if isFollowing and rootPart then
             local camPos = activeCCTV.Position
             local targetPos = rootPart.Position
@@ -532,32 +447,26 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
                 CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
             end
         end
-        
         if centerPart then
             centerPart.CFrame = CurrentCamera.CFrame * CFrame.new(0, 0, -12)
         end
-        
         local targetFOV = baseFOV
         if isDistZoomActive and rootPart then
             local currentDistance = (activeCCTV.Position - rootPart.Position).Magnitude
             local distFactor = currentDistance / math.max(initialSpawnDistance, 10)
             if distFactor < 1 then distFactor = 1 end
-            
             local effectiveZoom = zoomLevel * distFactor
             targetFOV = math.clamp(baseFOV / effectiveZoom, 1, baseFOV)
         else
             targetFOV = math.clamp(baseFOV / math.max(zoomLevel, 1), 1, baseFOV)
         end
-        
         if CurrentCamera.FieldOfView ~= targetFOV then
             CurrentCamera.FieldOfView = targetFOV
         end
     end
 end)
-
 local activeTouch = nil
 local lastTouchPos = Vector2.new()
-
 UserInputService.InputChanged:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if isMonitoring and not isCamLocked and not isFollowing and input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -566,7 +475,6 @@ UserInputService.InputChanged:Connect(function(input, gameProcessed)
         cameraRotY = math.clamp(cameraRotY - delta.Y * 0.003, -math.pi/2 + 0.01, math.pi/2 - 0.01)
     end
 end)
-
 UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
     if gameProcessed then return end
     if isMonitoring and not isCamLocked and not isFollowing then
@@ -574,7 +482,14 @@ UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
         lastTouchPos = touch.Position
     end
 end)
-
-UserInputService.TouchMoved:Connect(function:Connect(function(touch, gameProcessed) -- (corrected)
-    -- touched code
-end)) -- (disesuaikan dengan syntax asli)
+UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
+    if isMonitoring and not isCamLocked and not isFollowing and touch == activeTouch then
+        local delta = touch.Position - lastTouchPos
+        lastTouchPos = touch.Position
+        cameraRotX = cameraRotX - delta.X * 0.005
+        cameraRotY = math.clamp(cameraRotY - delta.Y * 0.005, -math.pi/2 + 0.01, math.pi/2 - 0.01)
+    end
+end)
+UserInputService.TouchEnded:Connect(function(touch)
+    if touch == activeTouch then activeTouch = nil end
+end)
