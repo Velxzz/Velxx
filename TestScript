@@ -181,23 +181,29 @@ SpeedDownBtn.MouseButton1Click:Connect(function()
     pathDuration = math.min(30.0, pathDuration + 1.0)
     updateSpeedDisplay()
 end)
+local function catmullRom(p0, p1, p2, p3, t)
+    local t2 = t * t
+    local t3 = t2 * t
+    return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+end
 local function renderCurvedPath()
     for _, block in ipairs(curveVisualBlocks) do block:Destroy() end
     table.clear(curveVisualBlocks)
     table.clear(curvePositions)
     if #pathPoints < 2 then return end
-    local resolution = 20
-    for i = 1, #pathPoints - 1 do
-        local pA = pathPoints[i]
-        local pB = pathPoints[i+1]
-        local dir = (pB - pA)
-        local dist = dir.Magnitude
-        local normal = Vector3.new(-dir.Z, 0, dir.X).Unit
-        for step = 1, resolution do
+    local resolution = 25
+    local extendedPoints = {}
+    table.insert(extendedPoints, pathPoints[1] - (pathPoints[2] - pathPoints[1]))
+    for _, pt in ipairs(pathPoints) do table.insert(extendedPoints, pt) end
+    table.insert(extendedPoints, pathPoints[#pathPoints] + (pathPoints[#pathPoints] - pathPoints[#pathPoints-1]))
+    for i = 2, #extendedPoints - 2 do
+        local p0 = extendedPoints[i - 1]
+        local p1 = extendedPoints[i]
+        local p2 = extendedPoints[i + 1]
+        local p3 = extendedPoints[i + 2]
+        for step = 0, resolution - 1 do
             local t = step / resolution
-            local linearPos = pA:Lerp(pB, t)
-            local waveOffset = normal * math.sin(t * math.pi) * (dist * 0.2)
-            local finalPos = linearPos + waveOffset
+            local finalPos = catmullRom(p0, p1, p2, p3, t)
             table.insert(curvePositions, finalPos)
             local curveBlock = Instance.new("Part")
             curveBlock.Name = "Curve_Point"
@@ -283,9 +289,9 @@ local function spawnCCTVAction()
     block.Parent = Workspace
     activeCCTV = block
     local cPart = Instance.new("Part")
-    cPart.Name = "CCTV_Center_Green"
+    cPart.Name = "CCTV_Center_Target"
     cPart.Size = Vector3.new(1, 1, 1)
-    cPart.CFrame = camCFrame * CFrame.new(0, 0, -10)
+    cPart.CFrame = camCFrame * CFrame.new(0, 0, -25)
     cPart.Anchored = true
     cPart.CanCollide = false
     cPart.Material = Enum.Material.Neon
@@ -357,10 +363,6 @@ ToggleViewBtn.MouseButton1Click:Connect(function()
         ToggleViewBtn.Text = "VIEW CCTV: ON"
         ToggleViewBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
         CurrentCamera.CameraType = Enum.CameraType.Scriptable
-        local lookVector = activeCCTV.CFrame.LookVector
-        cameraRotX = math.atan2(-lookVector.X, -lookVector.Z)
-        cameraRotY = math.asin(math.clamp(lookVector.Y, -1, 1))
-        CurrentCamera.CFrame = activeCCTV.CFrame
         updateZoomDisplay()
     else
         stopMonitoring()
@@ -442,13 +444,17 @@ RunService:BindToRenderStep("CCTV_Update", Enum.RenderPriority.Camera.Value + 1,
             CurrentCamera.CFrame = CFrame.new(camPos, targetPos)
         else
             if isCamLocked then
-                CurrentCamera.CFrame = activeCCTV.CFrame
+                if centerPart then
+                    CurrentCamera.CFrame = CFrame.new(activeCCTV.Position, centerPart.Position)
+                else
+                    CurrentCamera.CFrame = activeCCTV.CFrame
+                end
             else
                 CurrentCamera.CFrame = CFrame.new(activeCCTV.Position) * CFrame.Angles(0, cameraRotX, 0) * CFrame.Angles(cameraRotY, 0, 0)
             end
         end
-        if centerPart then
-            centerPart.CFrame = CurrentCamera.CFrame * CFrame.new(0, 0, -12)
+        if centerPart and not isCamLocked then
+            centerPart.CFrame = CurrentCamera.CFrame * CFrame.new(0, 0, -25)
         end
         local targetFOV = baseFOV
         if isDistZoomActive and rootPart then
