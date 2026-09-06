@@ -1,0 +1,9 @@
+workspace.Gravity = 255
+local StarterGui = game:GetService("StarterGui")
+pcall(function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "#Strong gravity",
+        Text = "-- Gravity Value was changed succesfully!",
+        Duration = 5
+    })
+end)
