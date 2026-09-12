@@ -5,19 +5,19 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Configuration
+-- Configurations
 local MAX_SAMPLES = 30
-local GRAPH_HEIGHT = 40
+local STANDARD_GRAVITY = 196.2
 
--- 1. Membuat GUI Utama Container
+-- 1. Membuat GUI Utama
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "VehicleTelemetryGui"
+screenGui.Name = "VehicleBarsGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
 local container = Instance.new("Frame")
 container.Name = "MainContainer"
-container.Size = UDim2.new(0, 180, 0, 160)
+container.Size = UDim2.new(0, 180, 0, 150)
 container.AnchorPoint = Vector2.new(1, 0)
 container.Position = UDim2.new(1, -10, 0, 10)
 container.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -30,32 +30,31 @@ corner.CornerRadius = UDim.new(0, 6)
 corner.Parent = container
 
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 6)
-padding.PaddingBottom = UDim.new(0, 6)
+padding.PaddingTop = UDim.new(0, 8)
+padding.PaddingBottom = UDim.new(0, 8)
 padding.PaddingLeft = UDim.new(0, 8)
 padding.PaddingRight = UDim.new(0, 8)
 padding.Parent = container
 
--- Text Labels Output
+-- Text Label Ringkas
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Name = "InfoLabel"
-infoLabel.Size = UDim2.new(1, 0, 0, 80)
+infoLabel.Size = UDim2.new(1, 0, 0, 50)
 infoLabel.BackgroundTransparency = 1
 infoLabel.Font = Enum.Font.SourceSansBold
 infoLabel.TextSize = 13
 infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 infoLabel.TextXAlignment = Enum.TextXAlignment.Left
 infoLabel.TextYAlignment = Enum.TextYAlignment.Top
-infoLabel.Text = "FPS: 0\nSpeed: 0 km/h\nDownforce: 0.00 G\nUpforce: 0.00 G"
+infoLabel.Text = "Speed: 0 km/h\nDownforce: 0.00 G\nUpforce: 0.00 G"
 infoLabel.Parent = container
 
--- Container Grafik
+-- Container Grafik Batang (Wave Graph)
 local graphFrame = Instance.new("Frame")
 graphFrame.Name = "GraphFrame"
-graphFrame.Size = UDim2.new(1, 0, 0, GRAPH_HEIGHT)
-graphFrame.Position = UDim2.new(0, 0, 0, 85)
-graphFrame.BackgroundTransparency = 0.9
-graphFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+graphFrame.Size = UDim2.new(1, 0, 0, 50)
+graphFrame.Position = UDim2.new(0, 0, 0, 55)
+graphFrame.BackgroundTransparency = 1
 graphFrame.Parent = container
 
 local uiListLayout = Instance.new("UIListLayout")
@@ -65,96 +64,81 @@ uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 uiListLayout.Padding = UDim.new(0, 1)
 uiListLayout.Parent = graphFrame
 
--- 2. Inisialisasi Batang Grafik (Bar Pool)
+-- 2. Membuat Pool Batang Grafik
 local bars = {}
 local sampleHistory = {}
 
 for i = 1, MAX_SAMPLES do
     local bar = Instance.new("Frame")
     bar.Name = "Bar_" .. i
-    bar.Size = UDim2.new(1 / MAX_SAMPLES, -1, 0, 2)
+    bar.Size = UDim2.new(1 / MAX_SAMPLES, -1, 0.05, 0)
     bar.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
     bar.BorderSizePixel = 0
     bar.Parent = graphFrame
 
     table.insert(bars, bar)
-    table.insert(sampleHistory, 0)
+    table.insert(sampleHistory, 0.05)
 end
 
--- Variables Perhitungan Fisika
+-- Variables Fisika
 local lastVelocity = Vector3.new(0, 0, 0)
-local STANDARD_GRAVITY = 196.2 -- Default Roblox Gravity (studs/s²)
 
--- 3. Loop Kalkulasi Realtime
+-- 3. Loop Logika Realtime
 RunService.Heartbeat:Connect(function(deltaTime)
-    -- A. Deteksi Target (Karakter atau Kendaraan)
     local char = LocalPlayer.Character
     if not char then return end
     
     local rootPart = char:FindFirstChild("HumanoidRootPart")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     
-    -- Jika sedang menaiki motor/mobil, ambil RootPart dari kendaraan
     if humanoid and humanoid.SeatPart then
         rootPart = humanoid.SeatPart.AssemblyRootPart or humanoid.SeatPart
     end
     
     if not rootPart then return end
 
-    -- B. Hitung Kecepatan (KM/H)
+    -- Hitung Kecepatan & G-Force
     local currentVelocity = rootPart.AssemblyLinearVelocity
-    local speedStuds = currentVelocity.Magnitude
-    local speedKmH = math.floor(speedStuds * 0.28) -- Konversi Studs/s ke KM/H
+    local speedKmH = math.floor(currentVelocity.Magnitude * 0.28)
 
-    -- C. Hitung Percepatan & G-Force (Vertical Vector)
     local acceleration = (currentVelocity - lastVelocity) / deltaTime
     lastVelocity = currentVelocity
 
-    -- Komponen percepatan vertikal relatif terhadap gravitasi
     local verticalAcc = acceleration.Y
     local gForceVertical = verticalAcc / STANDARD_GRAVITY
 
-    local downForceG = 0
-    local upForceG = 0
+    local downForceG = gForceVertical < 0 and math.abs(gForceVertical) or 0
+    local upForceG = gForceVertical > 0 and gForceVertical or 0
 
-    if gForceVertical < 0 then
-        downForceG = math.abs(gForceVertical)
-    else
-        upForceG = gForceVertical
-    end
-
-    -- D. Hitung FPS Instantaneous (Dynamic Wave Graph)
-    local instantFps = math.clamp(math.floor(1 / deltaTime), 0, 120)
-
-    -- Update Label Teks
+    -- Update Text Display
     infoLabel.Text = string.format(
-        "FPS: %d\nSpeed: %d km/h\nDownforce: %.2f G\nUpforce: %.2f G",
-        instantFps,
+        "Speed: %d km/h\nDownforce: %.2f G\nUpforce: %.2f G",
         speedKmH,
         downForceG,
         upForceG
     )
 
-    -- E. Update Data Grafik Batang Realtime
-    -- Menggunakan gabungan dinamika kecepatan & percepatan agar grafik bergerak naik-turun aktif
+    -- Hitung Tinggi Batang (Kombinasi Speed & Downforce secara langsung)
     table.remove(sampleHistory, 1)
     
-    -- Skala visualisasi grafik (Kombinasi responsivitas Kecepatan & G-Force)
-    local graphValue = math.clamp((speedKmH / 150) + (downForceG * 0.5), 0.05, 1)
-    table.insert(sampleHistory, graphValue)
+    -- Nilai gabungan: Kecepatan memicu tinggi dasar, Downforce memicu lonjakan puncak
+    local rawScale = (speedKmH / 350) + (downForceG * 0.7)
+    local barHeightScale = math.clamp(rawScale, 0.05, 1)
+    
+    table.insert(sampleHistory, barHeightScale)
 
-    -- Render Ulang Warna & Tinggi Batang
+    -- Render Ulang Warna & Tinggi Batang dari Kanan ke Kiri
     for i = 1, MAX_SAMPLES do
         local val = sampleHistory[i]
         bars[i].Size = UDim2.new(1 / MAX_SAMPLES, -1, val, 0)
-        
-        -- Gradasi warna batang berdasarkan tinggi grafik (Biru -> Kuning -> Merah)
+
+        -- Warna berubah sesuai dinamika pengereman/kecepatan
         if val > 0.75 then
-            bars[i].BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-        elseif val > 0.35 then
-            bars[i].BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+            bars[i].BackgroundColor3 = Color3.fromRGB(255, 50, 50)  -- Merah (Rem Keras / Downforce Tinggi)
+        elseif val > 0.4 then
+            bars[i].BackgroundColor3 = Color3.fromRGB(255, 180, 0) -- Kuning (Kecepatan Tinggi)
         else
-            bars[i].BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+            bars[i].BackgroundColor3 = Color3.fromRGB(0, 200, 255) -- Biru (Normal)
         end
     end
 end)
