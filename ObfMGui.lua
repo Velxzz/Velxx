@@ -2,7 +2,7 @@
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 
--- Daftar Material Licin / Off-road yang akan diubah menjadi Asphalt (agar tidak licin)
+-- Daftar Material Licin yang akan diubah ke Asphalt
 local slipperyMaterials = {
 	[Enum.Material.Grass] = true,
 	[Enum.Material.Sand] = true,
@@ -27,21 +27,34 @@ local function optimizeLighting()
 	Lighting.EnvironmentDiffuseScale = 0
 end
 
--- 2. Optimasi Part & Perbaikan Gesekan Jalan
+-- 2. Fungsi Pengecekan Apakah Objek Merupakan Elemen UI
+local function isUIObject(object)
+	-- Abaikan jika objek adalah bagian dari Interface/GUI/ScreenGui
+	if object:FindFirstAncestorWhichIsA("LayerCollector") 
+		or object:FindFirstAncestorWhichIsA("GuiBase")
+		or object:FindFirstAncestor("PlayerGui")
+		or object.Name:lower():find("gui")
+		or object.Name:lower():find("ui") then
+		return true
+	end
+	return false
+end
+
+-- 3. Optimasi Part Lingkungan Game (3D World Only)
 local function optimizePart(part)
-	-- Hanya proses BasePart dan abaikan jika part berada di dalam GUI/UI
-	if part:IsA("BasePart") and not part:FindFirstAncestorWhichIsA("LayerCollector") then
+	-- Pastikan hanya memproses BasePart 3D dan BUKAN elemen UI
+	if part:IsA("BasePart") and not isUIObject(part) then
 		
 		-- Matikan Bayangan & Pantulan
 		part.CastShadow = false
 		part.Reflectance = 0
 
-		-- Jika material part tergolong licin (Rumput, Pasir, dll.), ubah ke Asphalt
+		-- Ubah material licin ke Asphalt
 		if slipperyMaterials[part.Material] then
 			part.Material = Enum.Material.Asphalt
 		end
 
-		-- Khusus MeshPart: Hapus tekstur gambar visual saja
+		-- Hapus Tekstur HANYA jika berupa MeshPart murni lingkungan (bukan tombol/UI)
 		if part:IsA("MeshPart") then
 			part.TextureID = ""
 		end
@@ -51,12 +64,12 @@ end
 -- Jalankan Optimasi Lighting
 optimizeLighting()
 
--- Optimasi seluruh objek di Workspace
+-- Optimasi seluruh objek lingkungan di Workspace
 for _, descendant in ipairs(Workspace:GetDescendants()) do
 	optimizePart(descendant)
 end
 
--- Listener untuk objek yang baru di-spawn/di-load
+-- Listener untuk objek baru yang di-spawn
 Workspace.DescendantAdded:Connect(function(descendant)
 	optimizePart(descendant)
 end)
